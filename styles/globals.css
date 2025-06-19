@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+/* :root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+} */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+
+/* Override selected date color */
+.react-calendar__tile--active {
+  background-color: rgb(144, 71, 158) !important;  /* Set background to pink */
+  color: white !important;  /* Optional: Change text color to white */
+  border-radius: 5px !important;
+}
+
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background-color: rgb(144, 71, 158) !important;  /* Change hover/focus color to a darker pink */
+  color: white !important;  /* Ensure text color remains white */
+  border-radius: 5px !important;
+}
+
+/* Override styles for today's date */
+.react-calendar__tile--now {
+  background: none !important;
+  color: inherit !important;
+  border-radius: 5px !important;
+}
+
+/* Custom style for selected date */
+.react-calendar__tile--active {
+  background: rgb(144, 71, 158) !important;
+  color: white !important;
+  border-radius: 5px !important;
+}

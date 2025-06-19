@@ -1,0 +1,159 @@
+// variables & functions
+@import 'varibales.global.scss';
+@import 'extends';
+// base & layout
+@import 'common';
+@import 'breakpoints';
+@import 'grid';
+
+@import 'mixin';
+@import 'utilities';
+// ==================Global CSS START HERE========================
+
+// ============== Login AND SIGNUP CSS START HERE =========
+.btn_loginauth{
+  background: #4b164b;
+  font-family: Merriweather Sans,sans-serif;
+  
+}
+
+.btn_loginauth:hover{
+  background: #4b164b;
+}
+  .main_headtop{
+    text-align: left;
+    font-family: Merriweather Sans, sans-serif;
+    color: $themegogo;
+    margin: 0px;
+  }
+  .form_add_fordata{
+    background-color: #fff;
+    padding: 14px 8px;
+    border-radius: 6px;
+    box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px;
+  }
+  .ag-cell-focus {
+    border: none !important;
+  }
+  // Global Scss For Ag GridDatatable
+  .ag-theme-alpine {
+    --ag-font-family: 'Merriweather Sans', sans-serif;
+   & .ag-header-cell-label {
+      font-family: 'Merriweather Sans', sans-serif;
+    }
+   & .ag-cell {
+      font-family: 'Merriweather Sans', sans-serif;
+     span{
+        font-family: 'Merriweather Sans', sans-serif;
+      }
+    } 
+  }
+  .ag-header-container {
+    background-color: #4b164b;
+  }
+  .ag-header-cell{
+    color: #fff;
+  }
+  
+
+  .mui-eqeipb-MuiPaper-root-MuiPopover-paper-MuiMenu-paper {
+    top: 46px !important;
+    right: 46px !important;
+    left: initial !important;
+   
+  }
+  .ag-grid {
+    width: 100% !important;
+}
+.fileselectform{
+  background: #CDC3D4;
+  box-shadow: inherit;
+  color: $themegogo;
+  min-width: 45px;
+  &:hover{
+    background: #CDC3D4;
+    box-shadow: inherit;
+  }
+  & span{
+    margin: 0px;
+    
+  }
+  & svg{
+    font-size: 27px !important;
+  }
+}
+
+.addicon_field{
+  background: #CDC3D4;
+  box-shadow: inherit;
+  color: $themegogo;
+  min-width: 35px;
+  margin-left: 15px;
+  &:hover{
+    background: #CDC3D4;
+    box-shadow: inherit;
+  }
+  & span{
+    margin: 0px;
+    
+  }
+  & svg{
+    font-size: 27px !important;
+  }
+}
+
+// .mui-wa5fuu-MuiListItemIcon-root{
+//   margin-right: 12px !important;
+//  }
+.form_add_fordata{
+  h3{
+    text-align: center;
+    font-family: Merriweather Sans, sans-serif;
+    margin-top: 3px;
+    color: $themegogo;
+  }
+
+}
+.addbtn_add{
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+  padding: 8px 6px;
+  border-radius: 6px;
+}
+.add_btn_form{
+  background: #4b164b;
+  color: #fff;
+}
+.add_btn_form:hover{
+  background: #4b164b;
+}
+.modal_headingmain{
+  color: #4b164b;
+  font-family: Merriweather Sans, sans-serif;
+  text-align: center;
+  margin-bottom: 20px;
+  margin-top: 0px;
+  font-weight: 900;
+}
+// MOdal Popup Close Icon
+.iconbtn_close{
+  &:hover{
+    background: #DBC7DD;
+    color: #fff;
+  }
+}
+
+
+
+
+
+  
+  
+ 
+  
+
+
+  
+
+
+  
+

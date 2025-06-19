@@ -1,0 +1,31 @@
+// Breakpoints
+$breakpoint-xs: 0;          // Extra small devices (phones)
+$breakpoint-sm: 576px;      // Small devices (landscape phones)
+$breakpoint-md: 768px;      // Medium devices (tablets)
+$breakpoint-lg: 992px;      // Large devices (desktops)
+$breakpoint-xl: 1200px;     // Extra large devices (large desktops)
+$breakpoint-xxl: 1600px;    // Extra extra large devices (larger desktops)
+
+@media (min-width: #{$breakpoint-xxl}) {
+  .spacingleft_content {
+    padding: 0px 150px !important;
+  }
+}
+
+@media (min-width: #{$breakpoint-xl}) and (max-width: calc(#{$breakpoint-xxl} - 1px)) {
+  .spacingleft_content {
+    padding: 0px 90px !important;
+  }
+}
+
+// @media (min-width: #{$breakpoint-lg}) and (max-width: calc(#{$breakpoint-xl} - 1px)) {
+//   .spacingleft_content {
+//     padding: 0px 100px !important;
+//   }
+// }
+
+// @media (min-width: #{$breakpoint-md}) and (max-width: calc(#{$breakpoint-lg} - 1px)) {
+//   .spacingleft_content {
+//     padding: 0px 90px !important;
+//   }
+// }

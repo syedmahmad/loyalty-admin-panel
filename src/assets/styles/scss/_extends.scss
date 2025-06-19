@@ -1,0 +1,45 @@
+// Placeholder selectors for common styles
+
+%text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  %button-reset {
+    border: none;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+  }
+  
+  %clearfix::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  %hide {
+    display: none !important;
+  }
+  
+  %visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+  
+  %no-select {
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  %smooth-scroll {
+    scroll-behavior: smooth;
+  }
+  

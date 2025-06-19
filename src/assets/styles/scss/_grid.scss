@@ -1,0 +1,379 @@
+// Define breakpoints
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px; // Adjusted from 1250px to match the next breakpoint
+$breakpoint-xxl: 1350px;
+
+// Define container max-widths for each breakpoint
+$container-max-width-sm: 540px;
+$container-max-width-md: 720px;
+$container-max-width-lg: 960px;
+$container-max-width-xl: 1140px;
+$container-max-width-xxl: 1250px;
+
+// Define gutter width
+$gutter-width: 20px;
+
+// Number of columns in the grid system
+$columns: 12;
+
+// Container
+.container {
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: $gutter-width;
+  padding-left: $gutter-width;
+
+  @media (min-width: $breakpoint-sm) {
+    max-width: $container-max-width-sm;
+  }
+  @media (min-width: $breakpoint-md) {
+    max-width: $container-max-width-md;
+  }
+  @media (min-width: $breakpoint-lg) {
+    max-width: $container-max-width-lg;
+  }
+  @media (min-width: $breakpoint-xl) {
+    max-width: $container-max-width-xl;
+  }
+  @media (min-width: $breakpoint-xxl) {
+    max-width: $container-max-width-xxl;
+  }
+}
+
+// Container-fluid
+.container-fluid {
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: $gutter-width;
+  padding-left: $gutter-width;
+  max-width: 100%; // Adjusted for full-width container
+}
+
+// Row
+.row {
+  margin-right: -$gutter-width;
+  margin-left: -$gutter-width;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+// Column classes
+@for $i from 1 through $columns {
+  .col#{$i} {
+    width: percentage($i / $columns);
+    // padding-left: $gutter-width;
+    // padding-right: $gutter-width;
+  }
+}
+
+// Additional breakpoints
+// Small devices (landscape phones)
+@media (min-width: $breakpoint-sm) and (max-width: ($breakpoint-md - 1px)) {
+  .container {
+    max-width: $container-max-width-sm;
+  }
+}
+
+// Medium devices (tablets)
+@media (min-width: $breakpoint-md) and (max-width: ($breakpoint-lg - 1px)) {
+  .container {
+    max-width: $container-max-width-md;
+  }
+}
+
+// Large devices (desktops)
+@media (min-width: $breakpoint-lg) and (max-width: ($breakpoint-xl - 1px)) {
+  .container {
+    max-width: $container-max-width-lg;
+  }
+}
+
+// Extra large devices (large desktops)
+@media (min-width: $breakpoint-xl) and (max-width: ($breakpoint-xxl - 1px)) {
+  .container {
+    max-width: $container-max-width-xl;
+  }
+}
+
+// XXL devices (extra large desktops)
+@media (min-width: $breakpoint-xxl) {
+  .container {
+    max-width: $container-max-width-xxl;
+  }
+}
+
+
+
+/* Column 1 */
+.col1 {
+  width: 8.33333333%; /* 1/12 */
+}
+
+/* Column 2 */
+.col2 {
+  width: 16.66666667%; /* 2/12 */
+}
+
+/* Column 3 */
+.col3 {
+  width: 25%; /* 3/12 */
+}
+
+/* Column 4 */
+.col4 {
+  width: 33.33333333%; /* 4/12 */
+}
+
+/* Column 5 */
+.col5 {
+  width: 41.66666667%; /* 5/12 */
+}
+
+/* Column 6 */
+.col6 {
+  width: 50%; /* 6/12 */
+}
+
+/* Column 7 */
+.col7 {
+  width: 58.33333333%; /* 7/12 */
+}
+
+/* Column 8 */
+.col8 {
+  width: 66.66666667%; /* 8/12 */
+}
+
+/* Column 9 */
+.col9 {
+  width: 75%; /* 9/12 */
+}
+
+/* Column 10 */
+.col10 {
+  width: 83.33333333%; /* 10/12 */
+}
+
+/* Column 11 */
+.col11 {
+  width: 91.66666667%; /* 11/12 */
+}
+
+/* Column 12 */
+.col12 {
+  width: 100%; /* 12/12 */
+}
+
+/* Additional breakpoints */
+@media (max-width: 575px) {
+  /* Extra small devices (phones) */
+  .col1-xs {
+    width: 8.33333333%; /* 1/12 */
+  }
+  .col2-xs {
+    width: 16.66666667%; /* 2/12 */
+  }
+  .col3-xs {
+    width: 25%; /* 3/12 */
+  }
+  .col4-xs {
+    width: 33.33333333%; /* 4/12 */
+  }
+  .col5-xs {
+    width: 41.66666667%; /* 5/12 */
+  }
+  .col6-xs {
+    width: 50%; /* 6/12 */
+  }
+  .col7-xs {
+    width: 58.33333333%; /* 7/12 */
+  }
+  .col8-xs {
+    width: 66.66666667%; /* 8/12 */
+  }
+  .col9-xs {
+    width: 75%; /* 9/12 */
+  }
+  .col10-xs {
+    width: 83.33333333%; /* 10/12 */
+  }
+  .col11-xs {
+    width: 91.66666667%; /* 11/12 */
+  }
+  .col12-xs {
+    width: 100%; /* 12/12 */
+  }
+  /* Add similar classes for other column sizes */
+}
+
+/* Small devices (tablets) */
+@media (min-width: 576px) and (max-width: 767px) {
+  .col1sm {
+    width: 8.33333333%; /* 1/12 */
+  }
+  .col2sm {
+    width: 16.66666667%; /* 2/12 */
+  }
+  .col3sm {
+    width: 25%; /* 3/12 */
+  }
+  .col4sm {
+    width: 33.33333333%; /* 4/12 */
+  }
+  .col5sm {
+    width: 41.66666667%; /* 5/12 */
+  }
+  .col6sm {
+    width: 50%; /* 6/12 */
+  }
+  .col7sm {
+    width: 58.33333333%; /* 7/12 */
+  }
+  .col8sm {
+    width: 66.66666667%; /* 8/12 */
+  }
+  .col9sm {
+    width: 75%; /* 9/12 */
+  }
+  .col10sm {
+    width: 83.33333333%; /* 10/12 */
+  }
+  .col11sm {
+    width: 91.66666667%; /* 11/12 */
+  }
+  .col12sm {
+    width: 100%; /* 12/12 */
+  }
+}
+
+/* Medium devices (landscape tablets) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .col1md {
+    width: 8.33333333%; /* 1/12 */
+  }
+  .col2md {
+    width: 16.66666667%; /* 2/12 */
+  }
+  .col3md {
+    width: 25%; /* 3/12 */
+  }
+  .col4md {
+    width: 33.33333333%; /* 4/12 */
+  }
+  .col5md {
+    width: 41.66666667%; /* 5/12 */
+  }
+  .col6md {
+    width: 50%; /* 6/12 */
+  }
+  .col7md {
+    width: 58.33333333%; /* 7/12 */
+  }
+  .col8md {
+    width: 66.66666667%; /* 8/12 */
+  }
+  .col9md {
+    width: 75%; /* 9/12 */
+  }
+  .col10md {
+    width: 83.33333333%; /* 10/12 */
+  }
+  .col11md {
+    width: 91.66666667%; /* 11/12 */
+  }
+  .col12md {
+    width: 100%; /* 12/12 */
+  }
+}
+
+
+/* Additional breakpoints */
+@media (min-width: 992px) and (max-width: 1199px) {
+  /* Large devices (desktops) */
+  .col1lg {
+    width: 8.33333333%; /* 1/12 */
+  }
+  .col2lg {
+    width: 16.66666667%; /* 2/12 */
+  }
+  .col3lg {
+    width: 25%; /* 3/12 */
+  }
+  .col4lg {
+    width: 33.33333333%; /* 4/12 */
+  }
+  .col5lg {
+    width: 41.66666667%; /* 5/12 */
+  }
+  .col6lg {
+    width: 50%; /* 6/12 */
+  }
+  .col7lg {
+    width: 58.33333333%; /* 7/12 */
+  }
+  .col8lg {
+    width: 66.66666667%; /* 8/12 */
+  }
+  .col9lg {
+    width: 75%; /* 9/12 */
+  }
+  .col10lg {
+    width: 83.33333333%; /* 10/12 */
+  }
+  .col11lg {
+    width: 91.66666667%; /* 11/12 */
+  }
+  .col12lg {
+    width: 100%; /* 12/12 */
+  }
+}
+
+
+/* Additional breakpoints */
+@media (min-width: 1200px) {
+  /* Extra large devices (large desktops) */
+  .col1xl {
+    width: 8.33333333%; /* 1/12 */
+  }
+  .col2xl {
+    width: 16.66666667%; /* 2/12 */
+  }
+  .col3xl {
+    width: 25%; /* 3/12 */
+  }
+  .col4xl {
+    width: 33.33333333%; /* 4/12 */
+  }
+  .col5xl {
+    width: 41.66666667%; /* 5/12 */
+  }
+  .col6xl {
+    width: 50%; /* 6/12 */
+  }
+  .col7xl {
+    width: 58.33333333%; /* 7/12 */
+  }
+  .col8xl {
+    width: 66.66666667%; /* 8/12 */
+  }
+  .col9xl {
+    width: 75%; /* 9/12 */
+  }
+  .col10xl {
+    width: 83.33333333%; /* 10/12 */
+  }
+  .col11xl {
+    width: 91.66666667%; /* 11/12 */
+  }
+  .col12xl {
+    width: 100%; /* 12/12 */
+  }
+}
+
+
+
+
+
+
