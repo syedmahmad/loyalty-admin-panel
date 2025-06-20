@@ -42,7 +42,7 @@ export default function Microsoft() {
   //           debugger;
   //           if (res?.data?.token) {
   //             dispatch(setUserLogin(res.data));
-  //             router.replace("/clients");
+  //             router.replace("/tenants");
   //           } else {
   //             toast("Token validation failed.");
   //             localStorage.clear();

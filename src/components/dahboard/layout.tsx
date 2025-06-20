@@ -8,27 +8,23 @@ import MainLayout from '../MainLayout';
 import "../../../styles/globals.css";
 import Toast from '@/utils/Toast';
 import { useEffect } from 'react';
-import { alpha, Box, useTheme } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import MsalClientProvider from '../MsalClientProvider';
-import { useMsal } from '@azure/msal-react';
+// import { useMsal } from '@azure/msal-react';
 
 export default function DashboardLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const theme = useTheme();
     const pathname = usePathname();
     const isAuthRoute = pathname === '/login' || pathname === '/logout' || pathname === '/petromin-auth' || pathname === '/unsubscribe';
-    const { instance, accounts } = useMsal();
+    // const { instance, accounts } = useMsal();
     // Special edge case.
     // once user lands on /dahboard or any other route but his token expires as this expires in 7 days.
     // so user will redirect to /login page/
     useEffect(() => {
         if (localStorage.getItem('token') && isAuthRoute) {
             if (pathname !== '/unsubscribe') {
-                window.location.pathname = '/clients';
+                window.location.pathname = '/tenants';
             }
         } 
         // eslint-disable-next-line

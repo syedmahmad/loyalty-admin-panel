@@ -122,7 +122,7 @@ const Profile = () => {
 
   const pathname = usePathname();
   const clientName = localStorage.getItem("client-name");
-  const shouldShowClientName = pathname !== "/" && pathname !== "/clients";
+  const shouldShowClientName = pathname !== "/" && pathname !== "/tenants";
 
   const downMd = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -188,7 +188,7 @@ const Profile = () => {
             </Stack>
           </ButtonBase>
           {/* Right Side - Icon */}
-          <IconButton size="small" onClick={() => router.push("/clients")}>
+          <IconButton size="small" onClick={() => router.push("/tenants")}>
             <GridViewOutlinedIcon
               sx={{ fontSize: 18, color: "secondary.dark" }}
             />
@@ -335,7 +335,7 @@ const ClientInfo = ({ clientName }: { clientName: string | null }) => {
             color: theme.palette.secondary.dark,
             cursor: "pointer",
           }}
-          onClick={() => router.push("/clients")}
+          onClick={() => router.push("/tenants")}
         />
       </Tooltip>
     </Box>

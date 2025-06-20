@@ -29,7 +29,7 @@ const Header = () => {
   const downLG = useMediaQuery(theme.breakpoints.down("lg"));
   const pathname = usePathname();
   // need to hide hamburger menu if clients route is selected.
-  const isDashboardMainRoute = pathname === "/clients";
+  const isDashboardMainRoute = pathname === "/tenants";
 
   const menu = useSelector((state) => state.menu);
   const { drawerOpen } = menu;

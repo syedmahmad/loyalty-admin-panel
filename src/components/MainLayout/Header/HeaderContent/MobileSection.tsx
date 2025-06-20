@@ -90,7 +90,7 @@ const MobileSection = () => {
                 <AppBar color="inherit">
                   <Toolbar>
                     <Search />
-                    <Profile />
+                    {/* <Profile /> */}
                   </Toolbar>
                 </AppBar>
               </ClickAwayListener>

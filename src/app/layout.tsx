@@ -3,7 +3,7 @@ import "../../styles/globals.css";
 import Favicon from '../../public/favicon.ico'
 import DashboardLayout from "@/components/dahboard/layout";
 import ClientProviders from "@/components/ClientProviders";
-import MsalClientProvider from "@/components/MsalClientProvider";
+// import MsalClientProvider from "@/components/MsalClientProvider";
 
 /**
  * 2 types of metadata.
@@ -11,8 +11,8 @@ import MsalClientProvider from "@/components/MsalClientProvider";
  * dynamic: (generateMetadata) it is based on different routes, params etc.
  */
 export const metadata: Metadata = {
-    title: "GOGO Form Management App",
-    description: "We can control the all forms here. For example, inspection form request etc.",
+    title: "Loyalty Management Admin",
+    description: "Loyalty Management Admin Dashboard",
     // icons: {
     //     icon: '/favicon.ico'
     //     // icon: `https://po-cdn-nonprod.azureedge.net/b2cpages/favicon.ico`,
@@ -31,9 +31,9 @@ export default function RootLayout({
         <html lang="en">
         <body>
           <ClientProviders>
-            <MsalClientProvider>
+            {/* <MsalClientProvider> */}
                 <DashboardLayout>{children}</DashboardLayout>
-            </MsalClientProvider> 
+            {/* </MsalClientProvider>  */}
           </ClientProviders>
         </body>
         </html>

@@ -27,7 +27,7 @@ const MainLayout = ({
   const { container } = useConfig();
   const pathname = usePathname();
 
-  const isDashboardMainRoute = pathname === '/clients';
+  const isDashboardMainRoute = pathname === '/tenants';
 
   // set media wise responsive drawer
   // useEffect(() => {

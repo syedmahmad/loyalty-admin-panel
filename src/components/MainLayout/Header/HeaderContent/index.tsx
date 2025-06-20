@@ -30,7 +30,7 @@ const HeaderContent = () => {
       {menuOrientation === MenuOrientation.HORIZONTAL && !downLG && <DrawerHeader open={true} />}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
 
-      <Profile />
+      {/* <Profile /> */}
     </Box>
   );
 };
