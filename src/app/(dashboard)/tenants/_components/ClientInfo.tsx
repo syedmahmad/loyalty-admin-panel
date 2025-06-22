@@ -115,7 +115,7 @@ const ClientInfo = ({ clientInfo, reFetch }: any) => {
           endIcon={<KeyboardArrowRightIcon />}
           onClick={() => {
             localStorage.setItem("client-info", JSON.stringify(clientInfo));
-            window.location.pathname = "/dashboard";
+            window.location.pathname = "/business-units/view";
           }}
         >
           Details

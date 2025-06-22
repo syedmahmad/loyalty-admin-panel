@@ -8,6 +8,8 @@ import MainLayout from '../MainLayout';
 import "../../../styles/globals.css";
 import Toast from '@/utils/Toast';
 import { useEffect } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 // import { useMsal } from '@azure/msal-react';
 
 export default function DashboardLayout({
@@ -36,7 +38,7 @@ export default function DashboardLayout({
             {isAuthRoute ? (
                 <ThemeCustomization>{children}</ThemeCustomization>
                 ) : (
-
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <ThemeCustomization>
                             <Notistack>
                                 <MainLayout>
@@ -45,6 +47,7 @@ export default function DashboardLayout({
                                 </MainLayout>
                             </Notistack>
                         </ThemeCustomization>
+                    </LocalizationProvider>
                 )
             }
         </>
