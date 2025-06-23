@@ -111,29 +111,21 @@ const RuleCreateForm = () => {
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <TextField
-            select
-            label="Type"
+            label="Define Rule Type"
             fullWidth
             value={form.type}
             onChange={(e) => handleChange('type', e.target.value)}
           >
-            <MenuItem value="earn">Earn</MenuItem>
-            <MenuItem value="redeem">Redeem</MenuItem>
-            <MenuItem value="condition">Condition</MenuItem>
-            <MenuItem value="downgrade">Downgrade</MenuItem>
           </TextField>
         </Grid>
 
         <Grid item xs={6}>
         <TextField
-          select
-          label="Condition Type"
+          label="Define Condition Type"
           fullWidth
           value={form.condition_type}
           onChange={(e) => handleChange('condition_type', e.target.value)}
         >
-          <MenuItem value="total_spending">Total Spending</MenuItem>
-          <MenuItem value="visit_count">Visit Count</MenuItem>
         </TextField>
         </Grid>
 
