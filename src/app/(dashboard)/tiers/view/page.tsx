@@ -48,7 +48,7 @@ const TierList = () => {
   const fetchTiers = async () => {
     setLoading(true);
     const res = await GET('/tiers');
-    setTiers(res?.data || []);
+    setTiers(res?.data.tiers || []);
     setLoading(false);
   };
 
