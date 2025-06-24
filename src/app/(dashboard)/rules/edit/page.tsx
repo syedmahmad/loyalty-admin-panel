@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import { RichTextEditor } from '@/components/TextEditor';
 
 const initialState = {
   type: '',
@@ -23,9 +24,6 @@ const initialState = {
   reward_value: '',
   unit_type: '',
   description: '',
-  target_type: '',
-  target_id: '',
-  id: '',
 };
 
 const RuleEdit = () => {
@@ -34,8 +32,8 @@ const RuleEdit = () => {
   const [form, setForm] = useState<any>(initialState);
   const [loading, setLoading] = useState(false);
   const [rules, setRules] = useState<any[]>([]);
-  const [targets, setTargets] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState(paramId || '');
+  const [description, setDescription] = useState<string>('');
   const router = useRouter();
 
   const clientInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
@@ -52,23 +50,12 @@ const RuleEdit = () => {
     const rule = res?.data;
 
     if (rule) {
-      const target = rule.targets?.[0] || {};
       setForm({
         ...rule,
         value: rule.value.toString(),
         reward_value: rule.reward_value?.toString() || '',
-        target_type: target.target_type || '',
-        target_id: target.target_id?.toString() || '',
-        id: target.id,
       });
-
-      if (target.target_type === 'tier') {
-        const res = await GET('/tiers');
-        setTargets(res?.data || []);
-      } else if (target.target_type === 'campaign') {
-        const res = await GET('/campaigns');
-        setTargets(res?.data || []);
-      }
+      setDescription(rule.description || '');
     }
     setLoading(false);
   };
@@ -84,14 +71,6 @@ const RuleEdit = () => {
 
   const handleChange = (field: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [field]: value }));
-
-    if (field === 'target_type') {
-      setForm((prev: any) => ({ ...prev, target_id: '' }));
-
-      GET(`/${value === 'tier' ? 'tiers' : 'campaigns'}`).then((res) => {
-        setTargets(res?.data || []);
-      });
-    }
   };
 
   const handleSubmit = async () => {
@@ -104,7 +83,7 @@ const RuleEdit = () => {
       value: parseFloat(form.value),
       reward_value: form.reward_value ? parseFloat(form.reward_value) : '',
       unit_type: form.unit_type || '',
-      description: form.description || '',
+      description: description || '',
       created_by,
       updated_by: created_by,
       tenant_id: created_by,
@@ -237,44 +216,18 @@ const RuleEdit = () => {
           </Grid>
 
           <Grid item xs={12}>
-          <TextField
-            label="Description"
-            fullWidth
-            multiline
-            rows={2}
-            value={form.description || ''}
-            onChange={(e) => handleChange('description', e.target.value)}
-          />
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              select
-              label="Target Type"
+            {/* <TextField
+              label="Description"
               fullWidth
-              value={form.target_type}
-              onChange={(e) => handleChange('target_type', e.target.value)}
-            >
-              <MenuItem value="tier">Tier</MenuItem>
-              <MenuItem value="campaign">Campaign</MenuItem>
-            </TextField>
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              select
-              label="Target"
-              fullWidth
-              value={form.target_id}
-              onChange={(e) => handleChange('target_id', e.target.value)}
-              disabled={!form.target_type}
-            >
-              {targets.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.name}
-                </MenuItem>
-              ))}
-            </TextField>
+              multiline
+              rows={2}
+              value={form.description || ''}
+              onChange={(e) => handleChange('description', e.target.value)}
+            /> */}
+            <Typography variant="subtitle1" gutterBottom>
+              Description (optional)
+            </Typography>
+            <RichTextEditor value={description} setValue={setDescription} language="en" />
           </Grid>
         </Grid>
       )}

@@ -20,6 +20,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GET, PUT } from '@/utils/AxiosUtility';
+import { RichTextEditor } from '@/components/TextEditor';
 
 type Campaign = {
   id: number;
@@ -45,12 +46,14 @@ const EditCampaign = () => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
   const router = useRouter();
-
+  const [description, setDescription] = useState<string>('');
   const [campaignId, setCampaignId] = useState<number | null>(paramId ? +paramId : null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [rules, setRules] = useState<any[]>([]);
+  const [selectedRules, setSelectedRules] = useState<number[]>([]);
 
   const [formData, setFormData] = useState<Omit<Campaign, 'id'>>({
     name: '',
@@ -66,6 +69,12 @@ const EditCampaign = () => {
 
   const clientInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('client-info') || '{}') : {};
   const updated_by = clientInfo?.id;
+
+  // Fetch rules
+  const fetchRules = async () => {
+    const res = await GET('/rules');
+    if (res?.status === 200) setRules(res.data);
+  };
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -103,6 +112,10 @@ const EditCampaign = () => {
         is_active: data.is_active,
         business_unit_id: data.business_unit_id,
       });
+      setDescription(data.description || '');
+      // Set selected rule targets
+      const targetRules = data.rule_targets?.map((rt: any) => rt.rule_id) ?? [];
+      setSelectedRules(targetRules)
     }
   };
 
@@ -115,9 +128,13 @@ const EditCampaign = () => {
 
     const payload = {
       ...formData,
+      description: description || '',
       updated_by,
       start_date: dayjs(formData.start_date).toISOString(),
       end_date: dayjs(formData.end_date).toISOString(),
+      rule_targets: selectedRules.map((rule_id) => ({
+        rule_id,
+      })),
     };
 
     const res = await PUT(`/campaigns/${campaignId}`, payload);
@@ -135,6 +152,7 @@ const EditCampaign = () => {
   useEffect(() => {
     fetchBusinessUnits();
     fetchCampaigns();
+    fetchRules();
   }, []);
 
   useEffect(() => {
@@ -207,7 +225,30 @@ const EditCampaign = () => {
         </Select>
       </FormControl>
 
-      <TextField
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Attach Rules</InputLabel>
+        <Select
+          multiple
+          value={selectedRules}
+          onChange={(e) =>
+            setSelectedRules(
+              typeof e.target.value === 'string'
+                ? e.target.value.split(',').map(Number)
+                : e.target.value
+            )
+          }
+          label="Attach Rules"
+        >
+          {rules.map((rule) => (
+            <MenuItem key={rule.id} value={rule.id}>
+              {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} (${rule.value})`}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+
+      {/* <TextField
         fullWidth
         label="Description"
         multiline
@@ -215,7 +256,11 @@ const EditCampaign = () => {
         value={formData.description}
         onChange={(e) => handleChange('description', e.target.value)}
         margin="normal"
-      />
+      /> */}
+      <Typography variant="subtitle1" gutterBottom>
+        Description (optional)
+      </Typography>
+      <RichTextEditor value={description} setValue={setDescription} language="en" />
 
       <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
         <DatePicker

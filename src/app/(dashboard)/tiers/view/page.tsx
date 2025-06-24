@@ -128,8 +128,21 @@ const TierList = () => {
                       </TableCell>
                       <TableCell>{tier.min_points}</TableCell>
                       <TableCell>{tier.max_points}</TableCell>
-                      <TableCell>{tier.business_unit?.name || '-'}</TableCell>
-                      <TableCell>{tier.benefits || '-'}</TableCell>
+                      <TableCell sx={{
+                          maxWidth: 200,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}>
+                          <Tooltip title={tier.business_unit?.name || '-'}>
+                          <span>{tier.business_unit?.name || '-'}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Tooltip placement="top-start" title={tier.benefits || ''}>
+                          <span>{tier.benefits || '-'}</span>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell align="right" sx={{ display: 'flex' }}>
                         <Tooltip title="Edit">
                           <IconButton onClick={() => router.push(`/tiers/edit?id=${tier.id}`)}>

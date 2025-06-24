@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { GET, PUT } from '@/utils/AxiosUtility';
+import { RichTextEditor } from '@/components/TextEditor';
 
 type Tier = {
   id: number;
@@ -33,12 +34,22 @@ const EditTierForm = () => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
 
+  const [rules, setRules] = useState<{ id: number; type: string; condition_type: string; operator: string; value: number }[]>([]);
+  const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [selectedId, setSelectedId] = useState<string>(paramId || '');
   const [tierData, setTierData] = useState<any>(null);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [benefits, setBenefits] = useState<string>('');
+
+  const fetchRules = async () => {
+    const res = await GET('/rules');
+    if (res?.data) {
+      setRules(res.data);
+    }
+  };
 
   const userId =
     typeof window !== 'undefined'
@@ -46,22 +57,26 @@ const EditTierForm = () => {
       : 0;
 
   useEffect(() => {
-    const fetchTiersAndBUs = async () => {
-      const [tierListRes, buRes] = await Promise.all([
-        GET('/tiers'),
-        GET('/business-units'),
-      ]);
-      setTiers(tierListRes?.data || []);
-      setBusinessUnits(buRes?.data || []);
+    const resolveAllPromises = async () => {
+      const fetchTiersAndBUs = async () => {
+        const [tierListRes, buRes] = await Promise.all([
+          GET('/tiers'),
+          GET('/business-units'),
+        ]);
+        setTiers(tierListRes?.data.tiers || []);
+        setBusinessUnits(buRes?.data || []);
 
-      if (paramId) {
-        await fetchTierById(paramId);
-      }
+        if (paramId) {
+          await fetchTierById(paramId);
+        }
 
-      setInitializing(false);
-    };
+        setInitializing(false);
+      };
 
-    fetchTiersAndBUs();
+      await Promise.all([fetchRules(), fetchTiersAndBUs()]);
+    }
+
+    resolveAllPromises();
   }, [paramId]);
 
   const fetchTierById = async (id: string) => {
@@ -80,6 +95,8 @@ const EditTierForm = () => {
       benefits: res.data.benefits || '',
       business_unit_id: res.data.business_unit_id.toString(),
     });
+    setBenefits(res.data.benefits || '');
+    setSelectedRules((res.data.rule_targets || []).map((t: any) => t.rule_id));
     setLoading(false);
   };
 
@@ -94,9 +111,11 @@ const EditTierForm = () => {
     setLoading(true);
     const payload = {
       ...values,
+      benefits: benefits || '',
       min_points: +values.min_points,
       max_points: +values.max_points,
       updated_by: userId,
+      rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
 
     const res = await PUT(`/tiers/${selectedId}`, payload);
@@ -214,6 +233,26 @@ const EditTierForm = () => {
 
                   <Grid item xs={12}>
                     <TextField
+                      select
+                      fullWidth
+                      label="Attach Rules"
+                      SelectProps={{ multiple: true }}
+                      value={selectedRules}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedRules(Array.isArray(value) ? value : []);
+                      }}
+                    >
+                      {rules.map((rule) => (
+                        <MenuItem key={rule.id} value={rule.id}>
+                          {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} (${rule.value})`}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    {/* <TextField
                       fullWidth
                       name="benefits"
                       label="Benefits"
@@ -221,7 +260,11 @@ const EditTierForm = () => {
                       minRows={3}
                       value={values.benefits}
                       onChange={handleChange}
-                    />
+                    /> */}
+                    <Typography variant="subtitle1" gutterBottom>
+                      Benefits (optional)
+                    </Typography>
+                    <RichTextEditor value={benefits} setValue={setBenefits} language="en" />
                   </Grid>
 
                   <Grid item xs={12}>

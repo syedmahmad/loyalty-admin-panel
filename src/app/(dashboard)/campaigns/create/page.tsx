@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { POST, GET } from '@/utils/AxiosUtility';
 import dayjs from 'dayjs';
+import { RichTextEditor } from '@/components/TextEditor';
 
 type BusinessUnit = {
   id: number;
@@ -31,7 +32,15 @@ const CreateCampaign = () => {
   const router = useRouter();
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [loading, setLoading] = useState(false);
+  const [description, setDescription] = useState<string>('');
+  const [rules, setRules] = useState<any[]>([]);
+  const [selectedRules, setSelectedRules] = useState<number[]>([]);
 
+  const fetchRules = async () => {
+    const res = await GET('/rules');
+    if (res?.status === 200) setRules(res.data);
+  };
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -71,6 +80,7 @@ const CreateCampaign = () => {
 
     const payload = {
       ...formData,
+      description: description,
       start_date: formData.start_date.toISOString(),
       end_date: formData.end_date.toISOString(),
       budget: +formData.budget || null,
@@ -78,6 +88,9 @@ const CreateCampaign = () => {
       tenant_id,
       created_by,
       updated_by: created_by,
+      rule_targets: selectedRules.map((rule_id) => ({
+        rule_id,
+      })),
     };
 
     const res = await POST('/campaigns', payload);
@@ -93,6 +106,7 @@ const CreateCampaign = () => {
 
   useEffect(() => {
     fetchBusinessUnits();
+    fetchRules();
   }, []);
 
   return (
@@ -125,7 +139,34 @@ const CreateCampaign = () => {
         </Select>
       </FormControl>
 
-      <TextField
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Select Rules</InputLabel>
+        <Select
+          multiple
+          value={selectedRules}
+          onChange={(e) =>
+            setSelectedRules(
+              typeof e.target.value === 'string'
+                ? e.target.value.split(',').map(Number)
+                : e.target.value
+            )
+          }
+          renderValue={(selected) =>
+            rules
+              .filter((rule) => selected.includes(rule.id))
+              .map((r) => `${r.type}-${r.condition_type} ${r.operator} ${r.value}`)
+              .join(', ')
+          }
+        >
+          {rules.map((rule) => (
+            <MenuItem key={rule.id} value={rule.id}>
+              {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} ${rule.value}`}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {/* <TextField
         fullWidth
         label="Description"
         multiline
@@ -133,7 +174,12 @@ const CreateCampaign = () => {
         value={formData.description}
         onChange={(e) => handleChange('description', e.target.value)}
         margin="normal"
-      />
+      /> */}
+
+      <Typography variant="subtitle1" gutterBottom>
+        Description (optional)
+      </Typography>
+      <RichTextEditor value={description} setValue={setDescription} language="en" />
 
       <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
         <DatePicker

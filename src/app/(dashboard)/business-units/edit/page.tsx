@@ -13,7 +13,7 @@ import {
   InputAdornment,
   MenuItem,
 } from '@mui/material';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -49,7 +49,7 @@ const updateBusinessUnit = async (id: string, payload: any) => {
 const BusinessUnitEditForm = () => {
   const params = useSearchParams();
   const paramId =  params.get('id') || null;
-  
+  const router = useRouter();
   const [businessUnits, setBusinessUnits] = useState<{ id: number; name: string }[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(paramId ?? null);
   const [initialValues, setInitialValues] = useState({
@@ -110,6 +110,7 @@ const BusinessUnitEditForm = () => {
           .finally(() => setLoading(false));
       }
       toast.success('Business Unit updated!');
+      router.push('/business-units/view');
     } catch (e) {
       console.log('Something went wrong', e);
     } finally {

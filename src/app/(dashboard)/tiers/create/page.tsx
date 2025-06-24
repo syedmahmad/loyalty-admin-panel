@@ -15,6 +15,8 @@ import * as Yup from 'yup';
 import { useEffect, useState } from 'react';
 import { GET, POST } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import { RichTextEditor } from '@/components/TextEditor';
+import { useRouter } from 'next/navigation';
 
 type BusinessUnit = {
   id: number;
@@ -29,9 +31,22 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
   return response.data;
 };
 
+const fetchRules = async (): Promise<any[]> => {
+  const response = await GET('/rules');
+  if (response?.status !== 200) {
+    throw new Error('Failed to fetch rules');
+  }
+  return response.data;
+};
+
 const CreateTierForm = () => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [benefits, setBenefits] = useState<string>('');
+  const [rules, setRules] = useState<any[]>([]);
+  const [selectedRules, setSelectedRules] = useState<number[]>([]);
+
+  const router = useRouter();
 
   const created_by = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('client-info') || '{}')?.id ?? 0
@@ -40,8 +55,12 @@ const CreateTierForm = () => {
   const loadData = async () => {
       setLoading(true);
       try {
-        const data = await fetchBusinessUnits();
-        setBusinessUnits(data);
+        const [buData, ruleData] = await Promise.all([
+          fetchBusinessUnits(),
+          fetchRules(),
+        ]);
+        setBusinessUnits(buData);
+        setRules(ruleData);
       } finally {
         setLoading(false);
       }
@@ -70,11 +89,13 @@ const CreateTierForm = () => {
     setLoading(true);
     const payload = {
       ...values,
+      benefits: benefits || '',
       min_points: +values.min_points,
       max_points: +values.max_points,
       tenant_id: created_by,
       created_by,
       updated_by: created_by,
+      rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
 
     const response = await POST('/tiers', payload);
@@ -84,8 +105,10 @@ const CreateTierForm = () => {
       return toast.error('Failed to create tier');
     }
     toast.success('Tier created!');
+    setBenefits('');
     resetForm();
     setLoading(false);
+    router.push('/tiers/view');
   };
 
   return (
@@ -162,6 +185,30 @@ const CreateTierForm = () => {
 
                 <Grid item xs={12}>
                   <TextField
+                    select
+                    fullWidth
+                    name="rule_targets"
+                    label="Attach Rules"
+                    SelectProps={{ multiple: true }}
+                    value={selectedRules}
+                    onChange={(e) => {
+                      setSelectedRules(
+                        typeof e.target.value === 'string'
+                          ? e.target.value.split(',').map(Number)
+                          : e.target.value
+                      )
+                    }}
+                  >
+                    {rules.map((rule) => (
+                      <MenuItem key={rule.id} value={rule.id}>
+                        {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} (${rule.value})`}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12}>
+                  {/* <TextField
                     fullWidth
                     name="benefits"
                     label="Benefits (optional)"
@@ -169,7 +216,11 @@ const CreateTierForm = () => {
                     minRows={3}
                     value={values.benefits}
                     onChange={handleChange}
-                  />
+                  /> */}
+                  <Typography variant="subtitle1" gutterBottom>
+                    Benefits (optional)
+                  </Typography>
+                  <RichTextEditor value={benefits} setValue={setBenefits} language="en" />
                 </Grid>
 
                 <Grid item xs={12}>

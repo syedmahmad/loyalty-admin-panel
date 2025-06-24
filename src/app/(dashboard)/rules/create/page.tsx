@@ -14,13 +14,14 @@ import { useEffect, useState } from 'react';
 import { POST, GET } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import { RichTextEditor } from '@/components/TextEditor';
 
 const RuleCreateForm = () => {
   const router = useRouter();
   const userInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
   const created_by = userInfo?.id;
 
-  const [form, setForm] = useState({
+  const initialForm = {
     type: 'earn',
     condition_type: 'total_spending',
     operator: '=',
@@ -28,28 +29,12 @@ const RuleCreateForm = () => {
     reward_value: '',
     unit_type: '',
     description: '',
-    target_type: '',
-    target_id: '',
-  });
+  }
 
-  const [targets, setTargets] = useState<any[]>([]);
+  const [form, setForm] = useState(initialForm);
+
+  const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState(false);
-
-  const fetchTargets = async () => {
-    if (form.target_type === 'tier') {
-      const res = await GET('/tiers');
-      setTargets(res?.data || []);
-    } else if (form.target_type === 'campaign') {
-      const res = await GET('/campaigns');
-      setTargets(res?.data || []);
-    } else {
-      setTargets([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchTargets();
-  }, [form.target_type]);
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -59,9 +44,7 @@ const RuleCreateForm = () => {
     if (
       !form.condition_type ||
       !form.operator ||
-      !form.value ||
-      !form.target_type ||
-      !form.target_id
+      !form.value
     ) {
       toast.error('Please fill all required fields');
       return;
@@ -74,18 +57,12 @@ const RuleCreateForm = () => {
       condition_type: form.condition_type,
       operator: form.operator,
       value: parseFloat(form.value),
-      reward_value: form.reward_value ? parseFloat(form.reward_value) : null,
-      unit_type: form.unit_type || null,
-      description: form.description || null,
+      reward_value: form.reward_value ? parseFloat(form.reward_value) : '',
+      unit_type: form.unit_type || '',
+      description: description || '',
       created_by,
       updated_by: created_by, // handled in backend or frontend depending on design
       tenant_id: created_by, // if your logic expects this
-      targets: [
-        {
-          target_type: form.target_type,
-          target_id: parseInt(form.target_id),
-        },
-      ],
     };
     
   
@@ -93,7 +70,9 @@ const RuleCreateForm = () => {
   
     if (response?.status === 201) {
       toast.success('Rule created successfully!');
-      // router.push('/rules/view');
+      setForm(initialForm); // Reset form after successful creation
+      setDescription(''); // Reset description
+      router.push('/rules/view');
     } else {
       toast.error('Failed to create rule');
     }
@@ -176,44 +155,18 @@ const RuleCreateForm = () => {
         </Grid>
 
         <Grid item xs={12}>
-          <TextField
+          {/* <TextField
             label="Description"
             fullWidth
             multiline
             rows={2}
             value={form.description}
             onChange={(e) => handleChange('description', e.target.value)}
-          />
-        </Grid>
-
-        <Grid item xs={6}>
-          <TextField
-            select
-            label="Target Type"
-            fullWidth
-            value={form.target_type}
-            onChange={(e) => handleChange('target_type', e.target.value)}
-          >
-            <MenuItem value="tier">Tier</MenuItem>
-            <MenuItem value="campaign">Campaign</MenuItem>
-          </TextField>
-        </Grid>
-
-        <Grid item xs={6}>
-          <TextField
-            select
-            label={`Select ${form.target_type || 'Target'}`}
-            fullWidth
-            value={form.target_id}
-            onChange={(e) => handleChange('target_id', e.target.value)}
-            disabled={!form.target_type}
-          >
-            {targets.map((target: any) => (
-              <MenuItem key={target.id} value={target.id}>
-                {target.name}
-              </MenuItem>
-            ))}
-          </TextField>
+          /> */}
+          <Typography variant="subtitle1" gutterBottom>
+            Description (optional)
+          </Typography>
+          <RichTextEditor value={description} setValue={setDescription} language="en" />
         </Grid>
       </Grid>
 

@@ -18,6 +18,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DescriptionIcon from '@mui/icons-material/Description';
 import { POST } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
 
 const BusinessUnitSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
@@ -28,6 +29,7 @@ const BusinessUnitSchema = Yup.object().shape({
 const BusinessUnitCreateForm = () => {
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const clientInfo = localStorage.getItem('client-info');
@@ -60,6 +62,7 @@ const BusinessUnitCreateForm = () => {
       } else {
         resetForm();
         toast.success('Business Unit created successfully!');
+        router.push('/business-units/view');
       }
     } catch (err) {
       console.error(err);

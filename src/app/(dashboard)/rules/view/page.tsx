@@ -114,7 +114,6 @@ const RuleList = () => {
                   <TableCell>Operator</TableCell>
                   <TableCell>Value</TableCell>
                   <TableCell>Reward</TableCell>
-                  <TableCell>Target</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -133,11 +132,6 @@ const RuleList = () => {
                         <TableCell>
                           {rule.reward_value
                             ? `${rule.reward_value} ${rule.unit_type || ''}`
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {target
-                            ? `${target.target_type} #${target.target_id}`
                             : '-'}
                         </TableCell>
                         <TableCell sx={{ maxWidth: 200 }}>
