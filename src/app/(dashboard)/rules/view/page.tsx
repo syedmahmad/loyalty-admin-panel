@@ -32,7 +32,7 @@ type Rule = {
   rule_type: 'earn' | 'burn';
   min_transaction_amount?: number;
   max_points_limit: number;
-  conversion_factor?: number;
+  earn_conversion_factor?: number;
   burn_factor?: number;
   max_burn_percent?: number;
   min_points_to_burn?: number;
