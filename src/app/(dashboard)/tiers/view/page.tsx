@@ -31,6 +31,7 @@ type Tier = {
   name: string;
   min_points: number;
   max_points: number;
+  points_conversion_rate: number;
   benefits?: string;
   business_unit?: { name: string };
 };
@@ -85,7 +86,7 @@ const TierList = () => {
   }
 
   return (
-    <Card sx={{ width: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
+    <Card sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         🎯 Tier List
       </Typography>
@@ -104,6 +105,7 @@ const TierList = () => {
                   <TableCell>Min Points</TableCell>
                   <TableCell>Max Points</TableCell>
                   <TableCell>Business Unit</TableCell>
+                  <TableCell>Points Conversion Rate</TableCell>
                   <TableCell>Benefits</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -138,6 +140,7 @@ const TierList = () => {
                           <span>{tier.business_unit?.name || '-'}</span>
                         </Tooltip>
                       </TableCell>
+                      <TableCell>{tier.points_conversion_rate}</TableCell>
                       <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <Tooltip placement="top-start" title={tier.benefits || ''}>
                           <span>{tier.benefits || '-'}</span>

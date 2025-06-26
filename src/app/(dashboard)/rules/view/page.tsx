@@ -28,18 +28,15 @@ import { toast } from 'react-toastify';
 
 type Rule = {
   id: number;
-  type: string;
-  condition_type: string;
-  operator: string;
-  value: number;
-  reward_value?: number;
-  unit_type?: string;
+  name: string;
+  rule_type: 'earn' | 'burn';
+  min_transaction_amount?: number;
+  max_points_limit: number;
+  conversion_factor?: number;
+  burn_factor?: number;
+  max_burn_percent?: number;
+  min_points_to_burn?: number;
   description?: string;
-  targets: {
-    target_type: 'tier' | 'campaign';
-    target_id: number;
-    target_name?: string;
-  }[];
 };
 
 const RuleList = () => {
@@ -94,7 +91,7 @@ const RuleList = () => {
   }
 
   return (
-    <Card sx={{ p: 3, mt: 4, borderRadius: 3, Width: 700, mx: 'auto' }}>
+    <Card sx={{ p: 3, mt: 4, borderRadius: 3, width: '100%', maxWidth: 1100, mx: 'auto' }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         🧩 Rules List
       </Typography>
@@ -109,11 +106,14 @@ const RuleList = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell>Name</TableCell>
                   <TableCell>Type</TableCell>
-                  <TableCell>Condition</TableCell>
-                  <TableCell>Operator</TableCell>
-                  <TableCell>Value</TableCell>
-                  <TableCell>Reward</TableCell>
+                  <TableCell>Min Txn Amount</TableCell>
+                  <TableCell>Max Points</TableCell>
+                  <TableCell>Conversion Factor</TableCell>
+                  <TableCell>Burn Factor</TableCell>
+                  <TableCell>Max Burn %</TableCell>
+                  <TableCell>Min Points to Burn</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -121,48 +121,42 @@ const RuleList = () => {
               <TableBody>
                 {rules
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((rule) => {
-                    const target = rule.targets?.[0];
-                    return (
-                      <TableRow key={rule.id}>
-                        <TableCell sx={{textTransform: 'capitalize'}}>{rule.type}</TableCell>
-                        <TableCell>{rule.condition_type}</TableCell>
-                        <TableCell>{rule.operator}</TableCell>
-                        <TableCell>{rule.value}</TableCell>
-                        <TableCell>
-                          {rule.reward_value
-                            ? `${rule.reward_value} ${rule.unit_type || ''}`
-                            : '-'}
-                        </TableCell>
-                        <TableCell sx={{ maxWidth: 200 }}>
-                          <Tooltip title={rule.description || ''}>
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', width: '100%' }}>
-                              {rule.description || '-'}
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                          <Tooltip title="Edit">
-                            <IconButton
-                              onClick={() =>
-                                router.push(`/rules/edit?id=${rule.id}`)
-                              }
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton
-                              onClick={() => setDeleteId(rule.id)}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  .map((rule) => (
+                    <TableRow key={rule.id}>
+                      <TableCell>{rule.name}</TableCell>
+                      <TableCell sx={{ textTransform: 'capitalize' }}>{rule.rule_type}</TableCell>
+                      <TableCell>{rule.min_transaction_amount ?? '-'}</TableCell>
+                      <TableCell>{rule.max_points_limit}</TableCell>
+                      <TableCell>{rule.rule_type === 'earn' ? rule.earn_conversion_factor ?? '-' : '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'burn' ? rule.burn_factor ?? '-' : '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent ?? '-' : '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'burn' ? rule.min_points_to_burn ?? '-' : '-'}</TableCell>
+                      <TableCell sx={{ maxWidth: 200 }}>
+                        <Tooltip title={rule.description || ''}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', width: '100%' }}>
+                            {rule.description || '-'}
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                        <Tooltip title="Edit">
+                          <IconButton
+                            onClick={() => router.push(`/rules/edit?id=${rule.id}`)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            onClick={() => setDeleteId(rule.id)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -179,7 +173,6 @@ const RuleList = () => {
         </>
       )}
 
-      {/* Delete Dialog */}
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>Are you sure you want to delete this rule?</DialogTitle>
         <DialogActions>

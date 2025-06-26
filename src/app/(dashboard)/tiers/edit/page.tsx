@@ -92,6 +92,7 @@ const EditTierForm = () => {
       name: res.data.name,
       min_points: res.data.min_points,
       max_points: res.data.max_points,
+      points_conversion_rate: res.data.points_conversion_rate,
       benefits: res.data.benefits || '',
       business_unit_id: res.data.business_unit_id.toString(),
     });
@@ -104,6 +105,9 @@ const EditTierForm = () => {
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
     max_points: Yup.number().required('Maximum points required'),
+     conversion_rate: Yup.number()
+          .required('Conversion rate is required')
+          .min(0, 'Conversion rate must be a positive number'),
     business_unit_id: Yup.string().required('Business unit is required'),
   });
 
@@ -114,6 +118,7 @@ const EditTierForm = () => {
       benefits: benefits || '',
       min_points: +values.min_points,
       max_points: +values.max_points,
+      points_conversion_rate: +values.conversion_rate,
       updated_by: userId,
       rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
@@ -174,7 +179,7 @@ const EditTierForm = () => {
             {({ values, errors, touched, handleChange }) => (
               <Form noValidate>
                 <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Grid item xs={6}>
                     <TextField
                       fullWidth
                       name="name"
@@ -183,6 +188,18 @@ const EditTierForm = () => {
                       onChange={handleChange}
                       error={!!touched.name && !!errors.name}
                       helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
+                    />
+                  </Grid>
+
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      name="points_conversion_rate"
+                      label="Points Conversion Rate"
+                      value={values.points_conversion_rate}
+                      onChange={handleChange}
+                      error={!!touched.points_conversion_rate && !!errors.points_conversion_rate}
+                      helperText={touched.points_conversion_rate && typeof errors.points_conversion_rate === 'string' ? errors.points_conversion_rate : undefined}
                     />
                   </Grid>
 
