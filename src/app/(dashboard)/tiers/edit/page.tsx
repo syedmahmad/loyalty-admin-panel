@@ -34,7 +34,7 @@ const EditTierForm = () => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
 
-  const [rules, setRules] = useState<{ id: number; type: string; condition_type: string; operator: string; value: number }[]>([]);
+  const [rules, setRules] = useState<any[]>([]);
   const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [selectedId, setSelectedId] = useState<string>(paramId || '');
@@ -262,7 +262,7 @@ const EditTierForm = () => {
                     >
                       {rules.map((rule) => (
                         <MenuItem key={rule.id} value={rule.id}>
-                          {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} (${rule.value})`}
+                          {`${rule.name.toUpperCase()} — ${rule.rule_type} ${rule.max_points_limit}`}
                         </MenuItem>
                       ))}
                     </TextField>

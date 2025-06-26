@@ -160,7 +160,7 @@ const CreateCampaign = () => {
         >
           {rules.map((rule) => (
             <MenuItem key={rule.id} value={rule.id}>
-              {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} ${rule.value}`}
+              {`${rule.name.toUpperCase()} — ${rule.rule_type} ${rule.max_points_limit}`}
             </MenuItem>
           ))}
         </Select>
