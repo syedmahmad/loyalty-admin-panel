@@ -106,7 +106,7 @@ const RuleEdit = () => {
       rule_type: form.rule_type,
       min_transaction_amount: form.min_transaction_amount ? parseFloat(form.min_transaction_amount) : null,
       max_points_limit: parseInt(form.max_points_limit),
-      conversion_factor: form.conversion_factor ? parseFloat(form.conversion_factor) : null,
+      earn_conversion_factor: form.conversion_factor ? parseFloat(form.conversion_factor) : null,
       burn_factor: form.burn_factor ? parseFloat(form.burn_factor) : null,
       max_burn_percent: form.max_burn_percent ? parseFloat(form.max_burn_percent) : null,
       min_points_to_burn: form.min_points_to_burn ? parseInt(form.min_points_to_burn) : null,
