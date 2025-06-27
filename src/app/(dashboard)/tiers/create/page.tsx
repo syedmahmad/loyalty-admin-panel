@@ -31,20 +31,20 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
   return response.data;
 };
 
-const fetchRules = async (): Promise<any[]> => {
-  const response = await GET('/rules');
-  if (response?.status !== 200) {
-    throw new Error('Failed to fetch rules');
-  }
-  return response.data;
-};
+// const fetchRules = async (): Promise<any[]> => {
+//   const response = await GET('/rules');
+//   if (response?.status !== 200) {
+//     throw new Error('Failed to fetch rules');
+//   }
+//   return response.data;
+// };
 
 const CreateTierForm = () => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>('');
-  const [rules, setRules] = useState<any[]>([]);
-  const [selectedRules, setSelectedRules] = useState<number[]>([]);
+  // const [rules, setRules] = useState<any[]>([]);
+  // const [selectedRules, setSelectedRules] = useState<number[]>([]);
 
   const router = useRouter();
 
@@ -55,12 +55,12 @@ const CreateTierForm = () => {
   const loadData = async () => {
       setLoading(true);
       try {
-        const [buData, ruleData] = await Promise.all([
+        const [buData] = await Promise.all([
           fetchBusinessUnits(),
-          fetchRules(),
+          // fetchRules(),
         ]);
         setBusinessUnits(buData);
-        setRules(ruleData);
+        // setRules(ruleData);
       } finally {
         setLoading(false);
       }
@@ -76,16 +76,16 @@ const CreateTierForm = () => {
     max_points: '',
     benefits: '',
     business_unit_id: '',
-    conversion_rate: 0,
+    // conversion_rate: 0,
   };
 
   const validationSchema = Yup.object({
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
     max_points: Yup.number().required('Maximum points required'),
-    conversion_rate: Yup.number()
-      .required('Conversion rate is required')
-      .min(0, 'Conversion rate must be a positive number'),
+    // conversion_rate: Yup.number()
+    //   .required('Conversion rate is required')
+    //   .min(0, 'Conversion rate must be a positive number'),
     business_unit_id: Yup.string().required('Business unit is required'),
   });
 
@@ -97,10 +97,10 @@ const CreateTierForm = () => {
       min_points: +values.min_points,
       max_points: +values.max_points,
       tenant_id: created_by,
-      points_conversion_rate: +values.conversion_rate,
+      // points_conversion_rate: +values.conversion_rate,
       created_by,
       updated_by: created_by,
-      rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
+      // rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
 
     const response = await POST('/tiers', payload);
@@ -131,7 +131,7 @@ const CreateTierForm = () => {
           {({ values, errors, touched, handleChange }) => (
             <Form noValidate>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     name="name"
@@ -143,7 +143,7 @@ const CreateTierForm = () => {
                   />
                 </Grid>
 
-                <Grid item xs={6}>
+                {/* <Grid item xs={6}>
                   <TextField
                     fullWidth
                     name="conversion_rate"
@@ -154,7 +154,7 @@ const CreateTierForm = () => {
                     error={!!touched.conversion_rate && !!errors.conversion_rate}
                     helperText={touched.conversion_rate && errors.conversion_rate}
                   />
-                </Grid>
+                </Grid> */}
 
                 <Grid item xs={6}>
                   <TextField
@@ -201,7 +201,7 @@ const CreateTierForm = () => {
                   </TextField>
                 </Grid>
 
-                <Grid item xs={12}>
+                {/* <Grid item xs={12}>
                   <TextField
                     select
                     fullWidth
@@ -223,7 +223,7 @@ const CreateTierForm = () => {
                       </MenuItem>
                     ))}
                   </TextField>
-                </Grid>
+                </Grid> */}
 
                 <Grid item xs={12}>
                   {/* <TextField
@@ -250,6 +250,18 @@ const CreateTierForm = () => {
                     sx={{ textTransform: 'none', borderRadius: 2 }}
                   >
                     {loading ? <CircularProgress size={24} /> : 'Create Tier'}
+                  </Button>
+                  <br />
+                  <br />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    fullWidth
+                    size="large"
+                    onClick={() => router.push('view')}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                  >
+                    Go Back
                   </Button>
                 </Grid>
               </Grid>

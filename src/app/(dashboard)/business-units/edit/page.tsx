@@ -227,6 +227,18 @@ const BusinessUnitEditForm = () => {
                     >
                       {loading ? <CircularProgress size={24} /> : 'Update Business Unit'}
                     </Button>
+                    <br />
+                    <br />
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      fullWidth
+                      size="large"
+                      onClick={() => router.push('view')}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    >
+                      Go Back
+                    </Button>
                   </Grid>
                 </Grid>
               </Form>

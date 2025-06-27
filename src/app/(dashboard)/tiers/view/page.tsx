@@ -87,9 +87,14 @@ const TierList = () => {
 
   return (
     <Card sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
-      <Typography variant="h5" fontWeight={600} gutterBottom>
-        🎯 Tier List
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          🎯 Tier List
+        </Typography>
+        <Button sx={{ mb: 2 }} variant='contained' onClick={() => router.push('create')}>
+          Create Tier
+        </Button>
+      </Box>
 
       {tiers.length === 0 ? (
         <Typography mt={4} textAlign="center">
@@ -105,7 +110,7 @@ const TierList = () => {
                   <TableCell>Min Points</TableCell>
                   <TableCell>Max Points</TableCell>
                   <TableCell>Business Unit</TableCell>
-                  <TableCell>Points Conversion Rate</TableCell>
+                  {/* <TableCell>Points Conversion Rate</TableCell> */}
                   <TableCell>Benefits</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -140,7 +145,7 @@ const TierList = () => {
                           <span>{tier.business_unit?.name || '-'}</span>
                         </Tooltip>
                       </TableCell>
-                      <TableCell>{tier.points_conversion_rate}</TableCell>
+                      {/* <TableCell>{tier.points_conversion_rate}</TableCell> */}
                       <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <Tooltip placement="top-start" title={tier.benefits || ''}>
                           <span>{tier.benefits || '-'}</span>

@@ -269,9 +269,18 @@ const RuleEdit = () => {
         </Grid>
       )}
 
-      <Box mt={3} display="flex" justifyContent="flex-end">
+      <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
         <Button variant="contained" onClick={handleSubmit} disabled={loading}>
           {loading ? <CircularProgress size={24} /> : 'Update Rule'}
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={() => router.push('view')}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
+          Go Back
         </Button>
       </Box>
     </Card>

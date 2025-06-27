@@ -92,9 +92,14 @@ const BusinessUnitList = () => {
 
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        🏢 Business Units
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          🏢 Business Units
+        </Typography>
+        <Button sx={{ mb: 2 }} variant='contained' onClick={() => router.push('create')}>
+          Create Business Units
+        </Button>
+      </Box>
 
       {loading ? (
         <Box mt={4} textAlign="center">

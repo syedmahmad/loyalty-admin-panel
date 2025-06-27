@@ -92,9 +92,14 @@ const RuleList = () => {
 
   return (
     <Card sx={{ p: 3, mt: 4, borderRadius: 3, width: '100%', maxWidth: 1200, mx: 'auto' }}>
-      <Typography variant="h5" fontWeight={600} gutterBottom>
-        🧩 Rules List
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+        <Typography variant="h5" fontWeight={600} gutterBottom>
+          🧩 Rules List
+        </Typography>
+        <Button sx={{ mb: 2 }} variant='contained' onClick={() => router.push('create')}>
+          Create Rules
+        </Button>
+      </Box>
 
       {rules.length === 0 ? (
         <Typography mt={3} textAlign="center">

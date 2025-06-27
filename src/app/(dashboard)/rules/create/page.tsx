@@ -217,9 +217,18 @@ const RuleCreateForm = () => {
         </Grid>
       </Grid>
 
-      <Box mt={3} display="flex" justifyContent="flex-end">
+      <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
         <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
           {loading ? <CircularProgress size={24} /> : 'Create Rule'}
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={() => router.push('view')}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
+          Go Back
         </Button>
       </Box>
     </Card>
