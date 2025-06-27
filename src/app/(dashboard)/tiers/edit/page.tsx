@@ -116,6 +116,7 @@ const EditTierForm = () => {
     const payload = {
       ...values,
       benefits: benefits || '',
+      business_unit_id: values.business_unit_id,
       min_points: +values.min_points,
       max_points: +values.max_points,
       // points_conversion_rate: +values.conversion_rate,

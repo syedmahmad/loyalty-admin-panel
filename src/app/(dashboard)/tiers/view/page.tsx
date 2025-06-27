@@ -25,6 +25,8 @@ import { toast } from 'react-toastify';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { DELETE, GET } from '@/utils/AxiosUtility';
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
 
 type Tier = {
   id: number;
@@ -34,6 +36,13 @@ type Tier = {
   points_conversion_rate: number;
   benefits?: string;
   business_unit?: { name: string };
+};
+
+const htmlToPlainText = (htmlString: string): string => {
+  if (!htmlString) return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = htmlString;
+  return tempDiv.textContent || tempDiv.innerText || '';
 };
 
 const TierList = () => {
@@ -147,10 +156,19 @@ const TierList = () => {
                       </TableCell>
                       {/* <TableCell>{tier.points_conversion_rate}</TableCell> */}
                       <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <Tooltip placement="top-start" title={tier.benefits || ''}>
-                          <span>{tier.benefits || '-'}</span>
-                        </Tooltip>
-                      </TableCell>
+                      <Tooltip
+                        placement="top-start"
+                        title={
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: DOMPurify.sanitize(marked.parse(tier.benefits || '-') as string),
+                            }}
+                          />
+                        }
+                      >
+                         <span>{htmlToPlainText(tier.benefits || '-')}</span>
+                      </Tooltip>
+                    </TableCell>
                       <TableCell align="right" sx={{ display: 'flex' }}>
                         <Tooltip title="Edit">
                           <IconButton onClick={() => router.push(`/tiers/edit?id=${tier.id}`)}>
