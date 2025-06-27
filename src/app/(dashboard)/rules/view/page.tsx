@@ -29,13 +29,13 @@ import { toast } from 'react-toastify';
 type Rule = {
   id: number;
   name: string;
-  rule_type: 'earn' | 'burn';
-  min_transaction_amount?: number;
-  max_points_limit: number;
-  earn_conversion_factor?: number;
-  burn_factor?: number;
-  max_burn_percent?: number;
-  min_points_to_burn?: number;
+  rule_type: 'event based earn' | 'spend and earn' | 'burn';
+  min_amount_spent?: number;
+  reward_points?: number;
+  event_triggerer?: string;
+  max_redeemption_points_limit?: number;
+  points_conversion_factor?: number;
+  max_burn_percent_on_invoice?: number;
   description?: string;
 };
 
@@ -91,7 +91,7 @@ const RuleList = () => {
   }
 
   return (
-    <Card sx={{ p: 3, mt: 4, borderRadius: 3, width: '100%', maxWidth: 1100, mx: 'auto' }}>
+    <Card sx={{ p: 3, mt: 4, borderRadius: 3, width: '100%', maxWidth: 1200, mx: 'auto' }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         🧩 Rules List
       </Typography>
@@ -108,12 +108,12 @@ const RuleList = () => {
                 <TableRow>
                   <TableCell>Name</TableCell>
                   <TableCell>Type</TableCell>
-                  <TableCell>Min Txn Amount</TableCell>
-                  <TableCell>Max Points</TableCell>
+                  <TableCell>Min Spend</TableCell>
+                  <TableCell>Reward Points</TableCell>
+                  <TableCell>Event Trigger</TableCell>
+                  <TableCell>Max Redeem Points</TableCell>
                   <TableCell>Conversion Factor</TableCell>
-                  <TableCell>Burn Factor</TableCell>
                   <TableCell>Max Burn %</TableCell>
-                  <TableCell>Min Points to Burn</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -125,12 +125,12 @@ const RuleList = () => {
                     <TableRow key={rule.id}>
                       <TableCell>{rule.name}</TableCell>
                       <TableCell sx={{ textTransform: 'capitalize' }}>{rule.rule_type}</TableCell>
-                      <TableCell>{rule.min_transaction_amount ?? '-'}</TableCell>
-                      <TableCell>{rule.max_points_limit}</TableCell>
-                      <TableCell>{rule.rule_type === 'earn' ? rule.earn_conversion_factor ?? '-' : '-'}</TableCell>
-                      <TableCell>{rule.rule_type === 'burn' ? rule.burn_factor ?? '-' : '-'}</TableCell>
-                      <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent ?? '-' : '-'}</TableCell>
-                      <TableCell>{rule.rule_type === 'burn' ? rule.min_points_to_burn ?? '-' : '-'}</TableCell>
+                      <TableCell>{rule.min_amount_spent ?? '-'}</TableCell>
+                      <TableCell>{rule.reward_points ?? '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'event based earn' ? rule.event_triggerer || '-' : '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'burn' ? rule.max_redeemption_points_limit ?? '-' : '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'burn' ? rule.points_conversion_factor ?? '-' : '-'}</TableCell>
+                      <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent_on_invoice ?? '-' : '-'}</TableCell>
                       <TableCell sx={{ maxWidth: 200 }}>
                         <Tooltip title={rule.description || ''}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', width: '100%' }}>

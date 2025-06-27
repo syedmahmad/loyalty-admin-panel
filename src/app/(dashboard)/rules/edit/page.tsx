@@ -22,13 +22,13 @@ import { RichTextEditor } from '@/components/TextEditor';
 
 const initialForm = {
   name: '',
-  rule_type: 'earn',
-  min_transaction_amount: '',
-  max_points_limit: '',
-  conversion_factor: '',
-  burn_factor: '',
-  max_burn_percent: '',
-  min_points_to_burn: '',
+  rule_type: 'event based earn',
+  min_amount_spent: '',
+  reward_points: '',
+  event_triggerer: '',
+  max_redeemption_points_limit: '',
+  points_conversion_factor: '',
+  max_burn_percent_on_invoice: '',
 };
 
 const RuleEdit = () => {
@@ -57,12 +57,12 @@ const RuleEdit = () => {
       setForm({
         name: rule.name,
         rule_type: rule.rule_type,
-        min_transaction_amount: rule.min_transaction_amount?.toString() || '',
-        max_points_limit: rule.max_points_limit?.toString() || '',
-        conversion_factor: rule.earn_conversion_factor?.toString() || '',
-        burn_factor: rule.burn_factor?.toString() || '',
-        max_burn_percent: rule.max_burn_percent?.toString() || '',
-        min_points_to_burn: rule.min_points_to_burn?.toString() || '',
+        min_amount_spent: rule.min_amount_spent?.toString() || '',
+        reward_points: rule.reward_points?.toString() || '',
+        event_triggerer: rule.event_triggerer || '',
+        max_redeemption_points_limit: rule.max_redeemption_points_limit?.toString() || '',
+        points_conversion_factor: rule.points_conversion_factor?.toString() || '',
+        max_burn_percent_on_invoice: rule.max_burn_percent_on_invoice?.toString() || '',
       });
       setDescription(rule.description || '');
     }
@@ -84,18 +84,21 @@ const RuleEdit = () => {
   }, [paramId]);
 
   const handleSubmit = async () => {
-    if (!form.name || !form.rule_type || !form.max_points_limit) {
+    if (!form.name || !form.rule_type) {
       toast.error('Please fill all required fields');
       return;
     }
 
-    if (form.rule_type === 'earn' && !form.conversion_factor) {
-      toast.error('Conversion factor is required for earn rules');
-      return;
-    }
-
-    if (form.rule_type === 'burn' && (!form.burn_factor || !form.max_burn_percent)) {
-      toast.error('Burn factor and max burn percent are required for burn rules');
+    if (
+      (form.rule_type === 'event based earn' && (!form.event_triggerer || !form.reward_points)) ||
+      (form.rule_type === 'spend and earn' && (!form.min_amount_spent || !form.reward_points)) ||
+      (form.rule_type === 'burn' &&
+        (!form.min_amount_spent ||
+         !form.max_redeemption_points_limit ||
+         !form.points_conversion_factor ||
+         !form.max_burn_percent_on_invoice))
+    ) {
+      toast.error('Please fill all required fields for this rule type');
       return;
     }
 
@@ -104,12 +107,18 @@ const RuleEdit = () => {
     const payload = {
       name: form.name,
       rule_type: form.rule_type,
-      min_transaction_amount: form.min_transaction_amount ? parseFloat(form.min_transaction_amount) : null,
-      max_points_limit: parseInt(form.max_points_limit),
-      earn_conversion_factor: form.conversion_factor ? parseFloat(form.conversion_factor) : null,
-      burn_factor: form.burn_factor ? parseFloat(form.burn_factor) : null,
-      max_burn_percent: form.max_burn_percent ? parseFloat(form.max_burn_percent) : null,
-      min_points_to_burn: form.min_points_to_burn ? parseInt(form.min_points_to_burn) : null,
+      min_amount_spent: form.min_amount_spent ? parseFloat(form.min_amount_spent) : null,
+      reward_points: form.reward_points ? parseFloat(form.reward_points) : null,
+      event_triggerer: form.event_triggerer || null,
+      max_redeemption_points_limit: form.max_redeemption_points_limit
+        ? parseInt(form.max_redeemption_points_limit)
+        : null,
+      points_conversion_factor: form.points_conversion_factor
+        ? parseFloat(form.points_conversion_factor)
+        : null,
+      max_burn_percent_on_invoice: form.max_burn_percent_on_invoice
+        ? parseFloat(form.max_burn_percent_on_invoice)
+        : null,
       description,
       updated_by,
     };
@@ -160,10 +169,7 @@ const RuleEdit = () => {
       {selectedId && (
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <InfoLabel
-              label="Rule Name"
-              tooltip="Enter a descriptive name for this rule."
-            />
+            <InfoLabel label="Rule Name" tooltip="Enter a descriptive name for this rule." />
             <TextField
               fullWidth
               value={form.name}
@@ -172,58 +178,50 @@ const RuleEdit = () => {
           </Grid>
 
           <Grid item xs={12}>
-            <InfoLabel
-              label="Rule Type"
-              tooltip="Select whether this rule is for earning or burning points."
-            />
+            <InfoLabel label="Rule Type" tooltip="Select the type of rule logic to apply." />
             <TextField
               select
               fullWidth
               value={form.rule_type}
               onChange={(e) => handleChange('rule_type', e.target.value)}
             >
-              <MenuItem value="earn">Earn</MenuItem>
+              <MenuItem value="event based earn">Event-Based Earn</MenuItem>
+              <MenuItem value="spend and earn">Spend & Earn</MenuItem>
               <MenuItem value="burn">Burn</MenuItem>
             </TextField>
           </Grid>
 
-          <Grid item xs={12}>
-            <InfoLabel
-              label="Min Transaction Amount"
-              tooltip="The minimum amount required for the rule to apply."
-            />
-            <TextField
-              fullWidth
-              type="number"
-              value={form.min_transaction_amount}
-              onChange={(e) => handleChange('min_transaction_amount', e.target.value)}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <InfoLabel
-              label="Max Points Limit"
-              tooltip="The maximum number of points a user can earn from this rule."
-            />
-            <TextField
-              fullWidth
-              type="number"
-              value={form.max_points_limit}
-              onChange={(e) => handleChange('max_points_limit', e.target.value)}
-            />
-          </Grid>
-
-          {form.rule_type === 'earn' && (
+          {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn') && (
             <Grid item xs={12}>
-              <InfoLabel
-                label="Conversion Factor"
-                tooltip="Number of points awarded per currency unit spent."
-              />
+              <InfoLabel label="Reward Points" tooltip="Number of points awarded." />
               <TextField
                 fullWidth
                 type="number"
-                value={form.conversion_factor}
-                onChange={(e) => handleChange('conversion_factor', e.target.value)}
+                value={form.reward_points}
+                onChange={(e) => handleChange('reward_points', e.target.value)}
+              />
+            </Grid>
+          )}
+
+          {form.rule_type === 'event based earn' && (
+            <Grid item xs={12}>
+              <InfoLabel label="Event Triggerer" tooltip="Triggering event like signup or birthday." />
+              <TextField
+                fullWidth
+                value={form.event_triggerer}
+                onChange={(e) => handleChange('event_triggerer', e.target.value)}
+              />
+            </Grid>
+          )}
+
+          {(form.rule_type === 'spend and earn' || form.rule_type === 'burn') && (
+            <Grid item xs={12}>
+              <InfoLabel label="Minimum Amount Spent" tooltip="Minimum spend required to apply the rule." />
+              <TextField
+                fullWidth
+                type="number"
+                value={form.min_amount_spent}
+                onChange={(e) => handleChange('min_amount_spent', e.target.value)}
               />
             </Grid>
           )}
@@ -231,41 +229,32 @@ const RuleEdit = () => {
           {form.rule_type === 'burn' && (
             <>
               <Grid item xs={12}>
-                <InfoLabel
-                  label="Burn Factor"
-                  tooltip="Value per point burned (e.g., $0.01 per point)."
-                />
+                <InfoLabel label="Max Redeemable Points" tooltip="Max points a user can burn per transaction." />
                 <TextField
                   fullWidth
                   type="number"
-                  value={form.burn_factor}
-                  onChange={(e) => handleChange('burn_factor', e.target.value)}
+                  value={form.max_redeemption_points_limit}
+                  onChange={(e) => handleChange('max_redeemption_points_limit', e.target.value)}
                 />
               </Grid>
 
               <Grid item xs={12}>
-                <InfoLabel
-                  label="Max Burn Percent"
-                  tooltip="Maximum % of transaction value that can be paid using points."
-                />
+                <InfoLabel label="Points Conversion Factor" tooltip="Conversion rate from points to currency." />
                 <TextField
                   fullWidth
                   type="number"
-                  value={form.max_burn_percent}
-                  onChange={(e) => handleChange('max_burn_percent', e.target.value)}
+                  value={form.points_conversion_factor}
+                  onChange={(e) => handleChange('points_conversion_factor', e.target.value)}
                 />
               </Grid>
 
               <Grid item xs={12}>
-                <InfoLabel
-                  label="Min Points to Burn"
-                  tooltip="Minimum number of points required to burn in one transaction."
-                />
+                <InfoLabel label="Max Burn % on Invoice" tooltip="Max percent of invoice payable using points." />
                 <TextField
                   fullWidth
                   type="number"
-                  value={form.min_points_to_burn}
-                  onChange={(e) => handleChange('min_points_to_burn', e.target.value)}
+                  value={form.max_burn_percent_on_invoice}
+                  onChange={(e) => handleChange('max_burn_percent_on_invoice', e.target.value)}
                 />
               </Grid>
             </>
