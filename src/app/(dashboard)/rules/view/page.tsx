@@ -119,7 +119,7 @@ const RuleList = () => {
                   <TableCell>Max Redeem Points</TableCell>
                   <TableCell>Conversion Factor</TableCell>
                   <TableCell>Max Burn %</TableCell>
-                  <TableCell>Description</TableCell>
+                  {/* <TableCell>Description</TableCell> */}
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -136,13 +136,13 @@ const RuleList = () => {
                       <TableCell>{rule.rule_type === 'burn' ? rule.max_redeemption_points_limit ?? '-' : '-'}</TableCell>
                       <TableCell>{rule.rule_type === 'burn' ? rule.points_conversion_factor ?? '-' : '-'}</TableCell>
                       <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent_on_invoice ?? '-' : '-'}</TableCell>
-                      <TableCell sx={{ maxWidth: 200 }}>
+                      {/* <TableCell sx={{ maxWidth: 200 }}>
                         <Tooltip title={rule.description || ''}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', width: '100%' }}>
                             {rule.description || '-'}
                           </span>
                         </Tooltip>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                         <Tooltip title="Edit">
                           <IconButton

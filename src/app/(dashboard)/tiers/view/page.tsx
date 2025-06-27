@@ -86,7 +86,7 @@ const TierList = () => {
   }
 
   return (
-    <Card sx={{ maxWidth: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
+    <Card sx={{ width: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           🎯 Tier List
