@@ -34,8 +34,8 @@ const EditTierForm = () => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
 
-  const [rules, setRules] = useState<{ id: number; type: string; condition_type: string; operator: string; value: number }[]>([]);
-  const [selectedRules, setSelectedRules] = useState<number[]>([]);
+  // const [rules, setRules] = useState<any[]>([]);
+  // const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [selectedId, setSelectedId] = useState<string>(paramId || '');
   const [tierData, setTierData] = useState<any>(null);
@@ -44,12 +44,12 @@ const EditTierForm = () => {
   const [initializing, setInitializing] = useState(true);
   const [benefits, setBenefits] = useState<string>('');
 
-  const fetchRules = async () => {
-    const res = await GET('/rules');
-    if (res?.data) {
-      setRules(res.data);
-    }
-  };
+  // const fetchRules = async () => {
+  //   const res = await GET('/rules');
+  //   if (res?.data) {
+  //     setRules(res.data);
+  //   }
+  // };
 
   const userId =
     typeof window !== 'undefined'
@@ -73,7 +73,7 @@ const EditTierForm = () => {
         setInitializing(false);
       };
 
-      await Promise.all([fetchRules(), fetchTiersAndBUs()]);
+      await Promise.all([fetchTiersAndBUs()]);
     }
 
     resolveAllPromises();
@@ -91,19 +91,21 @@ const EditTierForm = () => {
     setTierData({
       name: res.data.name,
       min_points: res.data.min_points,
-      max_points: res.data.max_points,
+      // points_conversion_rate: res.data.points_conversion_rate,
       benefits: res.data.benefits || '',
       business_unit_id: res.data.business_unit_id.toString(),
     });
     setBenefits(res.data.benefits || '');
-    setSelectedRules((res.data.rule_targets || []).map((t: any) => t.rule_id));
+    // setSelectedRules((res.data.rule_targets || []).map((t: any) => t.rule_id));
     setLoading(false);
   };
 
   const validationSchema = Yup.object({
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
-    max_points: Yup.number().required('Maximum points required'),
+    //  conversion_rate: Yup.number()
+    //       .required('Conversion rate is required')
+    //       .min(0, 'Conversion rate must be a positive number'),
     business_unit_id: Yup.string().required('Business unit is required'),
   });
 
@@ -112,10 +114,11 @@ const EditTierForm = () => {
     const payload = {
       ...values,
       benefits: benefits || '',
+      business_unit_id: values.business_unit_id,
       min_points: +values.min_points,
-      max_points: +values.max_points,
+      // points_conversion_rate: +values.conversion_rate,
       updated_by: userId,
-      rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
+      // rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
 
     const res = await PUT(`/tiers/${selectedId}`, payload);
@@ -186,7 +189,19 @@ const EditTierForm = () => {
                     />
                   </Grid>
 
-                  <Grid item xs={6}>
+                  {/* <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      name="points_conversion_rate"
+                      label="Points Conversion Rate"
+                      value={values.points_conversion_rate}
+                      onChange={handleChange}
+                      error={!!touched.points_conversion_rate && !!errors.points_conversion_rate}
+                      helperText={touched.points_conversion_rate && typeof errors.points_conversion_rate === 'string' ? errors.points_conversion_rate : undefined}
+                    />
+                  </Grid> */}
+
+                  <Grid item xs={12}>
                     <TextField
                       fullWidth
                       name="min_points"
@@ -195,19 +210,6 @@ const EditTierForm = () => {
                       value={values.min_points}
                       onChange={handleChange}
                       error={!!touched.min_points && !!errors.min_points}
-                      helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
-                    />
-                  </Grid>
-
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      name="max_points"
-                      label="Max Points"
-                      type="number"
-                      value={values.max_points}
-                      onChange={handleChange}
-                      error={!!touched.max_points && !!errors.max_points}
                       helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
                     />
                   </Grid>
@@ -231,7 +233,7 @@ const EditTierForm = () => {
                     </TextField>
                   </Grid>
 
-                  <Grid item xs={12}>
+                  {/* <Grid item xs={12}>
                     <TextField
                       select
                       fullWidth
@@ -245,11 +247,11 @@ const EditTierForm = () => {
                     >
                       {rules.map((rule) => (
                         <MenuItem key={rule.id} value={rule.id}>
-                          {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} (${rule.value})`}
+                          {`${rule.name.toUpperCase()} — ${rule.rule_type} ${rule.max_points_limit}`}
                         </MenuItem>
                       ))}
                     </TextField>
-                  </Grid>
+                  </Grid> */}
 
                   <Grid item xs={12}>
                     {/* <TextField
@@ -276,6 +278,18 @@ const EditTierForm = () => {
                       sx={{ textTransform: 'none', borderRadius: 2 }}
                     >
                       {loading ? <CircularProgress size={24} /> : 'Update Tier'}
+                    </Button>
+                    <br />
+                    <br />
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      fullWidth
+                      size="large"
+                      onClick={() => router.push('view')}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    >
+                      Go Back
                     </Button>
                   </Grid>
                 </Grid>

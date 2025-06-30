@@ -168,6 +168,18 @@ const BusinessUnitCreateForm = () => {
                   >
                     {loading ? <CircularProgress size={24} /> : 'Create Business Unit'}
                   </Button>
+                  <br />
+                  <br />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    fullWidth
+                    size="large"
+                    onClick={() => router.push('view')}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                  >
+                    Go Back
+                  </Button>
                 </Grid>
               </Grid>
             </Form>

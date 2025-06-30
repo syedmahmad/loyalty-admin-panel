@@ -31,20 +31,20 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
   return response.data;
 };
 
-const fetchRules = async (): Promise<any[]> => {
-  const response = await GET('/rules');
-  if (response?.status !== 200) {
-    throw new Error('Failed to fetch rules');
-  }
-  return response.data;
-};
+// const fetchRules = async (): Promise<any[]> => {
+//   const response = await GET('/rules');
+//   if (response?.status !== 200) {
+//     throw new Error('Failed to fetch rules');
+//   }
+//   return response.data;
+// };
 
 const CreateTierForm = () => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>('');
-  const [rules, setRules] = useState<any[]>([]);
-  const [selectedRules, setSelectedRules] = useState<number[]>([]);
+  // const [rules, setRules] = useState<any[]>([]);
+  // const [selectedRules, setSelectedRules] = useState<number[]>([]);
 
   const router = useRouter();
 
@@ -55,12 +55,12 @@ const CreateTierForm = () => {
   const loadData = async () => {
       setLoading(true);
       try {
-        const [buData, ruleData] = await Promise.all([
+        const [buData] = await Promise.all([
           fetchBusinessUnits(),
-          fetchRules(),
+          // fetchRules(),
         ]);
         setBusinessUnits(buData);
-        setRules(ruleData);
+        // setRules(ruleData);
       } finally {
         setLoading(false);
       }
@@ -73,42 +73,50 @@ const CreateTierForm = () => {
   const initialValues = {
     name: '',
     min_points: '',
-    max_points: '',
     benefits: '',
-    business_unit_id: '',
+    business_unit_ids: [] as number[],
+    // conversion_rate: 0,
   };
 
   const validationSchema = Yup.object({
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
-    max_points: Yup.number().required('Maximum points required'),
-    business_unit_id: Yup.string().required('Business unit is required'),
+    // conversion_rate: Yup.number()
+    //   .required('Conversion rate is required')
+    //   .min(0, 'Conversion rate must be a positive number'),
+    business_unit_ids: Yup.array()
+      .min(1, 'At least one business unit is required')
+      .of(Yup.number().required()),
   });
 
   const handleSubmit = async (values: typeof initialValues, resetForm: () => void) => {
     setLoading(true);
-    const payload = {
-      ...values,
-      benefits: benefits || '',
+    const payloads = values.business_unit_ids.map((buId) => ({
+      name: values.name,
       min_points: +values.min_points,
-      max_points: +values.max_points,
+      benefits: benefits || '',
+      business_unit_id: buId,
       tenant_id: created_by,
       created_by,
       updated_by: created_by,
-      rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
-    };
+    }));
 
-    const response = await POST('/tiers', payload);
+    const responses = await Promise.all(
+      payloads.map((payload) => POST('/tiers', payload))
+    );
 
-    if (response?.status !== 201) {
+    const anyFailed = responses.some((res) => res?.status !== 201);
+
+    if (anyFailed) {
       setLoading(false);
-      return toast.error('Failed to create tier');
+      toast.error('Some tiers failed to create');
+    } else {
+      toast.success('All tiers created successfully!');
+      resetForm();
+      setBenefits('');
+      setLoading(false);
+      router.push('/tiers/view');
     }
-    toast.success('Tier created!');
-    setBenefits('');
-    resetForm();
-    setLoading(false);
-    router.push('/tiers/view');
   };
 
   return (
@@ -138,7 +146,20 @@ const CreateTierForm = () => {
                   />
                 </Grid>
 
-                <Grid item xs={6}>
+                {/* <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    name="conversion_rate"
+                    label="Points Conversion Rate"
+                    type="number"
+                    value={values.conversion_rate || ''}
+                    onChange={handleChange}
+                    error={!!touched.conversion_rate && !!errors.conversion_rate}
+                    helperText={touched.conversion_rate && errors.conversion_rate}
+                  />
+                </Grid> */}
+
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     name="min_points"
@@ -151,29 +172,17 @@ const CreateTierForm = () => {
                   />
                 </Grid>
 
-                <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    name="max_points"
-                    label="Max Points"
-                    type="number"
-                    value={values.max_points}
-                    onChange={handleChange}
-                    error={!!touched.max_points && !!errors.max_points}
-                    helperText={touched.max_points && errors.max_points}
-                  />
-                </Grid>
-
                 <Grid item xs={12}>
                   <TextField
                     select
                     fullWidth
-                    name="business_unit_id"
-                    label="Business Unit"
-                    value={values.business_unit_id}
+                    name="business_unit_ids"
+                    label="Business Units"
+                    SelectProps={{ multiple: true }}
+                    value={values.business_unit_ids}
                     onChange={handleChange}
-                    error={!!touched.business_unit_id && !!errors.business_unit_id}
-                    helperText={touched.business_unit_id && errors.business_unit_id}
+                    error={!!touched.business_unit_ids && !!errors.business_unit_ids}
+                    helperText={touched.business_unit_ids && errors.business_unit_ids}
                   >
                     {businessUnits.map((bu) => (
                       <MenuItem key={bu.id} value={bu.id}>
@@ -183,7 +192,8 @@ const CreateTierForm = () => {
                   </TextField>
                 </Grid>
 
-                <Grid item xs={12}>
+
+                {/* <Grid item xs={12}>
                   <TextField
                     select
                     fullWidth
@@ -201,11 +211,11 @@ const CreateTierForm = () => {
                   >
                     {rules.map((rule) => (
                       <MenuItem key={rule.id} value={rule.id}>
-                        {`${rule.type.toUpperCase()} — ${rule.condition_type} ${rule.operator} (${rule.value})`}
+                        {`${rule.name.toUpperCase()} — ${rule.rule_type} ${rule.max_points_limit}`}
                       </MenuItem>
                     ))}
                   </TextField>
-                </Grid>
+                </Grid> */}
 
                 <Grid item xs={12}>
                   {/* <TextField
@@ -232,6 +242,18 @@ const CreateTierForm = () => {
                     sx={{ textTransform: 'none', borderRadius: 2 }}
                   >
                     {loading ? <CircularProgress size={24} /> : 'Create Tier'}
+                  </Button>
+                  <br />
+                  <br />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    fullWidth
+                    size="large"
+                    onClick={() => router.push('view')}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                  >
+                    Go Back
                   </Button>
                 </Grid>
               </Grid>

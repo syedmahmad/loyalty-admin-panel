@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from "react";
 import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
-import { Button, Typography, useTheme } from "@mui/material";
+import {
+  Button,
+  Typography,
+  useTheme,
+  TextField,
+  MenuItem,
+} from "@mui/material";
 import { CustomTextfield } from "@/components/CustomTextField";
 import * as yup from "yup";
 import { toast } from "react-toastify";
 import { PATCH } from "@/utils/AxiosUtility";
 
+// Currency options
+const currencyOptions = [
+  { code: "SAR", label: "Saudi Riyal" },
+  { code: "PKR", label: "Pakistani Rupee" },
+  { code: "INR", label: "Indian Rupee" },
+];
+
 const validationSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
   domain: yup.string().required("Domain is required"),
+  currency: yup.string().required("Currency is required"),
 });
 
 const EditClient = ({
@@ -21,12 +35,15 @@ const EditClient = ({
   const [clientInfo, setClientInfo] = useState({
     name: "",
     domain: "",
+    currency: "",
   });
+
   useEffect(() => {
     if (itemToBeEdited) {
       setClientInfo({
         name: itemToBeEdited.name || "",
         domain: itemToBeEdited.domain || "",
+        currency: itemToBeEdited.currency || "",
       });
     }
   }, [itemToBeEdited]);
@@ -40,18 +57,19 @@ const EditClient = ({
     try {
       await validationSchema.validate(clientInfo, { abortEarly: false });
       setErrors({});
-    
+
       const payload = {
         name: clientInfo.name,
         domain: clientInfo.domain,
+        currency: clientInfo.currency,
         updated_by: itemToBeEdited.updated_by || 1,
       };
 
       await PATCH(`/tenants/${itemToBeEdited.id}`, payload, {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
       });
 
       toast.success("Updated Successfully!");
@@ -59,12 +77,15 @@ const EditClient = ({
       setOpenEditClientInfoModal(false);
     } catch (err: any) {
       const fieldErrors: any = {};
-      err.inner.forEach((error: any) => {
-        fieldErrors[error.path] = error.message;
-      });
+      if (err?.inner) {
+        err.inner.forEach((error: any) => {
+          fieldErrors[error.path] = error.message;
+        });
+      }
       setErrors(fieldErrors);
     }
   };
+
   return (
     <Grid2 container spacing={3}>
       <Grid2 xs={12}>
@@ -74,29 +95,55 @@ const EditClient = ({
           textTransform="capitalize"
           align="center"
         >
-          {"Update Tenants Info"}
+          Update Tenants Info
         </Typography>
       </Grid2>
 
-      {Object.entries(itemToBeEdited).map(([key, label]) => {
-        if (key === "id" || key === "created_at" || key === "updated_at" || key === "created_by" || key === "updated_by") {
-          return null; // Skip these fields
-        }
-          return (
-            <Grid2 xs={12} md={6} key={key}>
-              <CustomTextfield
-                required
-                fullWidth
-                name={key}
-                label={label}
-                value={(clientInfo as any)[key] || ""}
-                onChange={handleChange}
-                error={Boolean(errors[key])}
-                helpertext={errors[key]}
-              />
-            </Grid2>
-          );
-      })}
+      <Grid2 xs={12} md={6}>
+        <CustomTextfield
+          required
+          fullWidth
+          name="name"
+          label="Name"
+          value={clientInfo.name}
+          onChange={handleChange}
+          error={!!errors.name}
+          helpertext={errors.name}
+        />
+      </Grid2>
+
+      <Grid2 xs={12} md={6}>
+        <CustomTextfield
+          required
+          fullWidth
+          name="domain"
+          label="Domain"
+          value={clientInfo.domain}
+          onChange={handleChange}
+          error={!!errors.domain}
+          helpertext={errors.domain}
+        />
+      </Grid2>
+
+      <Grid2 xs={12} md={6}>
+        <TextField
+          select
+          fullWidth
+          required
+          name="currency"
+          label="Currency"
+          value={clientInfo.currency}
+          onChange={handleChange}
+          error={!!errors.currency}
+          helperText={errors.currency}
+        >
+          {currencyOptions.map((currency) => (
+            <MenuItem key={currency.code} value={currency.code}>
+              {currency.label} ({currency.code})
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid2>
 
       <Grid2 xs={12} display="flex" justifyContent="center">
         <Button
@@ -104,7 +151,7 @@ const EditClient = ({
           color="primary"
           onClick={() => handleSubmit(itemToBeEdited)}
         >
-          {"Update Data"}
+          Update Data
         </Button>
       </Grid2>
     </Grid2>

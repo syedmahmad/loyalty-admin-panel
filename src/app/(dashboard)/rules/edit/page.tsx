@@ -9,39 +9,46 @@ import {
   MenuItem,
   TextField,
   Typography,
+  Tooltip,
+  IconButton,
+  InputLabel,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { RichTextEditor } from '@/components/TextEditor';
 
-const initialState = {
-  type: '',
+const initialForm = {
+  name: '',
+  rule_type: 'event based earn',
+  min_amount_spent: '',
+  reward_points: '',
+  event_triggerer: '',
+  max_redeemption_points_limit: '',
+  points_conversion_factor: '',
+  max_burn_percent_on_invoice: '',
   condition_type: '',
-  operator: '',
-  value: '',
-  reward_value: '',
-  unit_type: '',
-  description: '',
+  condition_operator: '',
+  condition_value: '',
 };
 
 const RuleEdit = () => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
-  const [form, setForm] = useState<any>(initialState);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const clientInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
+  const updated_by = clientInfo?.id;
+
+  const [form, setForm] = useState(initialForm);
   const [rules, setRules] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState(paramId || '');
   const [description, setDescription] = useState<string>('');
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const clientInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
-  const created_by = clientInfo.id;
-
-  const fetchAllRules = async () => {
-    const res = await GET('/rules');
-    setRules(res?.data || []);
+  const handleChange = (field: string, value: any) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const loadRuleDetails = async (ruleId: string) => {
@@ -51,13 +58,26 @@ const RuleEdit = () => {
 
     if (rule) {
       setForm({
-        ...rule,
-        value: rule.value.toString(),
-        reward_value: rule.reward_value?.toString() || '',
+        name: rule.name,
+        rule_type: rule.rule_type,
+        min_amount_spent: rule.min_amount_spent?.toString() || '',
+        reward_points: rule.reward_points?.toString() || '',
+        event_triggerer: rule.event_triggerer || '',
+        max_redeemption_points_limit: rule.max_redeemption_points_limit?.toString() || '',
+        points_conversion_factor: rule.points_conversion_factor?.toString() || '',
+        max_burn_percent_on_invoice: rule.max_burn_percent_on_invoice?.toString() || '',
+        condition_type: rule.condition_type || '',
+        condition_operator: rule.condition_operator || '',
+        condition_value: rule.condition_value || '',
       });
       setDescription(rule.description || '');
     }
     setLoading(false);
+  };
+
+  const fetchAllRules = async () => {
+    const res = await GET('/rules');
+    setRules(res?.data || []);
   };
 
   useEffect(() => {
@@ -69,34 +89,51 @@ const RuleEdit = () => {
     }
   }, [paramId]);
 
-  const handleChange = (field: string, value: any) => {
-    setForm((prev: any) => ({ ...prev, [field]: value }));
-  };
-
   const handleSubmit = async () => {
-    if (!selectedId) return toast.error('No rule selected');
+    if (!form.name || !form.rule_type) {
+      toast.error('Please fill all required fields');
+      return;
+    }
 
-    const payload = {
-      type: form.type,
-      condition_type: form.condition_type,
-      operator: form.operator,
-      value: parseFloat(form.value),
-      reward_value: form.reward_value ? parseFloat(form.reward_value) : '',
-      unit_type: form.unit_type || '',
-      description: description || '',
-      created_by,
-      updated_by: created_by,
-      tenant_id: created_by,
-      targets: [
-        {
-          id: form.id || undefined,
-          target_type: form.target_type,
-          target_id: parseInt(form.target_id),
-        },
-      ],
-    };
+    if (
+      (form.rule_type === 'event based earn' && (!form.event_triggerer || !form.reward_points)) ||
+      (form.rule_type === 'spend and earn' && (!form.min_amount_spent || !form.reward_points)) ||
+      (form.rule_type === 'burn' &&
+        (!form.min_amount_spent ||
+          !form.max_redeemption_points_limit ||
+          !form.points_conversion_factor ||
+          !form.max_burn_percent_on_invoice)) ||
+      (form.rule_type === 'dynamic rule' &&
+        (!form.condition_type || !form.condition_operator || !form.condition_value))
+    ) {
+      toast.error('Please fill all required fields for this rule type');
+      return;
+    }
 
     setLoading(true);
+
+    const payload = {
+      name: form.name,
+      rule_type: form.rule_type,
+      min_amount_spent: form.min_amount_spent ? parseFloat(form.min_amount_spent) : null,
+      reward_points: form.reward_points ? parseFloat(form.reward_points) : null,
+      event_triggerer: form.event_triggerer || null,
+      max_redeemption_points_limit: form.max_redeemption_points_limit
+        ? parseInt(form.max_redeemption_points_limit)
+        : null,
+      points_conversion_factor: form.points_conversion_factor
+        ? parseFloat(form.points_conversion_factor)
+        : null,
+      max_burn_percent_on_invoice: form.max_burn_percent_on_invoice
+        ? parseFloat(form.max_burn_percent_on_invoice)
+        : null,
+      condition_type: form.condition_type || null,
+      condition_operator: form.condition_operator || null,
+      condition_value: form.condition_value || null,
+      description,
+      updated_by,
+    };
+
     const res = await PUT(`/rules/${selectedId}`, payload);
 
     if (res?.status === 200) {
@@ -105,17 +142,18 @@ const RuleEdit = () => {
     } else {
       toast.error('Failed to update rule');
     }
+
     setLoading(false);
   };
 
   return (
-    <Card sx={{ p: 4, width: 600, mx: 'auto', mt: 4, borderRadius: 3 }}>
-      <Typography variant="h5" fontWeight={600} gutterBottom>
+    <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
+      <Typography variant="h5" gutterBottom fontWeight={600}>
         ✏️ Edit Rule
       </Typography>
 
       {!paramId && (
-        <Grid container spacing={2} sx={{ mb: 1, width: '100%' }}>
+        <Grid container spacing={2} sx={{ mb: 1 }}>
           <Grid item xs={12}>
             <TextField
               select
@@ -131,7 +169,7 @@ const RuleEdit = () => {
             >
               {rules.map((rule) => (
                 <MenuItem key={rule.id} value={rule.id}>
-                  {rule.type.toUpperCase()} - {rule.condition_type} ({rule.operator} {rule.value})
+                  {rule.name}
                 </MenuItem>
               ))}
             </TextField>
@@ -141,89 +179,144 @@ const RuleEdit = () => {
 
       {selectedId && (
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid item xs={12}>
+            <InfoLabel label="Rule Name" tooltip="Enter a descriptive name for this rule." />
             <TextField
-              select
-              label="Type"
               fullWidth
-              value={form.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-            >
-              <MenuItem value="earn">Earn</MenuItem>
-              <MenuItem value="redeem">Redeem</MenuItem>
-              <MenuItem value="condition">Condition</MenuItem>
-              <MenuItem value="downgrade">Downgrade</MenuItem>
-            </TextField>
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              select
-              label="Condition Type"
-              fullWidth
-              value={form.condition_type}
-              onChange={(e) => handleChange('condition_type', e.target.value)}
-            >
-              <MenuItem value="total_spending">Total Spending</MenuItem>
-              <MenuItem value="visit_count">Visit Count</MenuItem>
-            </TextField>
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              select
-              label="Operator"
-              fullWidth
-              value={form.operator}
-              onChange={(e) => handleChange('operator', e.target.value)}
-            >
-              <MenuItem value="=">=</MenuItem>
-              <MenuItem value="!=">≠</MenuItem>
-              <MenuItem value=">">&gt;</MenuItem>
-              <MenuItem value=">=">&ge;</MenuItem>
-              <MenuItem value="<">&lt;</MenuItem>
-              <MenuItem value="<=">&le;</MenuItem>
-            </TextField>
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              label="Value"
-              fullWidth
-              type="number"
-              value={form.value}
-              onChange={(e) => handleChange('value', e.target.value)}
-            />
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              label="Reward Value"
-              fullWidth
-              type="number"
-              value={form.reward_value}
-              onChange={(e) => handleChange('reward_value', e.target.value)}
-            />
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              label="Unit Type"
-              fullWidth
-              value={form.unit_type}
-              onChange={(e) => handleChange('unit_type', e.target.value)}
+              value={form.name}
+              onChange={(e) => handleChange('name', e.target.value)}
             />
           </Grid>
 
           <Grid item xs={12}>
-            {/* <TextField
-              label="Description"
+            <InfoLabel label="Rule Type" tooltip="Select the type of rule logic to apply." />
+            <TextField
+              select
               fullWidth
-              multiline
-              rows={2}
-              value={form.description || ''}
-              onChange={(e) => handleChange('description', e.target.value)}
-            /> */}
+              value={form.rule_type}
+              onChange={(e) => handleChange('rule_type', e.target.value)}
+            >
+              <MenuItem value="event based earn">Event-Based Earn</MenuItem>
+              <MenuItem value="spend and earn">Spend & Earn</MenuItem>
+              <MenuItem value="burn">Burn</MenuItem>
+              <MenuItem value="dynamic rule">Dynamic Rule</MenuItem>
+            </TextField>
+          </Grid>
+
+          {form.rule_type === 'dynamic rule' && (
+            <Grid item xs={12}>
+              <Grid container spacing={1}>
+                <Grid item xs={4}>
+                  <TextField
+                    fullWidth
+                    label="Condition Type"
+                    value={form.condition_type}
+                    onChange={(e) => handleChange('condition_type', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Operator"
+                    value={form.condition_operator}
+                    onChange={(e) => handleChange('condition_operator', e.target.value)}
+                  >
+                    <MenuItem value="==">Equal To (==)</MenuItem>
+                    <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                    <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                    <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
+                    <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                    <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+                    <MenuItem value="contains">Contains</MenuItem>
+                    <MenuItem value="not_contains">Does Not Contain</MenuItem>
+                    <MenuItem value="in">In</MenuItem>
+                    <MenuItem value="not_in">Not In</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    fullWidth
+                    label="Condition Value"
+                    value={form.condition_value}
+                    onChange={(e) => handleChange('condition_value', e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          )}
+
+          {form.rule_type === 'event based earn' && (
+            <Grid item xs={12}>
+              <InfoLabel label="Event Triggerer" tooltip="Triggering event like signup or birthday." />
+              <TextField
+                fullWidth
+                value={form.event_triggerer}
+                onChange={(e) => handleChange('event_triggerer', e.target.value)}
+                placeholder="e.g. signup, birthday"
+              />
+            </Grid>
+          )}
+  
+          {(form.rule_type === 'spend and earn' || form.rule_type === 'burn') && (
+            <Grid item xs={12}>
+              <InfoLabel label="Minimum Amount Spent" tooltip="Minimum spend amount to activate the rule." />
+              <TextField
+                fullWidth
+                type="number"
+                value={form.min_amount_spent}
+                onChange={(e) => handleChange('min_amount_spent', e.target.value)}
+              />
+            </Grid>
+          )}
+
+          {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn' || form.rule_type === 'dynamic rule') && (
+            <Grid item xs={12}>
+              <InfoLabel label="Reward Points" tooltip="Number of points to be awarded." />
+              <TextField
+                fullWidth
+                type="number"
+                value={form.reward_points}
+                onChange={(e) => handleChange('reward_points', e.target.value)}
+              />
+            </Grid>
+          )}
+  
+          {form.rule_type === 'burn' && (
+            <>
+              <Grid item xs={12}>
+                <InfoLabel label="Max Redeemable Points" tooltip="Max points a user can burn in a transaction." />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.max_redeemption_points_limit}
+                  onChange={(e) => handleChange('max_redeemption_points_limit', e.target.value)}
+                />
+              </Grid>
+  
+              <Grid item xs={12}>
+                <InfoLabel label="Points Conversion Factor" tooltip="Points to currency value ratio." />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.points_conversion_factor}
+                  onChange={(e) => handleChange('points_conversion_factor', e.target.value)}
+                />
+              </Grid>
+  
+              <Grid item xs={12}>
+                <InfoLabel label="Max Burn % on Invoice" tooltip="Maximum invoice value percentage that can be paid using points." />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.max_burn_percent_on_invoice}
+                  onChange={(e) => handleChange('max_burn_percent_on_invoice', e.target.value)}
+                />
+              </Grid>
+            </>
+          )}
+
+          <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
               Description (optional)
             </Typography>
@@ -232,13 +325,18 @@ const RuleEdit = () => {
         </Grid>
       )}
 
-      <Box mt={4} textAlign="right">
+      <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+          {loading ? <CircularProgress size={24} /> : 'Update Rule'}
+        </Button>
         <Button
           variant="contained"
-          onClick={handleSubmit}
-          disabled={loading || !selectedId}
+          color="secondary"
+          size="large"
+          onClick={() => router.push('view')}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
         >
-          Update Rule
+          Go Back
         </Button>
       </Box>
     </Card>
@@ -246,3 +344,14 @@ const RuleEdit = () => {
 };
 
 export default RuleEdit;
+
+const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
+  <Box display="flex" alignItems="center" mb={0.5}>
+    <InputLabel sx={{ mr: 0.5 }}>{label}</InputLabel>
+    <Tooltip title={tooltip} placement="top" arrow>
+      <IconButton size="small" sx={{ p: 0.25 }}>
+        <InfoOutlinedIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  </Box>
+);
