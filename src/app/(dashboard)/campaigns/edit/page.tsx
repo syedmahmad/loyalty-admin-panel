@@ -4,333 +4,238 @@ import {
   Box,
   Button,
   Card,
+  Checkbox,
+  CircularProgress,
   FormControl,
+  FormControlLabel,
+  FormGroup,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
-  Switch,
   TextField,
   Typography,
-  FormControlLabel,
-  CircularProgress,
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-toastify';
-import dayjs from 'dayjs';
 import { GET, PUT } from '@/utils/AxiosUtility';
+import { toast } from 'react-toastify';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RichTextEditor } from '@/components/TextEditor';
 
-type Campaign = {
-  id: number;
-  name: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  type: 'seasonal' | 'referral' | 'targeted' | '';
-  budget: number;
-  color: string;
-  is_active: boolean;
-  business_unit_id: number;
-};
-
-type BusinessUnit = {
-  id: number;
-  name: string;
-};
-
-const campaignTypes = ['seasonal', 'referral', 'targeted'];
-
-const EditCampaign = () => {
-  const searchParams = useSearchParams();
-  const paramId = searchParams.get('id');
+const CampaignEdit = () => {
   const router = useRouter();
+  const params = useSearchParams();
+  const paramId = params.get('id') || null;
+
+  const [name, setName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [bus, setBus] = useState<number | null>(null);
+  const [allBus, setAllBus] = useState<any[]>([]);
+  const [rulesByType, setRulesByType] = useState<Record<string, any[]>>({});
+  const [selectedRules, setSelectedRules] = useState<Record<string, number[]>>({});
+  const [tiers, setTiers] = useState<number[]>([]);
+  const [allTiers, setAllTiers] = useState<any[]>([]);
   const [description, setDescription] = useState<string>('');
-  const [campaignId, setCampaignId] = useState<number | null>(paramId ? +paramId : null);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [rules, setRules] = useState<any[]>([]);
-  const [selectedRules, setSelectedRules] = useState<number[]>([]);
 
-  const [formData, setFormData] = useState<Omit<Campaign, 'id'>>({
-    name: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    type: '',
-    budget: 0,
-    color: '#000000',
-    is_active: true,
-    business_unit_id: 0,
-  });
+  const fetchInitialData = async () => {
+    const [buRes, tierRes, rulesRes, campaignRes] = await Promise.all([
+      GET('/business-units'),
+      GET('/tiers'),
+      GET('/rules'),
+      GET(`/campaigns/${paramId}`),
+    ]);
 
-  const clientInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('client-info') || '{}') : {};
-  const updated_by = clientInfo?.id;
+    const campaign = campaignRes?.data;
 
-  // Fetch rules
-  const fetchRules = async () => {
-    const res = await GET('/rules');
-    if (res?.status === 200) setRules(res.data);
+    setName(campaign.name);
+    setStartDate(campaign.start_date.split('T')[0]);
+    setEndDate(campaign.end_date.split('T')[0]);
+    setBus(campaign.business_unit_id);
+    setDescription(campaign.description || '');
+
+    setTiers(campaign.tiers.map((t: any) => t.tier.id));
+
+    // Convert rules into { [rule_type]: number[] }
+    const grouped: Record<string, number[]> = {};
+    campaign.rules.forEach((r: any) => {
+      const type = r.rule.rule_type;
+      const id = r.rule.id;
+      if (!grouped[type]) grouped[type] = [];
+      grouped[type].push(id);
+    });
+    setSelectedRules(grouped);
+
+    setAllBus(buRes?.data || []);
+    setAllTiers(tierRes?.data?.tiers || []);
+
+    const groupedRules = (rulesRes?.data || []).reduce((acc: any, rule: any) => {
+      acc[rule.rule_type] = acc[rule.rule_type] || [];
+      acc[rule.rule_type].push(rule);
+      return acc;
+    }, {});
+    setRulesByType(groupedRules);
   };
 
-  const handleChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
-  const fetchCampaigns = async () => {
-    const res = await GET('/campaigns');
-    if (res?.status === 200) {
-      setCampaigns(res.data);
-    }
-  };
-
-  const fetchBusinessUnits = async () => {
-    const res = await GET('/business-units');
-    if (res?.status === 200) {
-      setBusinessUnits(res.data);
-    }
-  };
-
-  const fetchCampaignDetails = async (id: number) => {
-    const res = await GET(`/campaigns/${id}`);
-    if (res?.status === 200) {
-      const data = res.data;
-      setFormData({
-        name: data.name,
-        description: data.description,
-        type: data.type || '',
-        budget: data.budget,
-        color: data.color || '#000000',
-        start_date: data.start_date,
-        end_date: data.end_date,
-        is_active: data.is_active,
-        business_unit_id: data.business_unit_id,
-      });
-      setDescription(data.description || '');
-      // Set selected rule targets
-      const targetRules = data.rule_targets?.map((rt: any) => rt.rule_id) ?? [];
-      setSelectedRules(targetRules)
+  const handleRuleToggle = (type: string, ruleId: number) => {
+    const current = selectedRules[type] || [];
+    if (current.includes(ruleId)) {
+      setSelectedRules({ ...selectedRules, [type]: current.filter((id) => id !== ruleId) });
+    } else {
+      setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
     }
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.business_unit_id) {
-      return toast.error('Please fill all required fields');
+    if (!name || !startDate || !endDate || !bus) {
+      toast.error('Please fill all required fields');
+      return;
     }
 
-    setLoading(true);
+    const ruleIds: number[] = Object.values(selectedRules).flat();
+    const rulesPayload = ruleIds.map((id) => ({ rule_id: id }));
+    const tiersPayload = tiers.map((id) => ({ tier_id: id }));
 
     const payload = {
-      ...formData,
-      description: description || '',
-      updated_by,
-      start_date: dayjs(formData.start_date).toISOString(),
-      end_date: dayjs(formData.end_date).toISOString(),
-      rule_targets: selectedRules.map((rule_id) => ({
-        rule_id,
-      })),
+      name,
+      start_date: startDate,
+      end_date: endDate,
+      business_unit_id: bus,
+      rules: rulesPayload,
+      tiers: tiersPayload,
+      description,
     };
 
-    const res = await PUT(`/campaigns/${campaignId}`, payload);
-
-    if (res?.status === 200) {
-      toast.success('Campaign updated!');
-      router.push('/campaigns/view');
-    } else {
-      toast.error('Failed to update campaign');
+    setLoading(true);
+    try {
+      const res = await PUT(`/campaigns/${paramId}`, payload);
+      if (res?.status === 200) {
+        toast.success('Campaign updated!');
+        router.push('/campaigns/view');
+      } else {
+        toast.error('Update failed');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('An error occurred');
     }
-
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchBusinessUnits();
-    fetchCampaigns();
-    fetchRules();
-  }, []);
-
-  useEffect(() => {
-    if (campaignId) {
-      fetchCampaignDetails(campaignId).finally(() => setFetching(false));
-    }
-  }, [campaignId]);
-
-  if (!campaignId) {
-    return (
-      <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3 }}>
-        <Typography variant="h6" fontWeight={600}>
-          Select Campaign to Edit
-        </Typography>
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel>Select Campaign</InputLabel>
-          <Select
-            value=""
-            onChange={(e) => {
-              setCampaignId(+e.target.value);
-            }}
-            label="Select Campaign"
-          >
-            {campaigns.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Card>
-    );
-  }
-
-  if (fetching) {
-    return (
-      <Box textAlign="center" mt={6}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
+    <Card sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         ✏️ Edit Campaign
       </Typography>
 
-      <TextField
-        fullWidth
-        label="Campaign Name"
-        value={formData.name}
-        onChange={(e) => handleChange('name', e.target.value)}
-        margin="normal"
-        required
-      />
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField label="Campaign Name" fullWidth value={name} onChange={(e) => setName(e.target.value)} />
+        </Grid>
 
-      <FormControl fullWidth margin="normal" required>
-        <InputLabel>Business Unit</InputLabel>
-        <Select
-          value={formData.business_unit_id}
-          onChange={(e) => handleChange('business_unit_id', e.target.value)}
-          label="Business Unit"
-        >
-          {businessUnits.map((unit) => (
-            <MenuItem key={unit.id} value={unit.id}>
-              {unit.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <FormControl fullWidth margin="normal">
-        <InputLabel>Attach Rules</InputLabel>
-        <Select
-          multiple
-          value={selectedRules}
-          onChange={(e) =>
-            setSelectedRules(
-              typeof e.target.value === 'string'
-                ? e.target.value.split(',').map(Number)
-                : e.target.value
-            )
-          }
-          label="Attach Rules"
-        >
-          {rules.map((rule) => (
-            <MenuItem key={rule.id} value={rule.id}>
-              {`${rule.name.toUpperCase()} — ${rule.rule_type} ${rule.max_points_limit}`}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-
-      {/* <TextField
-        fullWidth
-        label="Description"
-        multiline
-        rows={3}
-        value={formData.description}
-        onChange={(e) => handleChange('description', e.target.value)}
-        margin="normal"
-      /> */}
-      <Typography variant="subtitle1" gutterBottom>
-        Description (optional)
-      </Typography>
-      <RichTextEditor value={description} setValue={setDescription} language="en" />
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-        <DatePicker
-          label="Start Date"
-          value={dayjs(formData.start_date)}
-          onChange={(newDate) => handleChange('start_date', newDate?.toISOString())}
-        />
-        <DatePicker
-          label="End Date"
-          value={dayjs(formData.end_date)}
-          onChange={(newDate) => handleChange('end_date', newDate?.toISOString())}
-        />
-      </Box>
-
-      <FormControl fullWidth margin="normal">
-        <InputLabel>Campaign Type</InputLabel>
-        <Select
-          value={formData.type}
-          onChange={(e) => handleChange('type', e.target.value)}
-          label="Campaign Type"
-        >
-          {campaignTypes.map((type) => (
-            <MenuItem key={type} value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <TextField
-        fullWidth
-        label="Budget"
-        type="number"
-        value={formData.budget}
-        onChange={(e) => handleChange('budget', e.target.value)}
-        margin="normal"
-      />
-
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-        <Typography mr={2}>Color:</Typography>
-        <input
-          type="color"
-          value={formData.color}
-          onChange={(e) => handleChange('color', e.target.value)}
-          style={{ width: 50, height: 35, border: 'none', cursor: 'pointer' }}
-        />
-      </Box>
-
-      <FormControlLabel
-        control={
-          <Switch
-            checked={formData.is_active}
-            onChange={(e) => handleChange('is_active', e.target.checked)}
+        <Grid item xs={6}>
+          <TextField
+            label="Start Date"
+            type="date"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
           />
-        }
-        label="Active"
-        sx={{ mt: 2 }}
-      />
+        </Grid>
 
-      <Button
-        variant="contained"
-        fullWidth
-        onClick={handleSubmit}
-        sx={{ mt: 3 }}
-        disabled={loading}
-      >
-        {loading ? 'Updating...' : 'Update Campaign'}
-      </Button>
+        <Grid item xs={6}>
+          <TextField
+            label="End Date"
+            type="date"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <FormControl fullWidth>
+            <InputLabel>Business Unit</InputLabel>
+            <Select
+              value={bus || ''}
+              onChange={(e) => setBus(e.target.value as number)}
+              label="Business Unit"
+            >
+              {allBus.map((bu) => (
+                <MenuItem key={bu.id} value={bu.id}>
+                  {bu.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {Object.entries(rulesByType).map(([type, rules]) => (
+          <Grid key={type} item xs={12}>
+            <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>{type}</Typography>
+            <FormGroup>
+              {rules.map((rule) => (
+                <FormControlLabel
+                  key={rule.id}
+                  control={
+                    <Checkbox
+                      checked={selectedRules[type]?.includes(rule.id) || false}
+                      onChange={() => handleRuleToggle(type, rule.id)}
+                    />
+                  }
+                  label={rule.name}
+                />
+              ))}
+            </FormGroup>
+          </Grid>
+        ))}
+
+        <Grid item xs={12}>
+          <Typography variant="subtitle1">Tiers</Typography>
+          <FormGroup>
+            {allTiers.map((tier) => (
+              <FormControlLabel
+                key={tier.id}
+                control={
+                  <Checkbox
+                    checked={tiers.includes(tier.id)}
+                    onChange={() => {
+                      setTiers((prev) =>
+                        prev.includes(tier.id)
+                          ? prev.filter((id) => id !== tier.id)
+                          : [...prev, tier.id]
+                      );
+                    }}
+                  />
+                }
+                label={tier.name}
+              />
+            ))}
+          </FormGroup>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom>
+            Description (optional)
+          </Typography>
+          <RichTextEditor value={description} setValue={setDescription} language="en" />
+        </Grid>
+      </Grid>
+
+      <Box mt={3} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+          {loading ? <CircularProgress size={24} /> : 'Update Campaign'}
+        </Button>
+      </Box>
     </Card>
   );
 };
 
-export default EditCampaign;
+export default CampaignEdit;

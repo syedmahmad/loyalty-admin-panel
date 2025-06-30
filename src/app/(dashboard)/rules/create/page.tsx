@@ -45,6 +45,9 @@ const RuleCreateForm = () => {
     max_redeemption_points_limit: '',
     points_conversion_factor: '',
     max_burn_percent_on_invoice: '',
+    condition_type: '',
+    condition_operator: '',
+    condition_value: '',
   };
 
   const [form, setForm] = useState(initialForm);
@@ -66,9 +69,11 @@ const RuleCreateForm = () => {
       (form.rule_type === 'spend and earn' && (!form.min_amount_spent || !form.reward_points)) ||
       (form.rule_type === 'burn' &&
         (!form.min_amount_spent ||
-         !form.max_redeemption_points_limit ||
-         !form.points_conversion_factor ||
-         !form.max_burn_percent_on_invoice))
+          !form.max_redeemption_points_limit ||
+          !form.points_conversion_factor ||
+          !form.max_burn_percent_on_invoice)) ||
+      (form.rule_type === 'dynamic rule' &&
+        (!form.condition_type || !form.condition_operator || !form.condition_value))
     ) {
       toast.error('Please fill all required fields for this rule type');
       return;
@@ -91,6 +96,9 @@ const RuleCreateForm = () => {
       max_burn_percent_on_invoice: form.max_burn_percent_on_invoice
         ? parseFloat(form.max_burn_percent_on_invoice)
         : null,
+      condition_type: form.condition_type || null,
+      condition_operator: form.condition_operator || null,
+      condition_value: form.condition_value || null,
       description,
       created_by,
     };
@@ -136,6 +144,7 @@ const RuleCreateForm = () => {
             <MenuItem value="event based earn">Event-Based Earn</MenuItem>
             <MenuItem value="spend and earn">Spend & Earn</MenuItem>
             <MenuItem value="burn">Burn</MenuItem>
+            <MenuItem value="dynamic rule">Dynamic Rule</MenuItem>
           </TextField>
         </Grid>
 
@@ -163,7 +172,40 @@ const RuleCreateForm = () => {
           </Grid>
         )}
 
-        {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn') && (
+        {form.rule_type === 'dynamic rule' && (
+          <Grid item xs={12}>
+            <Box display="flex" gap={1}>
+              <TextField
+                label="Condition Type"
+                fullWidth
+                value={form.condition_type}
+                onChange={(e) => handleChange('condition_type', e.target.value)}
+              />
+              <TextField
+                select
+                fullWidth
+                label="Condition Operator"
+                value={form.condition_operator}
+                onChange={(e) => handleChange('condition_operator', e.target.value)}
+              >
+                <MenuItem value="==">Equal To (==)</MenuItem>
+                <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
+                <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+              </TextField>
+              <TextField
+                label="Value"
+                fullWidth
+                value={form.condition_value}
+                onChange={(e) => handleChange('condition_value', e.target.value)}
+              />
+            </Box>
+          </Grid>
+        )}
+
+        {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn' || form.rule_type === 'dynamic rule') && (
           <Grid item xs={12}>
             <InfoLabel label="Reward Points" tooltip="Number of points to be awarded." />
             <TextField

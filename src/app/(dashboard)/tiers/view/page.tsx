@@ -32,7 +32,6 @@ type Tier = {
   id: number;
   name: string;
   min_points: number;
-  max_points: number;
   points_conversion_rate: number;
   benefits?: string;
   business_unit?: { name: string };
@@ -117,7 +116,6 @@ const TierList = () => {
                 <TableRow>
                   <TableCell>Name</TableCell>
                   <TableCell>Min Points</TableCell>
-                  <TableCell>Max Points</TableCell>
                   <TableCell>Business Unit</TableCell>
                   {/* <TableCell>Points Conversion Rate</TableCell> */}
                   <TableCell>Benefits</TableCell>
@@ -143,7 +141,6 @@ const TierList = () => {
                         </Tooltip>
                       </TableCell>
                       <TableCell>{tier.min_points}</TableCell>
-                      <TableCell>{tier.max_points}</TableCell>
                       <TableCell sx={{
                           maxWidth: 200,
                           whiteSpace: 'nowrap',

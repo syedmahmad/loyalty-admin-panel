@@ -29,6 +29,9 @@ const initialForm = {
   max_redeemption_points_limit: '',
   points_conversion_factor: '',
   max_burn_percent_on_invoice: '',
+  condition_type: '',
+  condition_operator: '',
+  condition_value: '',
 };
 
 const RuleEdit = () => {
@@ -63,6 +66,9 @@ const RuleEdit = () => {
         max_redeemption_points_limit: rule.max_redeemption_points_limit?.toString() || '',
         points_conversion_factor: rule.points_conversion_factor?.toString() || '',
         max_burn_percent_on_invoice: rule.max_burn_percent_on_invoice?.toString() || '',
+        condition_type: rule.condition_type || '',
+        condition_operator: rule.condition_operator || '',
+        condition_value: rule.condition_value || '',
       });
       setDescription(rule.description || '');
     }
@@ -94,9 +100,11 @@ const RuleEdit = () => {
       (form.rule_type === 'spend and earn' && (!form.min_amount_spent || !form.reward_points)) ||
       (form.rule_type === 'burn' &&
         (!form.min_amount_spent ||
-         !form.max_redeemption_points_limit ||
-         !form.points_conversion_factor ||
-         !form.max_burn_percent_on_invoice))
+          !form.max_redeemption_points_limit ||
+          !form.points_conversion_factor ||
+          !form.max_burn_percent_on_invoice)) ||
+      (form.rule_type === 'dynamic rule' &&
+        (!form.condition_type || !form.condition_operator || !form.condition_value))
     ) {
       toast.error('Please fill all required fields for this rule type');
       return;
@@ -119,6 +127,9 @@ const RuleEdit = () => {
       max_burn_percent_on_invoice: form.max_burn_percent_on_invoice
         ? parseFloat(form.max_burn_percent_on_invoice)
         : null,
+      condition_type: form.condition_type || null,
+      condition_operator: form.condition_operator || null,
+      condition_value: form.condition_value || null,
       description,
       updated_by,
     };
@@ -188,18 +199,50 @@ const RuleEdit = () => {
               <MenuItem value="event based earn">Event-Based Earn</MenuItem>
               <MenuItem value="spend and earn">Spend & Earn</MenuItem>
               <MenuItem value="burn">Burn</MenuItem>
+              <MenuItem value="dynamic rule">Dynamic Rule</MenuItem>
             </TextField>
           </Grid>
 
-          {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn') && (
+          {form.rule_type === 'dynamic rule' && (
             <Grid item xs={12}>
-              <InfoLabel label="Reward Points" tooltip="Number of points awarded." />
-              <TextField
-                fullWidth
-                type="number"
-                value={form.reward_points}
-                onChange={(e) => handleChange('reward_points', e.target.value)}
-              />
+              <Grid container spacing={1}>
+                <Grid item xs={4}>
+                  <TextField
+                    fullWidth
+                    label="Condition Type"
+                    value={form.condition_type}
+                    onChange={(e) => handleChange('condition_type', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Operator"
+                    value={form.condition_operator}
+                    onChange={(e) => handleChange('condition_operator', e.target.value)}
+                  >
+                    <MenuItem value="==">Equal To (==)</MenuItem>
+                    <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                    <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                    <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
+                    <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                    <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+                    <MenuItem value="contains">Contains</MenuItem>
+                    <MenuItem value="not_contains">Does Not Contain</MenuItem>
+                    <MenuItem value="in">In</MenuItem>
+                    <MenuItem value="not_in">Not In</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    fullWidth
+                    label="Condition Value"
+                    value={form.condition_value}
+                    onChange={(e) => handleChange('condition_value', e.target.value)}
+                  />
+                </Grid>
+              </Grid>
             </Grid>
           )}
 
@@ -210,13 +253,14 @@ const RuleEdit = () => {
                 fullWidth
                 value={form.event_triggerer}
                 onChange={(e) => handleChange('event_triggerer', e.target.value)}
+                placeholder="e.g. signup, birthday"
               />
             </Grid>
           )}
-
+  
           {(form.rule_type === 'spend and earn' || form.rule_type === 'burn') && (
             <Grid item xs={12}>
-              <InfoLabel label="Minimum Amount Spent" tooltip="Minimum spend required to apply the rule." />
+              <InfoLabel label="Minimum Amount Spent" tooltip="Minimum spend amount to activate the rule." />
               <TextField
                 fullWidth
                 type="number"
@@ -226,10 +270,22 @@ const RuleEdit = () => {
             </Grid>
           )}
 
+          {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn' || form.rule_type === 'dynamic rule') && (
+            <Grid item xs={12}>
+              <InfoLabel label="Reward Points" tooltip="Number of points to be awarded." />
+              <TextField
+                fullWidth
+                type="number"
+                value={form.reward_points}
+                onChange={(e) => handleChange('reward_points', e.target.value)}
+              />
+            </Grid>
+          )}
+  
           {form.rule_type === 'burn' && (
             <>
               <Grid item xs={12}>
-                <InfoLabel label="Max Redeemable Points" tooltip="Max points a user can burn per transaction." />
+                <InfoLabel label="Max Redeemable Points" tooltip="Max points a user can burn in a transaction." />
                 <TextField
                   fullWidth
                   type="number"
@@ -237,9 +293,9 @@ const RuleEdit = () => {
                   onChange={(e) => handleChange('max_redeemption_points_limit', e.target.value)}
                 />
               </Grid>
-
+  
               <Grid item xs={12}>
-                <InfoLabel label="Points Conversion Factor" tooltip="Conversion rate from points to currency." />
+                <InfoLabel label="Points Conversion Factor" tooltip="Points to currency value ratio." />
                 <TextField
                   fullWidth
                   type="number"
@@ -247,9 +303,9 @@ const RuleEdit = () => {
                   onChange={(e) => handleChange('points_conversion_factor', e.target.value)}
                 />
               </Grid>
-
+  
               <Grid item xs={12}>
-                <InfoLabel label="Max Burn % on Invoice" tooltip="Max percent of invoice payable using points." />
+                <InfoLabel label="Max Burn % on Invoice" tooltip="Maximum invoice value percentage that can be paid using points." />
                 <TextField
                   fullWidth
                   type="number"

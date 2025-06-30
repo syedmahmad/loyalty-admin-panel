@@ -91,7 +91,6 @@ const EditTierForm = () => {
     setTierData({
       name: res.data.name,
       min_points: res.data.min_points,
-      max_points: res.data.max_points,
       // points_conversion_rate: res.data.points_conversion_rate,
       benefits: res.data.benefits || '',
       business_unit_id: res.data.business_unit_id.toString(),
@@ -104,7 +103,6 @@ const EditTierForm = () => {
   const validationSchema = Yup.object({
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
-    max_points: Yup.number().required('Maximum points required'),
     //  conversion_rate: Yup.number()
     //       .required('Conversion rate is required')
     //       .min(0, 'Conversion rate must be a positive number'),
@@ -118,7 +116,6 @@ const EditTierForm = () => {
       benefits: benefits || '',
       business_unit_id: values.business_unit_id,
       min_points: +values.min_points,
-      max_points: +values.max_points,
       // points_conversion_rate: +values.conversion_rate,
       updated_by: userId,
       // rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
@@ -204,7 +201,7 @@ const EditTierForm = () => {
                     />
                   </Grid> */}
 
-                  <Grid item xs={6}>
+                  <Grid item xs={12}>
                     <TextField
                       fullWidth
                       name="min_points"
@@ -213,19 +210,6 @@ const EditTierForm = () => {
                       value={values.min_points}
                       onChange={handleChange}
                       error={!!touched.min_points && !!errors.min_points}
-                      helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
-                    />
-                  </Grid>
-
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      name="max_points"
-                      label="Max Points"
-                      type="number"
-                      value={values.max_points}
-                      onChange={handleChange}
-                      error={!!touched.max_points && !!errors.max_points}
                       helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
                     />
                   </Grid>

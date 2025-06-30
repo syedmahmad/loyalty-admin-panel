@@ -73,47 +73,50 @@ const CreateTierForm = () => {
   const initialValues = {
     name: '',
     min_points: '',
-    max_points: '',
     benefits: '',
-    business_unit_id: '',
+    business_unit_ids: [] as number[],
     // conversion_rate: 0,
   };
 
   const validationSchema = Yup.object({
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
-    max_points: Yup.number().required('Maximum points required'),
     // conversion_rate: Yup.number()
     //   .required('Conversion rate is required')
     //   .min(0, 'Conversion rate must be a positive number'),
-    business_unit_id: Yup.string().required('Business unit is required'),
+    business_unit_ids: Yup.array()
+      .min(1, 'At least one business unit is required')
+      .of(Yup.number().required()),
   });
 
   const handleSubmit = async (values: typeof initialValues, resetForm: () => void) => {
     setLoading(true);
-    const payload = {
-      ...values,
-      benefits: benefits || '',
+    const payloads = values.business_unit_ids.map((buId) => ({
+      name: values.name,
       min_points: +values.min_points,
-      max_points: +values.max_points,
+      benefits: benefits || '',
+      business_unit_id: buId,
       tenant_id: created_by,
-      // points_conversion_rate: +values.conversion_rate,
       created_by,
       updated_by: created_by,
-      // rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
-    };
+    }));
 
-    const response = await POST('/tiers', payload);
+    const responses = await Promise.all(
+      payloads.map((payload) => POST('/tiers', payload))
+    );
 
-    if (response?.status !== 201) {
+    const anyFailed = responses.some((res) => res?.status !== 201);
+
+    if (anyFailed) {
       setLoading(false);
-      return toast.error('Failed to create tier');
+      toast.error('Some tiers failed to create');
+    } else {
+      toast.success('All tiers created successfully!');
+      resetForm();
+      setBenefits('');
+      setLoading(false);
+      router.push('/tiers/view');
     }
-    toast.success('Tier created!');
-    setBenefits('');
-    resetForm();
-    setLoading(false);
-    router.push('/tiers/view');
   };
 
   return (
@@ -156,7 +159,7 @@ const CreateTierForm = () => {
                   />
                 </Grid> */}
 
-                <Grid item xs={6}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     name="min_points"
@@ -169,29 +172,17 @@ const CreateTierForm = () => {
                   />
                 </Grid>
 
-                <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    name="max_points"
-                    label="Max Points"
-                    type="number"
-                    value={values.max_points}
-                    onChange={handleChange}
-                    error={!!touched.max_points && !!errors.max_points}
-                    helperText={touched.max_points && errors.max_points}
-                  />
-                </Grid>
-
                 <Grid item xs={12}>
                   <TextField
                     select
                     fullWidth
-                    name="business_unit_id"
-                    label="Business Unit"
-                    value={values.business_unit_id}
+                    name="business_unit_ids"
+                    label="Business Units"
+                    SelectProps={{ multiple: true }}
+                    value={values.business_unit_ids}
                     onChange={handleChange}
-                    error={!!touched.business_unit_id && !!errors.business_unit_id}
-                    helperText={touched.business_unit_id && errors.business_unit_id}
+                    error={!!touched.business_unit_ids && !!errors.business_unit_ids}
+                    helperText={touched.business_unit_ids && errors.business_unit_ids}
                   >
                     {businessUnits.map((bu) => (
                       <MenuItem key={bu.id} value={bu.id}>
@@ -200,6 +191,7 @@ const CreateTierForm = () => {
                     ))}
                   </TextField>
                 </Grid>
+
 
                 {/* <Grid item xs={12}>
                   <TextField

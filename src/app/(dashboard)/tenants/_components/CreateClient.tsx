@@ -4,47 +4,42 @@ import {
   Button,
   Typography,
   useTheme,
+  TextField,
+  MenuItem,
 } from "@mui/material";
 import { CustomTextfield } from "@/components/CustomTextField";
 import { POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import * as yup from "yup";
 
+const currencyOptions = [
+  { code: "SAR", label: "Saudi Riyal" },
+  { code: "PKR", label: "Pakistani Rupee" },
+  { code: "INR", label: "Indian Rupee" },
+];
+
 const CreateClient = ({ reFetch, setOpenModal }: any) => {
-
-  // #region general for state variables
   const theme = useTheme();
-
   const [formErrors, setFormErrors] = useState<any>({});
-
   const [clientInfo, setClientInfo] = useState({
     name: "",
     domain: "",
+    currency: "",
     created_by: 1,
     updated_by: 1,
   });
 
-  // #endregion
-
-
-  // #region to handle change in state and show updated data on in the states
   const handleChange = (e: any) => {
     const { name, value } = e.target;
     setClientInfo({ ...clientInfo, [name]: value });
   };
 
-  // #endregion
-
-  // #region for schema
   const schema = yup.object().shape({
     name: yup.string().required("Name is required"),
     domain: yup.string().required("Domain is required"),
+    currency: yup.string().required("Currency is required"),
   });
 
-  // #endregion
-
-
-  // #region for creating client and validating the entered data
   const handleSubmit = async () => {
     try {
       await schema.validate(clientInfo, { abortEarly: false });
@@ -53,18 +48,20 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
       const payload = {
         name: clientInfo.name,
         domain: clientInfo.domain,
+        currency: clientInfo.currency,
         created_by: clientInfo.created_by,
         updated_by: clientInfo.updated_by,
       };
 
       const response = await POST("/tenants", payload, {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
       });
+
       if (response?.status === 201) {
-        toast.success("Tenants Register Successfully");
+        toast.success("Tenant registered successfully");
         reFetch();
         setOpenModal(false);
       }
@@ -80,8 +77,6 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
       }
     }
   };
-
-  // #endregion
 
   return (
     <Grid2 container spacing={3}>
@@ -128,6 +123,25 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         />
       </Grid2>
 
+      <Grid2 xs={12} md={6}>
+        <TextField
+          select
+          fullWidth
+          name="currency"
+          label="Currency"
+          value={clientInfo.currency}
+          onChange={handleChange}
+          error={!!formErrors.currency}
+          helperText={formErrors.currency}
+        >
+          {currencyOptions.map((currency) => (
+            <MenuItem key={currency.code} value={currency.code}>
+              {currency.label} ({currency.code})
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid2>
+
       <Grid2 xs={12}>
         <Button
           variant="contained"
@@ -135,7 +149,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
           onClick={handleSubmit}
           fullWidth
         >
-          {"Register Tenants"}
+          Register Tenants
         </Button>
       </Grid2>
     </Grid2>
