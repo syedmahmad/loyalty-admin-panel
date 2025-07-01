@@ -12,6 +12,7 @@ import {
   Grid,
   InputLabel,
   MenuItem,
+  Radio,
   Select,
   TextField,
   Typography,
@@ -34,7 +35,7 @@ const CampaignEdit = () => {
   const [allBus, setAllBus] = useState<any[]>([]);
   const [rulesByType, setRulesByType] = useState<Record<string, any[]>>({});
   const [selectedRules, setSelectedRules] = useState<Record<string, number[]>>({});
-  const [tiers, setTiers] = useState<number[]>([]);
+  const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate: number }[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
   const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +56,12 @@ const CampaignEdit = () => {
     setBus(campaign.business_unit_id);
     setDescription(campaign.description || '');
 
-    setTiers(campaign.tiers.map((t: any) => t.tier.id));
+    setTiers(
+      campaign.tiers.map((t: any) => ({
+        tier_id: t.tier.id,
+        point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
+      }))
+    );
 
     // Convert rules into { [rule_type]: number[] }
     const grouped: Record<string, number[]> = {};
@@ -82,6 +88,21 @@ const CampaignEdit = () => {
     fetchInitialData();
   }, []);
 
+  const isTierSelected = (id: number) => tiers.some((t) => t.tier_id === id);
+
+  const handleTierToggle = (tierId: number) => {
+    setTiers([{tier_id: tierId, point_conversion_rate: 0}]);
+  };
+
+  const handleConversionRateChange = (tierId: number, value: number) => {
+    setTiers((prev) =>
+      prev.map((t) =>
+        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
+      )
+    );
+  };
+
+
   const handleRuleToggle = (type: string, ruleId: number) => {
     const current = selectedRules[type] || [];
     if (current.includes(ruleId)) {
@@ -99,7 +120,10 @@ const CampaignEdit = () => {
 
     const ruleIds: number[] = Object.values(selectedRules).flat();
     const rulesPayload = ruleIds.map((id) => ({ rule_id: id }));
-    const tiersPayload = tiers.map((id) => ({ tier_id: id }));
+    const tiersPayload = tiers.map((t) => ({
+      tier_id: t.tier_id,
+      point_conversion_rate: Number(t.point_conversion_rate),
+    }));
 
     const payload = {
       name,
@@ -200,25 +224,39 @@ const CampaignEdit = () => {
         <Grid item xs={12}>
           <Typography variant="subtitle1">Tiers</Typography>
           <FormGroup>
-            {allTiers.map((tier) => (
-              <FormControlLabel
-                key={tier.id}
-                control={
-                  <Checkbox
-                    checked={tiers.includes(tier.id)}
-                    onChange={() => {
-                      setTiers((prev) =>
-                        prev.includes(tier.id)
-                          ? prev.filter((id) => id !== tier.id)
-                          : [...prev, tier.id]
-                      );
-                    }}
+            {allTiers.map((tier) => {
+              const selected = isTierSelected(tier.id);
+              const current = tiers.find((t) => t.tier_id === tier.id);
+
+              return (
+                <Box key={tier.id} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <FormControlLabel
+                    control={
+                      <Radio
+                        checked={selected}
+                        onChange={() => handleTierToggle(tier.id)}
+                      />
+                    }
+                    label={tier.name}
                   />
-                }
-                label={tier.name}
-              />
-            ))}
+                  {selected && (
+                    <TextField
+                      type="number"
+                      label="Conversion Rate"
+                      value={current?.point_conversion_rate ?? 1}
+                      onChange={(e) =>
+                        handleConversionRateChange(tier.id, Number(e.target.value))
+                      }
+                      size="small"
+                      sx={{ ml: 2, width: 180 }}
+                      inputProps={{ step: 0.01, min: 0 }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
           </FormGroup>
+
         </Grid>
 
         <Grid item xs={12}>
