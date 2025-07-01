@@ -17,11 +17,19 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RichTextEditor } from '@/components/TextEditor';
+
+const htmlToPlainText = (htmlString: string): string => {
+  if (!htmlString) return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = htmlString;
+  return tempDiv.textContent || tempDiv.innerText || '';
+};
 
 const CampaignEdit = () => {
   const router = useRouter();
@@ -35,10 +43,13 @@ const CampaignEdit = () => {
   const [allBus, setAllBus] = useState<any[]>([]);
   const [rulesByType, setRulesByType] = useState<Record<string, any[]>>({});
   const [selectedRules, setSelectedRules] = useState<Record<string, number[]>>({});
+  const [ruleTypes, setRuleTypes] = useState<string[]>([]);
   const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate: number }[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
   const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState(false);
+
+  const RULE_TYPES = ['event based earn', 'spend and earn', 'burn', 'dynamic rule'];
 
   const fetchInitialData = async () => {
     const [buRes, tierRes, rulesRes, campaignRes] = await Promise.all([
@@ -51,8 +62,8 @@ const CampaignEdit = () => {
     const campaign = campaignRes?.data;
 
     setName(campaign.name);
-    setStartDate(campaign.start_date.split('T')[0]);
-    setEndDate(campaign.end_date.split('T')[0]);
+    setStartDate(DateTime.fromISO(campaign.start_date).toFormat('yyyy-MM-dd'));
+    setEndDate(DateTime.fromISO(campaign.end_date).toFormat('yyyy-MM-dd'));
     setBus(campaign.business_unit_id);
     setDescription(campaign.description || '');
 
@@ -63,7 +74,6 @@ const CampaignEdit = () => {
       }))
     );
 
-    // Convert rules into { [rule_type]: number[] }
     const grouped: Record<string, number[]> = {};
     campaign.rules.forEach((r: any) => {
       const type = r.rule.rule_type;
@@ -71,7 +81,9 @@ const CampaignEdit = () => {
       if (!grouped[type]) grouped[type] = [];
       grouped[type].push(id);
     });
+
     setSelectedRules(grouped);
+    setRuleTypes(Object.keys(grouped));
 
     setAllBus(buRes?.data || []);
     setAllTiers(tierRes?.data?.tiers || []);
@@ -88,10 +100,29 @@ const CampaignEdit = () => {
     fetchInitialData();
   }, []);
 
+  const handleRuleToggle = (type: string, ruleId: number) => {
+    const current = selectedRules[type] || [];
+    if (current.includes(ruleId)) {
+      setSelectedRules({ ...selectedRules, [type]: current.filter((id) => id !== ruleId) });
+    } else {
+      setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
+    }
+  };
+
+  const handleRuleTypeAdd = () => {
+    setRuleTypes((prev) => [...prev, RULE_TYPES[0]]);
+  };
+
+  const handleRuleTypeChange = (index: number, value: string) => {
+    const updated = [...ruleTypes];
+    updated[index] = value;
+    setRuleTypes(updated);
+  };
+
   const isTierSelected = (id: number) => tiers.some((t) => t.tier_id === id);
 
   const handleTierToggle = (tierId: number) => {
-    setTiers([{tier_id: tierId, point_conversion_rate: 0}]);
+    setTiers([{ tier_id: tierId, point_conversion_rate: 0 }]);
   };
 
   const handleConversionRateChange = (tierId: number, value: number) => {
@@ -100,16 +131,6 @@ const CampaignEdit = () => {
         t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
       )
     );
-  };
-
-
-  const handleRuleToggle = (type: string, ruleId: number) => {
-    const current = selectedRules[type] || [];
-    if (current.includes(ruleId)) {
-      setSelectedRules({ ...selectedRules, [type]: current.filter((id) => id !== ruleId) });
-    } else {
-      setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
-    }
   };
 
   const handleSubmit = async () => {
@@ -201,23 +222,52 @@ const CampaignEdit = () => {
           </FormControl>
         </Grid>
 
-        {Object.entries(rulesByType).map(([type, rules]) => (
-          <Grid key={type} item xs={12}>
-            <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>{type}</Typography>
-            <FormGroup>
-              {rules.map((rule) => (
-                <FormControlLabel
-                  key={rule.id}
-                  control={
-                    <Checkbox
-                      checked={selectedRules[type]?.includes(rule.id) || false}
-                      onChange={() => handleRuleToggle(type, rule.id)}
+        <Grid item xs={12}>
+          <Button variant="outlined" onClick={handleRuleTypeAdd}>
+            ➕ Add Rule Type
+          </Button>
+        </Grid>
+
+        {ruleTypes.map((type, idx) => (
+          <Grid key={idx} item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel>Rule Type</InputLabel>
+              <Select
+                value={type}
+                onChange={(e) => handleRuleTypeChange(idx, e.target.value)}
+                label="Rule Type"
+              >
+                {RULE_TYPES.map((rt) => (
+                  <MenuItem key={rt} value={rt}>
+                    {rt}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {type !== '' && rulesByType[type]?.length > 0 && (
+              <FormGroup sx={{ mt: 1 }}>
+                {rulesByType[type].map((rule) => (
+                  <Box key={rule.id} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={selectedRules[type]?.includes(rule.id) || false}
+                          onChange={() => handleRuleToggle(type, rule.id)}
+                        />
+                      }
+                      label={rule.name}
                     />
-                  }
-                  label={rule.name}
-                />
-              ))}
-            </FormGroup>
+                    {rule.description && (
+                      <Typography variant="body2" sx={{ ml: 1 }}>
+                        ({htmlToPlainText(rule.description)})
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </FormGroup>
+            )}
+
           </Grid>
         ))}
 
@@ -256,7 +306,6 @@ const CampaignEdit = () => {
               );
             })}
           </FormGroup>
-
         </Grid>
 
         <Grid item xs={12}>
