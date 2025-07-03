@@ -9,6 +9,7 @@ import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
 import CampaignIcon from '@mui/icons-material/Campaign';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 
 // types
@@ -156,6 +157,14 @@ const menuItems: { items: NavItemType[] } = {
       // ],
       privileges: [],
       icon: CampaignIcon,
+    },
+    {
+      id: "rewards",
+      title: "Rewards",
+      type: "item",
+      url: "/rewards",
+      privileges: [],
+      icon: EmojiEventsIcon,
     },
   ],
 };
