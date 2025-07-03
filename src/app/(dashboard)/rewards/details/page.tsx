@@ -12,6 +12,25 @@ const htmlToPlainText = (htmlString: string): string => {
   return tempDiv.textContent || tempDiv.innerText || '';
 };
 
+function getOperatorText(operator: string): string {
+  switch (operator) {
+    case '==':
+      return 'Equal To';
+    case '!=':
+      return 'Not Equal';
+    case '>':
+      return 'Greater Than';
+    case '>=':
+      return 'Greater Than or Equal';
+    case '<':
+      return 'Less Than';
+    case '<=':
+      return 'Less Than or Equal';
+    default:
+      return operator; // fallback if unrecognized
+  }
+}
+
 const CampaignDetails = () => {
   const params = useSearchParams();
   const paramId =  params.get('id') || null;
@@ -49,6 +68,17 @@ const CampaignDetails = () => {
 
   if (!campaign) return null;
 
+  const cardColors = [
+    '#e0f7fa', // light cyan
+    '#e8f5e9', // light green
+    '#ede7f6', // light indigo
+  ];
+
+  const rowColors = [
+    '#e0f7fa', // light green
+    '#f0f0f0'
+  ];
+
   return (
     <Box px={4} py={6}>
       <Typography variant="h4" gutterBottom>{campaign.name}</Typography>
@@ -63,25 +93,30 @@ const CampaignDetails = () => {
               {campaign.tiers.map((ct: any, i: number) => (
                 <TableCell key={i} align="center">
                   <Typography fontWeight={700} sx={{ color: ct.tier.color || '#000' }}>{ct.tier.name}</Typography>
-                  <Typography variant="body2">Spend ${ct.tier.min_points}+</Typography>
+                  <Typography variant="body2">Points {ct.tier.min_points}</Typography>
                   <Typography variant="caption">Rate: {ct.point_conversion_rate}x</Typography>
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {benefitsList.map((b: any, i: number) => (
-              <TableRow key={i}>
-                <TableCell><span dangerouslySetInnerHTML={{ __html: b }} /></TableCell>
-                {campaign.tiers.map((ct: any, j: number) => (
-                  <TableCell key={j} align="center">
-                    {ct._parsedBenefits?.includes(b) && (
-                      <CheckCircle color={ct.tier.color || '#4caf50'} size={20} />
-                    )}
+            {benefitsList.map((b: any, i: number) => {
+              const bgColor = rowColors[i % rowColors.length];
+              return (
+                <TableRow key={i} sx={{ backgroundColor: bgColor }}>
+                  <TableCell>
+                    <span dangerouslySetInnerHTML={{ __html: b }} />
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                  {campaign.tiers.map((ct: any, j: number) => (
+                    <TableCell key={j} align="center">
+                      {ct._parsedBenefits?.includes(b) && (
+                        <CheckCircle color={ct.tier.color || '#4caf50'} size={20} />
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Paper>
@@ -89,16 +124,58 @@ const CampaignDetails = () => {
       {/* Ways to Earn Points */}
       <Box mt={6}>
         <Typography variant="h5" gutterBottom>🌟 Ways to Earn Points</Typography>
-        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }} gap={3} mt={2}>
-          {campaign.rules.map((r: any, i: number) => (
-            <Card key={i} elevation={3}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography fontSize='2rem'>{r.rule.icon}</Typography>
-                <Typography fontWeight={600}>{r.rule.points} Points</Typography>
-                <Typography variant='body2'>{r.rule.name}</Typography>
-              </CardContent>
-            </Card>
-          ))}
+        <Box
+          display="grid"
+          gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }}
+          gap={3}
+          mt={2}
+        >
+          {campaign.rules.map((r: any, i: number) => {
+            const bgColor = cardColors[i % cardColors.length];
+
+            if (r.rule.rule_type === 'event based earn') {
+              return (
+                <Card key={i} elevation={3} sx={{ backgroundColor: bgColor }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="body1" fontWeight={600}>
+                      {r.rule.name}
+                    </Typography>
+                    <Typography>Get {r.rule.reward_points} Points</Typography>
+                  </CardContent>
+                </Card>
+              );
+            } else if (r.rule.rule_type === 'spend and earn') {
+              return (
+                <Card key={i} elevation={3} sx={{ backgroundColor: bgColor }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography fontWeight={600}>
+                      Get {r.rule.reward_points} Points
+                    </Typography>
+                    <Typography>
+                      By Spending {r.rule.min_amount_spent} SAR
+                    </Typography>
+                  </CardContent>
+                </Card>
+              );
+            } else if (r.rule.rule_type === 'dynamic rule') {
+              return (
+                <Card key={i} elevation={3} sx={{ backgroundColor: bgColor }}>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography fontWeight={600}>
+                      Get {r.rule.reward_points} Points
+                    </Typography>
+                    <Typography variant="body1">
+                      If {r.rule.condition_type} is{' '}
+                      {getOperatorText(r.rule.condition_operator)}{' '}
+                      {r.rule.condition_value}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              );
+            } else {
+              return null;
+            }
+          })}
         </Box>
       </Box>
     </Box>
