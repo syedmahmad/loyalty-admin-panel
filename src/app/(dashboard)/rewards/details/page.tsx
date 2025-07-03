@@ -1,9 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell, Card, CardContent } from '@mui/material';
+import { Box, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell, Card, CardContent, IconButton, Tooltip, useTheme } from '@mui/material';
 import { CheckCircle } from 'lucide-react';
 import { GET } from '@/utils/AxiosUtility';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const htmlToPlainText = (htmlString: string): string => {
   if (!htmlString) return '';
@@ -32,6 +33,8 @@ function getOperatorText(operator: string): string {
 }
 
 const CampaignDetails = () => {
+  const theme = useTheme();
+  const router = useRouter();
   const params = useSearchParams();
   const paramId =  params.get('id') || null;
   const [campaign, setCampaign] = useState<any>(null);
@@ -80,7 +83,14 @@ const CampaignDetails = () => {
   ];
 
   return (
-    <Box px={4} py={6}>
+    <Box px={4}>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ paddingLeft: 0, justifyContent: 'flex-start', width: 105, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+      <br />
+      <br />
       <Typography variant="h4" gutterBottom>{campaign.name}</Typography>
       <Typography variant="body1" gutterBottom>{htmlToPlainText(campaign.description)}</Typography>
 

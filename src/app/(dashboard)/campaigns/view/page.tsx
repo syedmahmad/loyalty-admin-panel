@@ -126,12 +126,24 @@ const CampaignsList = () => {
               <Grid item xs={12} md={6} key={campaign.id}>
                 <Card sx={{ borderRadius: 3 }}>
                   <CardContent>
-                    <Typography variant="h6" fontWeight={600}>
-                      {campaign.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          {campaign.name}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <IconButton onClick={() => router.push(`/campaigns/edit?id=${campaign.id}`)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      BU: {campaign.business_unit?.name || 'N/A'}
-                    </Typography>
+                        BU: {campaign.business_unit?.name || 'N/A'}
+                      </Typography>
                     <Typography variant="body2">
                       {dayjs(campaign.start_date).format('MMM D, YYYY')} -{' '}
                       {dayjs(campaign.end_date).format('MMM D, YYYY')}
@@ -145,14 +157,6 @@ const CampaignsList = () => {
                       </Tooltip>
                     </Box>
                   </CardContent>
-                  <CardActions>
-                    <IconButton onClick={() => router.push(`/campaigns/edit?id=${campaign.id}`)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </CardActions>
                 </Card>
               </Grid>
             );
