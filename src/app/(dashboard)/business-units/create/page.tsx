@@ -10,7 +10,11 @@ import {
   CardContent,
   Grid,
   InputAdornment,
+  Tooltip,
+  IconButton,
+  useTheme,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -30,7 +34,7 @@ const BusinessUnitCreateForm = () => {
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
+  const theme = useTheme();
   useEffect(() => {
     const clientInfo = localStorage.getItem('client-info');
     if (clientInfo) {
@@ -81,112 +85,120 @@ const BusinessUnitCreateForm = () => {
   }
 
   return (
-    <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
-      <CardContent>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-          🚀 Create New Business Unit
-        </Typography>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
 
-        <Formik
-          initialValues={{
-            name: '',
-            description: '',
-            location: '',
-          }}
-          validationSchema={BusinessUnitSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ values, errors, touched, handleChange }) => (
-            <Form noValidate>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="name"
-                    label="Business Unit Name"
-                    value={values.name}
-                    onChange={handleChange}
-                    error={touched.name && Boolean(errors.name)}
-                    helperText={touched.name && errors.name}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <BusinessIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
+      <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
+        <CardContent>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+            🚀 Create New Business Unit
+          </Typography>
 
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="description"
-                    label="Description"
-                    value={values.description}
-                    onChange={handleChange}
-                    error={touched.description && Boolean(errors.description)}
-                    helperText={touched.description && errors.description}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <DescriptionIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
+          <Formik
+            initialValues={{
+              name: '',
+              description: '',
+              location: '',
+            }}
+            validationSchema={BusinessUnitSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ values, errors, touched, handleChange }) => (
+              <Form noValidate>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      name="name"
+                      label="Business Unit Name"
+                      value={values.name}
+                      onChange={handleChange}
+                      error={touched.name && Boolean(errors.name)}
+                      helperText={touched.name && errors.name}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <BusinessIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
 
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="location"
-                    label="Location"
-                    value={values.location}
-                    onChange={handleChange}
-                    error={touched.location && Boolean(errors.location)}
-                    helperText={touched.location && errors.location}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationOnIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      name="description"
+                      label="Description"
+                      value={values.description}
+                      onChange={handleChange}
+                      error={touched.description && Boolean(errors.description)}
+                      helperText={touched.description && errors.description}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <DescriptionIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
 
-                <Grid item xs={12}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                    disabled={loading}
-                    fullWidth
-                    size="large"
-                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                  >
-                    {loading ? <CircularProgress size={24} /> : 'Create Business Unit'}
-                  </Button>
-                  <br />
-                  <br />
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    fullWidth
-                    size="large"
-                    onClick={() => router.push('view')}
-                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                  >
-                    Go Back
-                  </Button>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      name="location"
+                      label="Location"
+                      value={values.location}
+                      onChange={handleChange}
+                      error={touched.location && Boolean(errors.location)}
+                      helperText={touched.location && errors.location}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LocationOnIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      type="submit"
+                      disabled={loading}
+                      fullWidth
+                      size="large"
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    >
+                      {loading ? <CircularProgress size={24} /> : 'Create Business Unit'}
+                    </Button>
+                    <br />
+                    <br />
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      fullWidth
+                      size="large"
+                      onClick={() => router.push('view')}
+                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    >
+                      Go Back
+                    </Button>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </Form>
-          )}
-        </Formik>
-      </CardContent>
+              </Form>
+            )}
+          </Formik>
+        </CardContent>
     </Card>
+    </>
   );
 };
 
