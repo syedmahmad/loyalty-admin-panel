@@ -12,7 +12,9 @@ import {
   Tooltip,
   IconButton,
   InputLabel,
+  useTheme,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useState } from 'react';
 import { POST } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
@@ -53,7 +55,7 @@ const RuleCreateForm = () => {
   const [form, setForm] = useState(initialForm);
   const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState(false);
-
+  const theme = useTheme();
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -81,9 +83,12 @@ const RuleCreateForm = () => {
 
     setLoading(true);
 
+    const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+
     const payload = {
       name: form.name,
       rule_type: form.rule_type,
+      client_id: clientInfo.id, 
       min_amount_spent: form.min_amount_spent ? parseFloat(form.min_amount_spent) : null,
       reward_points: form.reward_points ? parseFloat(form.reward_points) : null,
       event_triggerer: form.event_triggerer || null,
@@ -118,7 +123,14 @@ const RuleCreateForm = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+
+      <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" gutterBottom fontWeight={600}>
         ➕ Create Rule
       </Typography>
@@ -274,6 +286,7 @@ const RuleCreateForm = () => {
         </Button>
       </Box>
     </Card>
+    </>
   );
 };
 

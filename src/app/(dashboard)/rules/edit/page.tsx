@@ -12,7 +12,9 @@ import {
   Tooltip,
   IconButton,
   InputLabel,
+  useTheme,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { GET, PUT } from '@/utils/AxiosUtility';
@@ -40,7 +42,7 @@ const RuleEdit = () => {
   const router = useRouter();
   const clientInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
   const updated_by = clientInfo?.id;
-
+  const theme = useTheme();
   const [form, setForm] = useState(initialForm);
   const [rules, setRules] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState(paramId || '');
@@ -53,7 +55,7 @@ const RuleEdit = () => {
 
   const loadRuleDetails = async (ruleId: string) => {
     setLoading(true);
-    const res = await GET(`/rules/${ruleId}`);
+    const res = await GET(`/rules/single/${ruleId}`);
     const rule = res?.data;
 
     if (rule) {
@@ -76,7 +78,8 @@ const RuleEdit = () => {
   };
 
   const fetchAllRules = async () => {
-    const res = await GET('/rules');
+    const clientInfo = JSON.parse(localStorage.getItem('client-info')!)
+    const res = await GET(`/rules/${clientInfo.id}`);
     setRules(res?.data || []);
   };
 
@@ -147,7 +150,14 @@ const RuleEdit = () => {
   };
 
   return (
-    <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+
+      <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" gutterBottom fontWeight={600}>
         ✏️ Edit Rule
       </Typography>
@@ -340,6 +350,7 @@ const RuleEdit = () => {
         </Button>
       </Box>
     </Card>
+    </>
   );
 };
 
