@@ -103,9 +103,6 @@ const EditTierForm = () => {
   const validationSchema = Yup.object({
     name: Yup.string().required('Tier name is required'),
     min_points: Yup.number().required('Minimum points required'),
-    //  conversion_rate: Yup.number()
-    //       .required('Conversion rate is required')
-    //       .min(0, 'Conversion rate must be a positive number'),
     business_unit_id: Yup.string().required('Business unit is required'),
   });
 

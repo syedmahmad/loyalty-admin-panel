@@ -174,7 +174,7 @@ const CouponList = () => {
                          <span>{htmlToPlainText(coupon.benefits || '-')}</span>
                       </Tooltip>
                     </TableCell>
-                      <TableCell align="right" sx={{ display: 'flex' }}>
+                      <TableCell sx={{ display: 'flex' }}>
                         <Tooltip title="Edit">
                           <IconButton onClick={() => router.push(`/coupons/edit?id=${coupon.id}`)}>
                             <EditIcon fontSize="small" />
