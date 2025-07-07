@@ -35,34 +35,9 @@ import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
   couponTypesArr,
+  tooltipMessages,
 } from "@/constants/constants";
-
-const tooltipMessages = {
-  discountPercentage: {
-    DISCOUNT:
-      "Enter a percentage-based discount (e.g., 10 for 10% off). Leave blank if using fixed amount.",
-    CASHBACK: "This field is ignored for cashback. Leave it as 0.",
-    TIER_BASED: "Not required. Discount is defined per user tier.",
-    REFERRAL: "Optional: Used when offering percentage-based rewards.",
-    BIRTHDAY: "Set the percentage discount for birthday offers.",
-    USAGE_BASED: "Used to offer discount after specific usage count.",
-    GEO_TARGETED: "Apply discount based on user's location.",
-    PRODUCT_SPECIFIC: "Applies percentage discount to specific products.",
-    TIME_LIMITED: "Valid within the specified time window.",
-  },
-  deductionPrice: {
-    DISCOUNT:
-      "Enter a fixed discount value (e.g., 100 for ₹100 off). Leave blank if using percentage.",
-    CASHBACK: "This is the cashback amount the user receives after purchase.",
-    REFERRAL: "Fixed cashback or reward amount for referral.",
-    TIER_BASED: "Not used here — discount comes from tier mapping.",
-    BIRTHDAY: "Fixed discount for birthday-related purchases.",
-    USAGE_BASED: "Fixed discount after Nth usage.",
-    GEO_TARGETED: "Flat discount based on user’s location.",
-    PRODUCT_SPECIFIC: "Flat amount discount for specific products.",
-    TIME_LIMITED: "Flat discount available within the active period.",
-  },
-};
+import { generateRandomCode } from "@/utils/Index";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
@@ -72,15 +47,6 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
     throw new Error("Failed to fetch business units");
   }
   return response.data;
-};
-
-const generateRandomCode = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `${result}`;
 };
 
 const oncePerCustomer = [
@@ -473,15 +439,21 @@ const CreateCouponForm = () => {
                     value={values.discount_percentage}
                     onChange={handleChange}
                     InputProps={{
-                      endAdornment: (
+                      endAdornment: selectedCouponType ? (
                         <InputAdornment position="end">
-                          <Tooltip title="This field is ignored for cashback. Leave it as 0.">
+                          <Tooltip
+                            title={
+                              tooltipMessages.discountPercentage[
+                                selectedCouponType
+                              ] || ""
+                            }
+                          >
                             <IconButton edge="end">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </InputAdornment>
-                      ),
+                      ) : null,
                     }}
                     error={
                       !!touched.discount_percentage &&
@@ -502,15 +474,21 @@ const CreateCouponForm = () => {
                     value={values.discount_price}
                     onChange={handleChange}
                     InputProps={{
-                      endAdornment: (
+                      endAdornment: selectedCouponType ? (
                         <InputAdornment position="end">
-                          <Tooltip title="Enter the cashback amount the user will receive after the purchase.">
+                          <Tooltip
+                            title={
+                              tooltipMessages.discountPrice[
+                                selectedCouponType
+                              ] || ""
+                            }
+                          >
                             <IconButton edge="end">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </InputAdornment>
-                      ),
+                      ) : null,
                     }}
                     error={!!touched.discount_price && !!errors.discount_price}
                     helperText={touched.discount_price && errors.discount_price}
