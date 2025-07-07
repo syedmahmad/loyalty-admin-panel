@@ -33,7 +33,7 @@ const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
   </Box>
 );
 
-const RuleCreateForm = () => {
+const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const userInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
   const created_by = userInfo?.id;
@@ -114,7 +114,7 @@ const RuleCreateForm = () => {
       toast.success('Rule created successfully!');
       setForm(initialForm);
       setDescription('');
-      router.push('/rules/view');
+     onSuccess();
     } else {
       toast.error('Failed to create rule');
     }
@@ -124,16 +124,16 @@ const RuleCreateForm = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
-      </Tooltip>
+      </Tooltip> */}
 
-      <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
+      {/* <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" gutterBottom fontWeight={600}>
         ➕ Create Rule
-      </Typography>
+      </Typography> */}
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
@@ -272,20 +272,13 @@ const RuleCreateForm = () => {
       </Grid>
 
       <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-        <Button variant="contained" color="primary" onClick={handleSubmit} disabled={loading}>
+        <Button variant="outlined" color="primary" onClick={handleSubmit} disabled={loading}
+          sx={{ fontWeight: 600, textTransform: 'none' }}>
           {loading ? <CircularProgress size={24} /> : 'Create Rule'}
         </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          onClick={() => router.push('view')}
-          sx={{ textTransform: 'none', fontWeight: 600 }}
-        >
-          Go Back
-        </Button>
+        
       </Box>
-    </Card>
+    
     </>
   );
 };

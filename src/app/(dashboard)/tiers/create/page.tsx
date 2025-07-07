@@ -12,6 +12,7 @@ import {
   Tooltip,
   IconButton,
   useTheme,
+  Box,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Formik, Form } from 'formik';
@@ -44,7 +45,7 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
 //   return response.data;
 // };
 
-const CreateTierForm = () => {
+const CreateTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>('');
@@ -120,13 +121,14 @@ const CreateTierForm = () => {
       resetForm();
       setBenefits('');
       setLoading(false);
-      router.push('/tiers/view');
+     // router.push('/tiers/view');
+     onSuccess();
     }
   };
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
@@ -135,7 +137,7 @@ const CreateTierForm = () => {
       <CardContent>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           ➕ Create New Tier
-        </Typography>
+        </Typography> */}
 
         <Formik
           initialValues={initialValues}
@@ -245,18 +247,22 @@ const CreateTierForm = () => {
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Button
+                 <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                    <Button
+                    variant="outlined"
+                    color="primary"
                     type="submit"
-                    fullWidth
-                    variant="contained"
                     disabled={loading}
-                    sx={{ textTransform: 'none', borderRadius: 2 }}
-                  >
-                    {loading ? <CircularProgress size={24} /> : 'Create Tier'}
-                  </Button>
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight:600}}
+                                             >
+                   {loading ? <CircularProgress size={24} /> : 'Create Tier'}
+                    </Button>
+                   </Box>
+                    </Grid>
+                
                   <br />
                   <br />
-                  <Button
+                  {/* <Button
                     variant="contained"
                     color="secondary"
                     fullWidth
@@ -265,15 +271,13 @@ const CreateTierForm = () => {
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                   >
                     Go Back
-                  </Button>
-                </Grid>
+                  </Button> */}
+                
               </Grid>
             </Form>
           )}
         </Formik>
-      </CardContent>
-    </Card>
-    </>
+     </>
   );
 };
 

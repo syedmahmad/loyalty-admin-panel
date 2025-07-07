@@ -36,7 +36,7 @@ const initialForm = {
   condition_value: '',
 };
 
-const RuleEdit = () => {
+const RuleEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
   const router = useRouter();
@@ -141,7 +141,7 @@ const RuleEdit = () => {
 
     if (res?.status === 200) {
       toast.success('Rule updated successfully!');
-      router.push('/rules/view');
+      onSuccess();
     } else {
       toast.error('Failed to update rule');
     }
@@ -151,7 +151,7 @@ const RuleEdit = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
@@ -160,7 +160,7 @@ const RuleEdit = () => {
       <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" gutterBottom fontWeight={600}>
         ✏️ Edit Rule
-      </Typography>
+      </Typography> */}
 
       {!paramId && (
         <Grid container spacing={2} sx={{ mb: 1 }}>
@@ -336,20 +336,13 @@ const RuleEdit = () => {
       )}
 
       <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+        <Button variant="outlined" onClick={handleSubmit} disabled={loading}
+          sx={{ fontWeight: 600, textTransform: 'none' }}>
           {loading ? <CircularProgress size={24} /> : 'Update Rule'}
         </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          onClick={() => router.push('view')}
-          sx={{ textTransform: 'none', fontWeight: 600 }}
-        >
-          Go Back
-        </Button>
+       
       </Box>
-    </Card>
+    
     </>
   );
 };

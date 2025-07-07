@@ -10,6 +10,7 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -22,12 +23,15 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import { GET, DELETE } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import RuleCreateForm from '../create/page';
+import RuleEdit from '../edit/page';
+import BaseDrawer from '@/components/drawer/basedrawer';
 
 type Rule = {
   id: number;
@@ -53,6 +57,9 @@ const RuleList = () => {
   const [searchValue, setSearchValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+    const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+  const drawerId = searchParams.get('id');
 
   const router = useRouter();
 
@@ -64,6 +71,18 @@ const RuleList = () => {
     setRules(res?.data || []);
     setLoading(false);
   };
+  const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl);
+  };
+  //  const fetchRules = async () => {
+  //   setLoading(true);
+  //   const res = await GET('/rules');
+  //   setRules(res?.data || []);
+  //   setLoading(false);
+  // };
+
+  
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -97,12 +116,20 @@ const RuleList = () => {
   };
 
   return (
-    <Card sx={{ p: 3, mt: 4, borderRadius: 3, width: '100%', maxWidth: 1200, mx: 'auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          🧩 Rules List
-        </Typography>
-        <Button variant="contained" onClick={() => router.push('create')}>
+     <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" ,mb:2 }}>
+        <Typography
+                    sx={{
+                      color: 'rgba(0, 0, 0, 0.87)',
+                      fontFamily: 'Outfit',
+                      fontSize: '32px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Rules 
+                  </Typography>
+        <Button variant="outlined" onClick={() =>router.push('/rules/view?drawer=create')}
+          sx={{ fontWeight: 600, textTransform: 'none' }} >
           Create Rule
         </Button>
       </Box>
@@ -160,7 +187,8 @@ const RuleList = () => {
                     <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent_on_invoice ?? '-' : '-'}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="Edit">
-                        <IconButton onClick={() => router.push(`/rules/edit?id=${rule.id}`)}>
+                        <IconButton onClick={() => router.push(`/rules/view?drawer=edit&id=${rule.id}`)
+                        }>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -195,7 +223,33 @@ const RuleList = () => {
           <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>
-    </Card>
+    
+    {/* Drawer for Create */}
+      <BaseDrawer
+        open={drawerOpen === 'create'}
+        onClose={handleCloseDrawer}
+        title="Create Rule"
+      >
+        <RuleCreateForm onSuccess={() => {
+          handleCloseDrawer(); 
+          fetchRules(); 
+    }}/>
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Edit Rule"
+        >
+          <RuleEdit onSuccess={() => {
+          handleCloseDrawer(); 
+          fetchRules(); 
+    }}/>
+        </BaseDrawer>
+      )}
+      </Paper>
   );
 };
 

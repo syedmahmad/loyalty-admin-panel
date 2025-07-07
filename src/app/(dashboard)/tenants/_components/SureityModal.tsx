@@ -73,7 +73,7 @@ const RegenrateModal = ({
 
       <Grid2 xs={12} display="flex" justifyContent="center">
         <Button
-          variant="contained"
+          variant="outlined"
           color="primary"
           onClick={() => handleRegenerateSecret(clientId)}
         >

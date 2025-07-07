@@ -34,7 +34,7 @@ const htmlToPlainText = (htmlString: string): string => {
   return tempDiv.textContent || tempDiv.innerText || '';
 };
 
-const CampaignCreate = () => {
+const CampaignCreate  =  ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const theme = useTheme();
   const [name, setName] = useState('');
@@ -169,7 +169,8 @@ const CampaignCreate = () => {
     try {
       await Promise.all(payloads.map((payload) => POST('/campaigns', payload)));
       toast.success('Campaign(s) created!');
-      router.push('/campaigns/view');
+    // router.push('/campaigns/view');
+    onSuccess();
     } catch (err) {
       console.error(err);
       toast.error('Failed to create one or more campaigns');
@@ -180,15 +181,15 @@ const CampaignCreate = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
       </Tooltip>
-      <Card sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
-      <Typography variant="h5" fontWeight={600} gutterBottom>
+      <Card sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}> */}
+      {/* <Typography variant="h5" fontWeight={600} gutterBottom>
         🎯 Create Campaign
-      </Typography>
+      </Typography> */}
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
@@ -339,11 +340,12 @@ const CampaignCreate = () => {
       </Grid>
 
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+        <Button variant="outlined" onClick={handleSubmit} disabled={loading}
+          sx={{ fontWeight: 600, textTransform: 'none' }} >
           {loading ? <CircularProgress size={24} /> : 'Create Campaign'}
         </Button>
       </Box>
-    </Card>
+    
     </>
   );
 };

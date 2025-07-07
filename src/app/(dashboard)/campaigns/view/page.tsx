@@ -26,12 +26,15 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { GET, DELETE } from '@/utils/AxiosUtility';
-import { useRouter } from 'next/navigation';
+import { useRouter ,useSearchParams} from 'next/navigation';
 import dayjs from 'dayjs';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import { toast } from 'react-toastify';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import CampaignCreateForm from '../create/page';
+import CampaignEdit from '../edit/page';
 
 const CampaignsList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -40,6 +43,13 @@ const CampaignsList = () => {
   const [searchValue, setSearchValue] = useState('');
   const [nameFilter, setNameFilter] = useState('');
   const router = useRouter();
+    const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+  const drawerId = searchParams.get('id');
+   const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl);
+  };
 
   const fetchCampaigns = async (name = '') => {
     setLoading(true);
@@ -83,23 +93,34 @@ const CampaignsList = () => {
   }, [searchValue]);
 
   return (
-    <Box sx={{ width: 900, mx: 'auto', mt: 4, px: 2 }}>
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" fontWeight={600}>
-          📋 All Campaigns
-        </Typography>
+        <Typography
+                  sx={{
+                        color: 'rgba(0, 0, 0, 0.87)',
+                        fontFamily: 'Outfit',
+                        fontSize: '32px',
+                        fontWeight: 600,
+                        }}
+                        >
+                             All Campaigns
+                            </Typography>
+                  
 
         <Box sx={{ gap: 1, display: 'flex' }}>
+         
           <Select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
             size="small"
+             sx={{ fontWeight: 600, textTransform: 'none' }}
           >
-            <MenuItem value="card">Card View</MenuItem>
+            <MenuItem value="card" >Card View</MenuItem>
             <MenuItem value="table">Table View</MenuItem>
           </Select>
-          <Button size="small" variant="contained" onClick={() => router.push('create')}>
-            Create Campaign
+          <Button size="small" variant="outlined" onClick={() => router.push('/campaigns/view?drawer=create')}
+              sx={{ fontWeight: 600, textTransform: 'none' }}>
+            Create 
           </Button>
         </Box>
       </Box>
@@ -123,7 +144,7 @@ const CampaignsList = () => {
             const tierNames = campaign.tiers?.map((t: any) => t.tier?.name).join(', ') || 'No Tiers';
 
             return (
-              <Grid item xs={12} md={6} key={campaign.id}>
+              <Grid item xs={12} sm={6} md={4} key={campaign.id}>
                 <Card sx={{ borderRadius: 3 }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -133,7 +154,7 @@ const CampaignsList = () => {
                         </Typography>
                       </Box>
                       <Box>
-                        <IconButton onClick={() => router.push(`/campaigns/edit?id=${campaign.id}`)}>
+                        <IconButton  onClick={() =>router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`)}>
                           <EditIcon />
                         </IconButton>
                         <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
@@ -182,6 +203,7 @@ const CampaignsList = () => {
                 const tierNames = campaign.tiers?.map((t: any) => t.tier?.name).join(', ') || 'No Tiers';
 
                 return (
+                  
                   <TableRow key={campaign.id}>
                     <TableCell>{campaign.name}</TableCell>
                     <TableCell>{campaign.business_unit?.name || 'N/A'}</TableCell>
@@ -198,8 +220,8 @@ const CampaignsList = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell>
-                      <IconButton onClick={() => router.push(`/campaigns/edit?id=${campaign.id}`)}>
-                        <EditIcon />
+                     <IconButton onClick={() =>router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`)}>
+                     <EditIcon />
                       </IconButton>
                       <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
                         <DeleteIcon />
@@ -212,7 +234,36 @@ const CampaignsList = () => {
           </Table>
         </TableContainer>
       )}
-    </Box>
+       {/* Drawer for Create */}
+      <BaseDrawer
+        open={drawerOpen === 'create'}
+        onClose={handleCloseDrawer}
+        title="Create Campaign"
+      >
+        <CampaignCreateForm
+          onSuccess={() => {
+            handleCloseDrawer();
+            fetchCampaigns();
+          }}
+        />
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Edit Campaign"
+        >
+          <CampaignEdit
+            onSuccess={() => {
+              handleCloseDrawer();
+              fetchCampaigns();
+            }}
+          />
+        </BaseDrawer>
+      )}
+    </Paper>
   );
 };
 

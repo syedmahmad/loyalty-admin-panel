@@ -77,7 +77,7 @@ const ClientInfo = ({ clientInfo, reFetch }: any) => {
       <Grid2 xs={12} md={12} sx={{ mt: 2 }}>
         <Button
           fullWidth
-          variant="contained"
+          variant="outlined"
           endIcon={<KeyboardArrowRightIcon />}
           onClick={() => {
             localStorage.setItem("client-info", JSON.stringify(clientInfo));
