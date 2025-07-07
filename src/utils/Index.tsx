@@ -27,3 +27,10 @@ export const generateRandomCode = () => {
   }
   return `${result}`;
 };
+
+export const htmlToPlainText = (htmlString: string): string => {
+  if (!htmlString) return '';
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = htmlString;
+  return tempDiv.textContent || tempDiv.innerText || '';
+};

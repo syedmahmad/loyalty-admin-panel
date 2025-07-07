@@ -20,7 +20,7 @@ export type CouponFormValues = {
   date_to: string;
   once_per_customer?: number;
   reuse_interval?:number;
-  is_active: boolean;
+  status: number;
   benefits: string;
   conditions: {
     [key: string]: any;

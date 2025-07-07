@@ -6,8 +6,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Grid,
   IconButton,
@@ -16,7 +14,7 @@ import {
   Switch,
   TextField,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import { useFormik } from "formik";
 import { DateTime } from "luxon";
@@ -30,9 +28,9 @@ import {
   COUPON_TYPE_ARRAY,
   tooltipMessages,
 } from "@/constants/constants";
+import { generateRandomCode } from "@/utils/Index";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { CouponFormValues } from "../types";
-import { generateRandomCode } from "@/utils/Index";
 
 type Tier = {
   id: number;
@@ -51,7 +49,7 @@ const oncePerCustomer = [
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
-const EditCouponForm = () => {
+const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");
@@ -77,11 +75,14 @@ const EditCouponForm = () => {
       : 0;
 
   useEffect(() => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
     const resolveAllPromises = async () => {
-      const fetchTiersAndBUs = async () => {
+      const fetchTiersAndBUs = async (name: string = "") => {
         const [tierListRes, buRes, couponTypesRes] = await Promise.all([
-          GET("/tiers"),
-          GET("/business-units"),
+          GET(`/tiers/${clientInfo.id}?name=${encodeURIComponent(name)}`),
+          GET(
+            `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
+          ),
           GET("/coupon-types"),
         ]);
         setTiers(tierListRes?.data.tiers || []);
@@ -111,7 +112,7 @@ const EditCouponForm = () => {
 
   const fetchCouponById = async (id: string) => {
     setLoading(true);
-    const res = await GET(`/coupons/${id}`);
+    const res = await GET(`/coupons/edit/${id}`);
     if (!res?.data) {
       toast.error("Coupon not found");
       return;
@@ -146,7 +147,7 @@ const EditCouponForm = () => {
         DateTime.fromISO(couponData?.date_from).toFormat("yyyy-MM-dd") || "",
       date_to:
         DateTime.fromISO(couponData?.date_to).toFormat("yyyy-MM-dd") || "",
-      is_active: couponData?.is_active || 1,
+      status: couponData?.status,
     },
     validationSchema: Yup.object({
       code: Yup.string().required("Code is required"),
@@ -160,7 +161,7 @@ const EditCouponForm = () => {
       date_to: Yup.date()
         .min(Yup.ref("date_from"), "End date must be after start date")
         .required("End date is required"),
-      is_active: Yup.boolean().required(),
+      status: Yup.boolean().required(),
     }),
     enableReinitialize: true,
     onSubmit: async (values, { resetForm }) => {
@@ -209,9 +210,11 @@ const EditCouponForm = () => {
       discount_percentage: values.discount_percentage,
       discount_price: values.discount_price,
       once_per_customer: values.once_per_customer,
+      reuse_interval: values.reuse_interval,
       usage_limit: values.usage_limit,
       date_from: values.date_from,
       date_to: values.date_to,
+      status: values.status,
       benefits: benefits || "",
       updated_by: userId,
     };
@@ -220,7 +223,7 @@ const EditCouponForm = () => {
       toast.error("Failed to update coupon");
     } else {
       toast.success("Coupon updated!");
-      router.push("/coupons/view");
+      onSuccess();
     }
     setLoading(false);
   };
@@ -250,490 +253,482 @@ const EditCouponForm = () => {
     setDynamicRows((prev) => prev.filter((c) => c.id !== idToDelete));
   };
 
-  console.log("dynamicRows:::", dynamicRows);
+  console.log("couponData:::", couponData);
+  console.log("status :::", values.status)
 
   return (
-    <Card sx={{ width: 600, mx: "auto", mt: 4, p: 2, borderRadius: 3 }}>
-      <CardContent>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          ✏ Edit Coupon
-        </Typography>
+    <>
+      {couponData && (
+        <form onSubmit={formik.handleSubmit}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Generate code"
+                value={values.code}
+                name="code"
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        onClick={() => {
+                          const generatedCode = generateRandomCode();
+                          setFieldValue("code", generatedCode);
+                        }}
+                        variant="contained"
+                        sx={{
+                          height: "100%",
+                          borderRadius: 0,
+                          padding: "20px 16px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Generate
+                      </Button>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: 2,
+                    paddingRight: 0,
+                    overflow: "hidden",
+                  },
+                }}
+                error={!!touched.code && !!errors.code}
+                helperText={touched.code && errors.code}
+              />
+            </Grid>
 
-        {couponData && (
-          <form onSubmit={formik.handleSubmit}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  placeholder="Generate code"
-                  value={values.code}
-                  name="code"
-                  onChange={handleChange}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Button
-                          onClick={() => {
-                            const generatedCode = generateRandomCode();
-                            setFieldValue("code", generatedCode);
-                          }}
-                          variant="contained"
-                          sx={{
-                            height: "100%",
-                            borderRadius: 0,
-                            padding: "20px 16px",
-                            fontWeight: 500,
-                          }}
-                        >
-                          Generate
-                        </Button>
-                      </InputAdornment>
-                    ),
-                    sx: {
-                      borderRadius: 2,
-                      paddingRight: 0,
-                      overflow: "hidden",
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                name="coupon_type"
+                label="Coupon Type"
+                value={values.coupon_type}
+                onChange={(e) => {
+                  handleChange(e);
+                  const selectedCouponId = Number(e.target.value);
+                  const selectedOption: any = COUPON_TYPE_ARRAY.find(
+                    (option: { id: number }) => option.id === selectedCouponId
+                  );
+                  setSelectedCouponType(selectedOption.type || "");
+                  setFieldValue("conditions", {});
+                  setDynamicRows([
+                    { id: generateId(), type: "", operator: "", value: "" },
+                  ]);
+                  setTimeout(() => formik.validateForm(), 0);
+                }}
+                error={!!touched.coupon_type && !!errors.coupon_type}
+                helperText={touched.coupon_type && errors.coupon_type}
+              >
+                {couponTypes.map(
+                  (option: { id: number; coupon_type: string }) => (
+                    <MenuItem key={option.coupon_type} value={option.id}>
+                      {option.coupon_type}
+                    </MenuItem>
+                  )
+                )}
+              </TextField>
+            </Grid>
+
+            {values.coupon_type !== "" && (
+              <>
+                {dynamicRows?.map(
+                  (
+                    row: {
+                      id: any;
+                      type: string;
+                      operator: string;
+                      value: string;
+                      tier?: number;
                     },
-                  }}
-                  error={!!touched.code && !!errors.code}
-                  helperText={touched.code && errors.code}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  name="coupon_type"
-                  label="Coupon Type"
-                  value={values.coupon_type}
-                  onChange={(e) => {
-                    handleChange(e);
-                    const selectedCouponId = Number(e.target.value);
-                    const selectedOption: any = COUPON_TYPE_ARRAY.find(
-                      (option: { id: number }) => option.id === selectedCouponId
-                    );
-                    setSelectedCouponType(selectedOption.type || "");
-                    setFieldValue("conditions", {});
-                    setDynamicRows([
-                      { id: generateId(), type: "", operator: "", value: "" },
-                    ]);
-                    setTimeout(() => formik.validateForm(), 0);
-                  }}
-                  error={!!touched.coupon_type && !!errors.coupon_type}
-                  helperText={touched.coupon_type && errors.coupon_type}
-                >
-                  {couponTypes.map(
-                    (option: { id: number; coupon_type: string }) => (
-                      <MenuItem key={option.coupon_type} value={option.id}>
-                        {option.coupon_type}
-                      </MenuItem>
-                    )
-                  )}
-                </TextField>
-              </Grid>
-
-              {values.coupon_type !== "" && (
-                <>
-                  {dynamicRows?.map(
-                    (
-                      row: {
-                        id: any;
-                        type: string;
-                        operator: string;
-                        value: string;
-                        tier?: number;
-                      },
-                      index
-                    ) => (
-                      <Grid item xs={12} key={index}>
-                        <Box display="flex" gap={1}>
-                          {selectedCouponType === COUPON_TYPE.TIER_BASED && (
-                            <TextField
-                              select
-                              label="Tier"
-                              value={row.tier || ""}
-                              onChange={(e) =>
-                                handleChangeCondition(
-                                  row.id,
-                                  "tier",
-                                  e.target.value
-                                )
-                              }
-                              sx={{ minWidth: 150 }}
-                            >
-                              {tiers?.map((tier) => (
-                                <MenuItem key={tier.id} value={tier.id}>
-                                  {tier.name}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                          )}
-
+                    index
+                  ) => (
+                    <Grid item xs={12} key={index}>
+                      <Box display="flex" gap={1}>
+                        {selectedCouponType === COUPON_TYPE.TIER_BASED && (
                           <TextField
                             select
-                            label="Condition Type"
-                            fullWidth
-                            value={row.type}
+                            label="Tier"
+                            value={row.tier || ""}
                             onChange={(e) =>
                               handleChangeCondition(
                                 row.id,
-                                "type",
+                                "tier",
                                 e.target.value
                               )
                             }
+                            sx={{ minWidth: 150 }}
                           >
-                            {(conditionOfCouponTypes ?? []).map(
-                              (option: { name: string }) => (
-                                <MenuItem key={option.name} value={option.name}>
-                                  {option.name}
-                                </MenuItem>
-                              )
-                            )}
+                            {tiers?.map((tier) => (
+                              <MenuItem key={tier.id} value={tier.id}>
+                                {tier.name}
+                              </MenuItem>
+                            ))}
                           </TextField>
+                        )}
 
-                          <TextField
-                            select
-                            fullWidth
-                            label="Condition Operator"
-                            value={row.operator}
-                            onChange={(e) =>
-                              handleChangeCondition(
-                                row.id,
-                                "operator",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <MenuItem value="==">Equal To (==)</MenuItem>
-                            <MenuItem value="!=">Not Equal (!=)</MenuItem>
-                            <MenuItem value=">">Greater Than (&gt;)</MenuItem>
-                            <MenuItem value=">=">
-                              Greater Than or Equal (&gt;=)
-                            </MenuItem>
-                            <MenuItem value="<">Less Than (&lt;)</MenuItem>
-                            <MenuItem value="<=">
-                              Less Than or Equal (&lt;=)
-                            </MenuItem>
-                          </TextField>
-
-                          <TextField
-                            label="Value"
-                            fullWidth
-                            value={row.value}
-                            onChange={(e) =>
-                              handleChangeCondition(
-                                row.id,
-                                "value",
-                                e.target.value
-                              )
-                            }
-                          />
-
-                          {index === 0 && (
-                            <IconButton onClick={handleAdd}>
-                              <AddIcon fontSize="small" color="primary" />
-                            </IconButton>
+                        <TextField
+                          select
+                          label="Condition Type"
+                          fullWidth
+                          value={row.type}
+                          onChange={(e) =>
+                            handleChangeCondition(
+                              row.id,
+                              "type",
+                              e.target.value
+                            )
+                          }
+                        >
+                          {(conditionOfCouponTypes ?? []).map(
+                            (option: { name: string }) => (
+                              <MenuItem key={option.name} value={option.name}>
+                                {option.name}
+                              </MenuItem>
+                            )
                           )}
+                        </TextField>
 
-                          {index >= 1 && (
-                            <IconButton onClick={() => handleDelete(row.id)}>
-                              <DeleteIcon fontSize="small" color="error" />
-                            </IconButton>
-                          )}
-                        </Box>
-                      </Grid>
-                    )
-                  )}
-                </>
-              )}
+                        <TextField
+                          select
+                          fullWidth
+                          label="Condition Operator"
+                          value={row.operator}
+                          onChange={(e) =>
+                            handleChangeCondition(
+                              row.id,
+                              "operator",
+                              e.target.value
+                            )
+                          }
+                        >
+                          <MenuItem value="==">Equal To (==)</MenuItem>
+                          <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                          <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                          <MenuItem value=">=">
+                            Greater Than or Equal (&gt;=)
+                          </MenuItem>
+                          <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                          <MenuItem value="<=">
+                            Less Than or Equal (&lt;=)
+                          </MenuItem>
+                        </TextField>
 
-              {selectedCouponType !== COUPON_TYPE.TIER_BASED && (
-                <>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="discount_percentage"
-                      label="Discount (%)"
-                      type="number"
-                      value={values.discount_percentage}
-                      onChange={handleChange}
-                      InputProps={{
-                        endAdornment: selectedCouponType ? (
-                          <InputAdornment position="end">
-                            <Tooltip
-                              title={
-                                tooltipMessages.discountPercentage[
-                                  selectedCouponType
-                                ] || ""
-                              }
-                            >
-                              <IconButton edge="end">
-                                <InfoOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </InputAdornment>
-                        ) : null,
-                      }}
-                      error={
-                        !!touched.discount_percentage &&
-                        !!errors.discount_percentage
-                      }
-                      helperText={
-                        touched.discount_percentage &&
-                        errors.discount_percentage
-                      }
-                    />
-                  </Grid>
+                        <TextField
+                          label="Value"
+                          fullWidth
+                          value={row.value}
+                          onChange={(e) =>
+                            handleChangeCondition(
+                              row.id,
+                              "value",
+                              e.target.value
+                            )
+                          }
+                        />
 
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="discount_price"
-                      label="Fixed Discount Amount"
-                      type="number"
-                      value={values.discount_price}
-                      onChange={handleChange}
-                      InputProps={{
-                        endAdornment: selectedCouponType ? (
-                          <InputAdornment position="end">
-                            <Tooltip
-                              title={
-                                tooltipMessages.discountPrice[
-                                  selectedCouponType
-                                ] || ""
-                              }
-                            >
-                              <IconButton edge="end">
-                                <InfoOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </InputAdornment>
-                        ) : null,
-                      }}
-                      error={
-                        !!touched.discount_price && !!errors.discount_price
-                      }
-                      helperText={
-                        touched.discount_price && errors.discount_price
-                      }
-                    />
-                  </Grid>
-                </>
-              )}
+                        {index === 0 && (
+                          <IconButton onClick={handleAdd}>
+                            <AddIcon fontSize="small" color="primary" />
+                          </IconButton>
+                        )}
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="usage_limit"
-                  label="Usage Limit"
-                  placeholder="Usage Limit"
-                  type="number"
-                  value={values.usage_limit}
-                  onChange={handleChange}
-                  error={!!touched.usage_limit && !!errors.usage_limit}
-                  helperText={touched.usage_limit && errors.usage_limit}
-                />
-              </Grid>
+                        {index >= 1 && (
+                          <IconButton onClick={() => handleDelete(row.id)}>
+                            <DeleteIcon fontSize="small" color="error" />
+                          </IconButton>
+                        )}
+                      </Box>
+                    </Grid>
+                  )
+                )}
+              </>
+            )}
 
-              {/* Business Units */}
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  name="business_unit_ids"
-                  label="Business Units"
-                  SelectProps={{ multiple: true }}
-                  value={values.business_unit_ids}
-                  onChange={handleChange}
-                  error={
-                    !!touched.business_unit_ids && !!errors.business_unit_ids
-                  }
-                  helperText={
-                    touched.business_unit_ids && errors.business_unit_ids
-                  }
-                >
-                  {businessUnits?.map((bu) => (
-                    <MenuItem key={bu.id} value={bu.id}>
-                      {bu.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-
-              {/* Once Per Customer */}
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  name="once_per_customer"
-                  label="Once Per Customer"
-                  value={values.once_per_customer ? 1 : 0}
-                  onChange={(e) => {
-                    const selected = Number(e.target.value);
-                    setFieldValue("once_per_customer", selected === 1);
-                  }}
-                  error={
-                    !!touched.once_per_customer && !!errors.once_per_customer
-                  }
-                  helperText={
-                    touched.once_per_customer && errors.once_per_customer
-                  }
-                >
-                  {oncePerCustomer?.map((option, index) => (
-                    <MenuItem key={option.name} value={option.value}>
-                      {option.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-
-              {/* Reuse Interval */}
-              {Boolean(values.once_per_customer) && (
+            {selectedCouponType !== COUPON_TYPE.TIER_BASED && (
+              <>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    variant="outlined"
-                    label="Reuse Interval (in days)"
-                    value={values.reuse_interval}
+                    name="discount_percentage"
+                    label="Discount (%)"
                     type="number"
-                    name="reuse_interval"
+                    value={values.discount_percentage}
                     onChange={handleChange}
-                    error={!!touched.reuse_interval && !!errors.reuse_interval}
-                    helperText={touched.reuse_interval && errors.reuse_interval}
+                    InputProps={{
+                      endAdornment: selectedCouponType ? (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={
+                              tooltipMessages.discountPercentage[
+                                selectedCouponType
+                              ] || ""
+                            }
+                          >
+                            <IconButton edge="end">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                    error={
+                      !!touched.discount_percentage &&
+                      !!errors.discount_percentage
+                    }
+                    helperText={
+                      touched.discount_percentage && errors.discount_percentage
+                    }
                   />
                 </Grid>
-              )}
 
-              {/* Expiry Date */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="discount_price"
+                    label="Fixed Discount Amount"
+                    type="number"
+                    value={values.discount_price}
+                    onChange={handleChange}
+                    InputProps={{
+                      endAdornment: selectedCouponType ? (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={
+                              tooltipMessages.discountPrice[
+                                selectedCouponType
+                              ] || ""
+                            }
+                          >
+                            <IconButton edge="end">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                    error={!!touched.discount_price && !!errors.discount_price}
+                    helperText={touched.discount_price && errors.discount_price}
+                  />
+                </Grid>
+              </>
+            )}
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="usage_limit"
+                label="Usage Limit"
+                placeholder="Usage Limit"
+                type="number"
+                value={values.usage_limit}
+                onChange={handleChange}
+                error={!!touched.usage_limit && !!errors.usage_limit}
+                helperText={touched.usage_limit && errors.usage_limit}
+              />
+            </Grid>
+
+            {/* Business Units */}
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                name="business_unit_ids"
+                label="Business Units"
+                SelectProps={{ multiple: true }}
+                value={values.business_unit_ids}
+                onChange={handleChange}
+                error={
+                  !!touched.business_unit_ids && !!errors.business_unit_ids
+                }
+                helperText={
+                  touched.business_unit_ids && errors.business_unit_ids
+                }
+              >
+                {businessUnits?.map((bu) => (
+                  <MenuItem key={bu.id} value={bu.id}>
+                    {bu.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            {/* Once Per Customer */}
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                name="once_per_customer"
+                label="Once Per Customer"
+                value={values.once_per_customer ? 1 : 0}
+                onChange={(e) => {
+                  const selected = Number(e.target.value);
+                  setFieldValue("once_per_customer", selected === 1);
+                }}
+                error={
+                  !!touched.once_per_customer && !!errors.once_per_customer
+                }
+                helperText={
+                  touched.once_per_customer && errors.once_per_customer
+                }
+              >
+                {oncePerCustomer?.map((option, index) => (
+                  <MenuItem key={option.name} value={option.value}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            {/* Reuse Interval */}
+            {Boolean(values.once_per_customer) && (
               <Grid item xs={12}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <TextField
-                      type="date"
-                      fullWidth
-                      label="Date From"
-                      name="date_from"
-                      InputLabelProps={{ shrink: true }}
-                      value={values.date_from}
-                      onChange={handleChange}
-                      error={!!touched.date_from && !!errors.date_from}
-                      helperText={touched.date_from && errors.date_from}
-                    />
-                  </Grid>
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  label="Reuse Interval (in days)"
+                  value={values.reuse_interval}
+                  type="number"
+                  name="reuse_interval"
+                  onChange={handleChange}
+                  error={!!touched.reuse_interval && !!errors.reuse_interval}
+                  helperText={touched.reuse_interval && errors.reuse_interval}
+                />
+              </Grid>
+            )}
 
-                  <Grid item xs={6}>
-                    <TextField
-                      type="date"
-                      fullWidth
-                      label="Date To"
-                      name="date_to"
-                      InputLabelProps={{ shrink: true }}
-                      value={values.date_to}
-                      onChange={handleChange}
-                      error={!!touched.date_to && !!errors.date_to}
-                      helperText={touched.date_to && errors.date_to}
-                    />
-                  </Grid>
+            {/* Expiry Date */}
+            <Grid item xs={12}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="date"
+                    fullWidth
+                    label="Date From"
+                    name="date_from"
+                    InputLabelProps={{ shrink: true }}
+                    value={values.date_from}
+                    onChange={handleChange}
+                    error={!!touched.date_from && !!errors.date_from}
+                    helperText={touched.date_from && errors.date_from}
+                  />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <TextField
+                    type="date"
+                    fullWidth
+                    label="Date To"
+                    name="date_to"
+                    InputLabelProps={{ shrink: true }}
+                    value={values.date_to}
+                    onChange={handleChange}
+                    error={!!touched.date_to && !!errors.date_to}
+                    helperText={touched.date_to && errors.date_to}
+                  />
                 </Grid>
               </Grid>
+            </Grid>
 
-              {/* General failure Error */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label="General failure error (English)"
-                  value={values.general_error_message_en}
-                  name="general_error_message_en"
-                  onChange={handleChange}
-                  error={
-                    !!touched.general_error_message_en &&
-                    !!errors.general_error_message_en
-                  }
-                  helperText={
-                    touched.general_error_message_en &&
-                    errors.general_error_message_en
-                  }
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label="General failure error (Arabic)"
-                  value={values.general_error_message_ar}
-                  name="general_error_message_ar"
-                  onChange={handleChange}
-                  error={
-                    !!touched.general_error_message_ar &&
-                    !!errors.general_error_message_ar
-                  }
-                  helperText={
-                    touched.general_error_message_ar &&
-                    errors.general_error_message_ar
-                  }
-                />
-              </Grid>
+            {/* General failure Error */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="General failure error (English)"
+                value={values.general_error_message_en}
+                name="general_error_message_en"
+                onChange={handleChange}
+                error={
+                  !!touched.general_error_message_en &&
+                  !!errors.general_error_message_en
+                }
+                helperText={
+                  touched.general_error_message_en &&
+                  errors.general_error_message_en
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="General failure error (Arabic)"
+                value={values.general_error_message_ar}
+                name="general_error_message_ar"
+                onChange={handleChange}
+                error={
+                  !!touched.general_error_message_ar &&
+                  !!errors.general_error_message_ar
+                }
+                helperText={
+                  touched.general_error_message_ar &&
+                  errors.general_error_message_ar
+                }
+              />
+            </Grid>
 
-              {/* Exception Error */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label="Exception error (English)"
-                  value={values.exception_error_message_en}
-                  name="exception_error_message_en"
-                  onChange={handleChange}
-                  error={
-                    !!touched.exception_error_message_en &&
-                    !!errors.exception_error_message_en
-                  }
-                  helperText={
-                    touched.exception_error_message_en &&
-                    errors.exception_error_message_en
-                  }
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label="Exception error (Arabic)"
-                  value={values.exception_error_message_ar}
-                  name="exception_error_message_ar"
-                  onChange={handleChange}
-                  error={
-                    !!touched.exception_error_message_ar &&
-                    !!errors.exception_error_message_ar
-                  }
-                  helperText={
-                    touched.exception_error_message_ar &&
-                    errors.exception_error_message_ar
-                  }
-                />
-              </Grid>
+            {/* Exception Error */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Exception error (English)"
+                value={values.exception_error_message_en}
+                name="exception_error_message_en"
+                onChange={handleChange}
+                error={
+                  !!touched.exception_error_message_en &&
+                  !!errors.exception_error_message_en
+                }
+                helperText={
+                  touched.exception_error_message_en &&
+                  errors.exception_error_message_en
+                }
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Exception error (Arabic)"
+                value={values.exception_error_message_ar}
+                name="exception_error_message_ar"
+                onChange={handleChange}
+                error={
+                  !!touched.exception_error_message_ar &&
+                  !!errors.exception_error_message_ar
+                }
+                helperText={
+                  touched.exception_error_message_ar &&
+                  errors.exception_error_message_ar
+                }
+              />
+            </Grid>
 
-              <Grid item xs={12}>
-                <Grid container alignItems="center" spacing={2}>
-                  <Grid item>
-                    <Typography variant="subtitle1">Is Active</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Switch
-                      name="isActive"
-                      color="primary"
-                      checked={values.is_active}
-                      onChange={(e) =>
-                        setFieldValue("is_active", e.target.checked)
-                      }
-                    />
-                  </Grid>
+            {/* Is Active */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="subtitle1">Is Active</Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="isActive"
+                    color="primary"
+                    checked={values.status === 1}
+                    onChange={(e) =>
+                      setFieldValue("status", e.target.checked ? 1 : 0)
+                    }
+                  />
                 </Grid>
               </Grid>
+            </Grid>
 
-              {/* <Grid item xs={12}>
+            {/* <Grid item xs={12}>
                   <Typography variant="subtitle1" gutterBottom>
                     Benefits (optional)
                   </Typography>
@@ -744,39 +739,30 @@ const EditCouponForm = () => {
                   />
                 </Grid> */}
 
-              <Grid item xs={12}>
+            <Grid item xs={12}>
+              <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
                 <Button
                   type="submit"
-                  fullWidth
-                  variant="contained"
+                  variant="outlined"
                   disabled={loading}
-                  sx={{ textTransform: "none", borderRadius: 2 }}
-                >
-                  {loading ? <CircularProgress size={24} /> : "Update Coupon"}
-                </Button>
-                <br />
-                <br />
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  fullWidth
-                  size="large"
-                  onClick={() => router.push("view")}
                   sx={{
-                    borderRadius: 2,
                     textTransform: "none",
+                    borderRadius: 2,
                     fontWeight: 600,
                   }}
                 >
-                  Go Back
+                  {loading ? <CircularProgress size={24} /> : "Update Coupon"}
                 </Button>
-              </Grid>
+              </Box>
+
+              <br />
+              <br />
             </Grid>
-          </form>
-        )}
-      </CardContent>
-    </Card>
-  );
+          </Grid>
+        </form>
+      )}
+    </>
+  )
 };
 
 export default EditCouponForm;

@@ -1,32 +1,37 @@
-'use client';
+"use client";
 
+import BaseDrawer from "@/components/drawer/basedrawer";
+import { DELETE, GET } from "@/utils/AxiosUtility";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import {
   Box,
-  Card,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogTitle,
   IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Typography,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogActions,
-  Button,
   TablePagination,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import { DELETE, GET } from '@/utils/AxiosUtility';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
+  TableRow,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import CouponCreate from "../create/page";
+import CouponEdit from "../edit/page";
+import { htmlToPlainText } from "@/utils/Index";
 
 type Coupon = {
   id: number;
@@ -34,53 +39,64 @@ type Coupon = {
   discount_percentage: string;
   discount_price: number;
   business_unit?: { name: string };
-  usage_limit:number;
-  number_of_times_used:number;
+  usage_limit: number;
+  number_of_times_used: number;
   benefits?: string;
 };
 
-const htmlToPlainText = (htmlString: string): string => {
-  if (!htmlString) return '';
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = htmlString;
-  return tempDiv.textContent || tempDiv.innerText || '';
-};
-
 const CouponList = () => {
+  const [search, setSearch] = useState("");
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get("drawer");
+  const drawerId = searchParams.get("id");
+  const handleCloseDrawer = () => {
+    router.push("/coupons/view");
+  };
 
-  const fetchCoupons = async () => {
+  const fetchCoupons = async (name = "") => {
     setLoading(true);
-    const res = await GET('/coupons');
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const res = await GET(
+      `/coupons/${clientInfo.id}?name=${encodeURIComponent(name)}`
+    );
     setCoupons(res?.data.coupons || []);
     setLoading(false);
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
-
     const res = await DELETE(`/coupons/${deleteId}`);
     if (res?.status === 200) {
-      toast.success('Coupon deleted!');
-      fetchCoupons();
+      toast.success("Coupon deleted!");
+      fetchCoupons(search);
     } else {
-      toast.error('Failed to delete coupon');
+      toast.error("Failed to delete coupon");
     }
 
     setDeleteId(null);
   };
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    setTimeout(() => {
+      fetchCoupons(value);
+    }, 300);
   };
 
   useEffect(() => {
@@ -95,20 +111,51 @@ const CouponList = () => {
     );
   }
 
-  console.log("")
+  console.log("");
 
   return (
-    <Card sx={{ minWidth: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          🎗️ Coupon List
+    <Paper
+      elevation={3}
+      sx={{ p: 3, borderRadius: 3, maxWidth: "100%", overflow: "auto" }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography
+          sx={{
+            color: "rgba(0, 0, 0, 0.87)",
+            fontFamily: "Outfit",
+            fontSize: "32px",
+            fontWeight: 600,
+          }}
+        >
+          Coupon List
         </Typography>
-        <Button sx={{ mb: 2 }} variant='contained' onClick={() => router.push('create')}>
-          Create Coupon
+        <Button
+          variant="outlined"
+          onClick={() => router.push("/coupons/view?drawer=create")}
+          sx={{ fontWeight: 600, textTransform: "none" }}
+        >
+          Create
         </Button>
       </Box>
-
-      {coupons.length === 0 ? (
+      <Box mb={2}>
+        <TextField
+          placeholder="Search by code"
+          value={search}
+          onChange={handleSearchChange}
+        />
+      </Box>
+      {loading ? (
+        <Box textAlign="center" mt={6}>
+          <CircularProgress />
+        </Box>
+      ) : coupons.length === 0 ? (
         <Typography mt={4} textAlign="center">
           No coupons found.
         </Typography>
@@ -137,9 +184,9 @@ const CouponList = () => {
                       <TableCell
                         sx={{
                           maxWidth: 200,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         <Tooltip title={coupon.code}>
@@ -148,35 +195,52 @@ const CouponList = () => {
                       </TableCell>
                       <TableCell>{coupon.discount_percentage}</TableCell>
                       <TableCell>{coupon.discount_price}</TableCell>
-                      <TableCell sx={{
+                      <TableCell
+                        sx={{
                           maxWidth: 200,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}>
-                          <Tooltip title={coupon.business_unit?.name || '-'}>
-                          <span>{coupon.business_unit?.name || '-'}</span>
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        <Tooltip title={coupon.business_unit?.name || "-"}>
+                          <span>{coupon.business_unit?.name || "-"}</span>
                         </Tooltip>
                       </TableCell>
                       <TableCell>{coupon.usage_limit}</TableCell>
                       <TableCell>{coupon.number_of_times_used}</TableCell>
-                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <Tooltip
-                        placement="top-start"
-                        title={
-                          <span
-                            dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(marked.parse(coupon.benefits || '-') as string),
-                            }}
-                          />
-                        }
+                      <TableCell
+                        sx={{
+                          maxWidth: 200,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
                       >
-                         <span>{htmlToPlainText(coupon.benefits || '-')}</span>
-                      </Tooltip>
-                    </TableCell>
-                      <TableCell sx={{ display: 'flex' }}>
+                        <Tooltip
+                          placement="top-start"
+                          title={
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(
+                                  marked.parse(coupon.benefits || "-") as string
+                                ),
+                              }}
+                            />
+                          }
+                        >
+                          <span>{htmlToPlainText(coupon.benefits || "-")}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ display: "flex" }}>
                         <Tooltip title="Edit">
-                          <IconButton onClick={() => router.push(`/coupons/edit?id=${coupon.id}`)}>
+                          <IconButton
+                            onClick={() =>
+                              router.push(
+                                `/coupons/view?drawer=edit&id=${coupon.id}`
+                              )
+                            }
+                          >
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -204,7 +268,7 @@ const CouponList = () => {
           />
         </>
       )}
-
+      {/* Delete Dialog */}
       <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
         <DialogTitle>Are you sure you want to delete this coupon?</DialogTitle>
         <DialogActions>
@@ -214,7 +278,33 @@ const CouponList = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Card>
+
+      {/* Drawer for Create */}
+      <BaseDrawer
+        open={drawerOpen === "create"}
+        onClose={handleCloseDrawer}
+        title="Create Coupon"
+      >
+        <CouponCreate
+          onSuccess={() => {
+            handleCloseDrawer();
+            fetchCoupons();
+          }}
+        />
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === "edit" && drawerId && (
+        <BaseDrawer open onClose={handleCloseDrawer} title="Edit Coupon">
+          <CouponEdit
+            onSuccess={() => {
+              handleCloseDrawer();
+              fetchCoupons();
+            }}
+          />
+        </BaseDrawer>
+      )}
+    </Paper>
   );
 };
 
