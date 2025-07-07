@@ -3,7 +3,7 @@ import "../../styles/globals.css";
 import Favicon from '../../public/favicon.ico'
 import DashboardLayout from "@/components/dahboard/layout";
 import ClientProviders from "@/components/ClientProviders";
-// import MsalClientProvider from "@/components/MsalClientProvider";
+import MsalClientProvider from "@/components/MsalClientProvider";
 
 /**
  * 2 types of metadata.
@@ -31,9 +31,9 @@ export default function RootLayout({
         <html lang="en">
         <body>
           <ClientProviders>
-            {/* <MsalClientProvider> */}
+            <MsalClientProvider>
                 <DashboardLayout>{children}</DashboardLayout>
-            {/* </MsalClientProvider>  */}
+            </MsalClientProvider> 
           </ClientProviders>
         </body>
         </html>
