@@ -23,6 +23,7 @@ import { toast } from 'react-toastify';
 import { GET, PUT } from '@/utils/AxiosUtility';
 import { RichTextEditor } from '@/components/TextEditor';
 
+
 type Tier = {
   id: number;
   name: string;
@@ -33,7 +34,7 @@ type BusinessUnit = {
   name: string;
 };
 
-const EditTierForm = () => {
+const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
@@ -125,16 +126,15 @@ const EditTierForm = () => {
       // rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
 
-    const res = await PUT(`/tiers/${selectedId}`, payload);
+     const res = await PUT(`/tiers/${selectedId}`, payload);
     if (res?.status !== 200) {
       toast.error('Failed to update tier');
     } else {
       toast.success('Tier updated!');
-      router.push('/tiers/view');
+      onSuccess();
     }
     setLoading(false);
   };
-
   if (initializing) {
     return (
       <Box mt={6} textAlign="center">
@@ -145,7 +145,7 @@ const EditTierForm = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
@@ -154,7 +154,7 @@ const EditTierForm = () => {
       <CardContent>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           ✏ Edit Tier
-        </Typography>
+        </Typography> */}
 
         {!selectedId && (
           <Grid container spacing={2} sx={{ mb: 1, width: '100%' }}>
@@ -280,35 +280,27 @@ const EditTierForm = () => {
                   </Grid>
 
                   <Grid item xs={12}>
+                     <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
                     <Button
                       type="submit"
-                      fullWidth
-                      variant="contained"
+                      variant="outlined"
                       disabled={loading}
-                      sx={{ textTransform: 'none', borderRadius: 2 }}
+                      sx={{ textTransform: 'none', borderRadius: 2,fontWeight:600 }}
                     >
                       {loading ? <CircularProgress size={24} /> : 'Update Tier'}
                     </Button>
+                    </Box>
+
                     <br />
                     <br />
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      fullWidth
-                      size="large"
-                      onClick={() => router.push('view')}
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Go Back
-                    </Button>
+                    
                   </Grid>
                 </Grid>
               </Form>
             )}
           </Formik>
         )}
-      </CardContent>
-    </Card>
+      
     </>
   );
 };

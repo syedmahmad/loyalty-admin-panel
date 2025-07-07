@@ -75,7 +75,7 @@ export const ClientsTableData = ({
                 Tenants Details
               </Typography>
               <Button
-                variant="contained"
+                variant="outlined"
                 sx={{
                   transition: "0.3s",
                   transform: "scale(1)",

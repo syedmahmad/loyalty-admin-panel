@@ -19,15 +19,19 @@ import {
   Button,
   TablePagination,
   TextField,
+  Paper,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { DELETE, GET } from '@/utils/AxiosUtility';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import TierCreate from '../create/page';
+import TierEdit from '../edit/page';
 
 type Tier = {
   id: number;
@@ -54,7 +58,12 @@ const TierList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+  const drawerId = searchParams.get('id');
+  const handleCloseDrawer = () => {
+    router.push('/tiers/view');
+  };
   const fetchTiers = async (name = '') => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
@@ -96,13 +105,21 @@ const TierList = () => {
   }, []);
 
   return (
-    <Card sx={{ width: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          🎯 Tier List
-        </Typography>
-        <Button variant='contained' onClick={() => router.push('create')}>
-          Create Tier
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" , mb:2 }}>
+        <Typography
+                    sx={{
+                      color: 'rgba(0, 0, 0, 0.87)',
+                      fontFamily: 'Outfit',
+                      fontSize: '32px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Tier List
+                  </Typography>
+        <Button variant='outlined' onClick={() => router.push('/tiers/view?drawer=create')}
+            sx={{ fontWeight: 600, textTransform: 'none' }}>
+          Create 
         </Button>
       </Box>
 
@@ -158,7 +175,7 @@ const TierList = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Tooltip title="Edit">
-                        <IconButton onClick={() => router.push(`/tiers/edit?id=${tier.id}`)}>
+                        <IconButton onClick={() => router.push(`/tiers/view?drawer=edit&id=${tier.id}`)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -193,7 +210,28 @@ const TierList = () => {
           <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>
-    </Card>
+      {/* Drawer for Create */}
+      <BaseDrawer open={drawerOpen === 'create'} onClose={handleCloseDrawer} title="Create Tier">
+        <TierCreate
+          onSuccess={() => {
+            handleCloseDrawer();
+            fetchTiers();
+          }}
+        />
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer open onClose={handleCloseDrawer} title="Edit Tier">
+          <TierEdit
+            onSuccess={() => {
+              handleCloseDrawer();
+              fetchTiers();
+            }}
+          />
+        </BaseDrawer>
+)};
+    </Paper>
   );
 };
 

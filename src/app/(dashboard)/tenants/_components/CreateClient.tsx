@@ -144,7 +144,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
 
       <Grid2 xs={12}>
         <Button
-          variant="contained"
+          variant="outlined"
           color="primary"
           onClick={handleSubmit}
           fullWidth

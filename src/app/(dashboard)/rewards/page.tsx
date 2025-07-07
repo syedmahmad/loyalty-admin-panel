@@ -55,7 +55,7 @@ const CampaignList = () => {
                 <Typography variant="body1" mt={1}>From: {new Date(c.start_date).toLocaleDateString()}</Typography>
                 <Typography variant="body1" mt={1}>To: {new Date(c.end_date).toLocaleDateString()}</Typography>          
               </CardContent>
-              <Button onClick={() => router.push(`/rewards/details?id=${c.id}`)} sx={{ m: 2 }} variant="contained">View Details</Button>
+              <Button onClick={() => router.push(`/rewards/details?id=${c.id}`)} sx={{ m: 2 }} variant="outlined">View Details</Button>
             </Card>
           </Grid>
         ))}

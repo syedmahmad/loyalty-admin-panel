@@ -21,13 +21,17 @@ import {
   TablePagination,
   TextField,
 } from '@mui/material';
+
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BusinessIcon from '@mui/icons-material/Business';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import { DELETE, GET } from '@/utils/AxiosUtility';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import BusinessUnitEditForm from '../edit/page';
+import BusinessUnitCreateForm from '../create/page';
 
 type BusinessUnit = {
   id: number;
@@ -59,8 +63,15 @@ const BusinessUnitList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchName, setSearchName] = useState('');
+   const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+   const drawerId = searchParams.get('id');
 
   const router = useRouter();
+   const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl);
+  };
 
   const loadData = async (name = '') => {
     setLoading(true);
@@ -98,12 +109,20 @@ const BusinessUnitList = () => {
 
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          🏢 Business Units
-        </Typography>
-        <Button variant="contained" onClick={() => router.push('create')}>
-          Create Business Units
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' , alignItems: 'center', mb: 2 }}>
+       <Typography
+            sx={{
+              color: 'rgba(0, 0, 0, 0.87)',
+              fontFamily: 'Outfit',
+              fontSize: '32px',
+              fontWeight:600 ,
+            }}
+          >
+            Business Units
+          </Typography>
+        <Button variant="outlined" onClick={() => router.push('/business-units/view?drawer=create')}
+          sx={{ fontWeight: 600, textTransform: 'none' }}>
+          Create
         </Button>
       </Box>
 
@@ -143,14 +162,15 @@ const BusinessUnitList = () => {
               <TableBody>
                 {paginatedUnits.map((unit) => (
                   <TableRow key={unit.id}>
-                    <TableCell align="center">{unit.name}</TableCell>
+                    <TableCell align="center" >{unit.name}</TableCell>
                     <TableCell align="center">{unit.description || '—'}</TableCell>
-                    <TableCell align="center">{unit.location || '—'}</TableCell>
-                    <TableCell align="center">
+                    <TableCell align="center" >{unit.location || '—'}</TableCell>
+                    <TableCell  align="center">
                       <Tooltip title="Edit">
                         <IconButton
                           color="primary"
-                          onClick={() => router.push(`/business-units/edit?id=${unit.id}`)}
+                          onClick={() => router.push(`/business-units/view?drawer=edit&id=${unit.id}`)
+                        }
                         >
                           <EditIcon />
                         </IconButton>
@@ -203,7 +223,37 @@ const BusinessUnitList = () => {
           </Button>
         </DialogActions>
       </Dialog>
+     
+        <BaseDrawer
+        open={drawerOpen === 'create'}
+        onClose={handleCloseDrawer}
+        title="Create Business"
+      >
+         <BusinessUnitCreateForm onSuccess={() => {
+          loadData();           
+          handleCloseDrawer(); 
+    }} />
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Edit Business"
+        >
+          <BusinessUnitEditForm onSuccess={() => {
+          handleCloseDrawer(); 
+          loadData(); 
+    }} />
+        </BaseDrawer>
+    
+  )}
     </Paper>
+    
+    
+    
+     
   );
 };
 
