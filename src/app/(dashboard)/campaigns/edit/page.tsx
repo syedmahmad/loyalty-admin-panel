@@ -10,13 +10,16 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  IconButton,
   InputLabel,
   MenuItem,
-  Radio,
   Select,
   TextField,
+  Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { GET, PUT } from '@/utils/AxiosUtility';
@@ -35,7 +38,7 @@ const CampaignEdit = () => {
   const router = useRouter();
   const params = useSearchParams();
   const paramId = params.get('id') || null;
-
+  const theme = useTheme();
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -44,19 +47,25 @@ const CampaignEdit = () => {
   const [rulesByType, setRulesByType] = useState<Record<string, any[]>>({});
   const [selectedRules, setSelectedRules] = useState<Record<string, number[]>>({});
   const [ruleTypes, setRuleTypes] = useState<string[]>([]);
+  const [availableRuleTypes, setAvailableRuleTypes] = useState<string[]>([]);
   const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate: number }[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
   const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const RULE_TYPES = ['event based earn', 'spend and earn', 'burn', 'dynamic rule'];
+  const ALL_RULE_TYPES = ['event based earn', 'spend and earn', 'burn', 'dynamic rule'];
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   const fetchInitialData = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
     const [buRes, tierRes, rulesRes, campaignRes] = await Promise.all([
-      GET('/business-units'),
-      GET('/tiers'),
-      GET('/rules'),
-      GET(`/campaigns/${paramId}`),
+      GET(`business-units/${clientInfo.id}`),
+      GET(`tiers/${clientInfo.id}`),
+      GET(`rules/${clientInfo.id}`),
+      GET(`/campaigns/single/${paramId}`),
     ]);
 
     const campaign = campaignRes?.data;
@@ -82,8 +91,12 @@ const CampaignEdit = () => {
       grouped[type].push(id);
     });
 
+    const usedTypes = Object.keys(grouped);
+    const available = ALL_RULE_TYPES.filter((t) => !usedTypes.includes(t));
+
     setSelectedRules(grouped);
-    setRuleTypes(Object.keys(grouped));
+    setRuleTypes(usedTypes);
+    setAvailableRuleTypes(available);
 
     setAllBus(buRes?.data || []);
     setAllTiers(tierRes?.data?.tiers || []);
@@ -96,10 +109,6 @@ const CampaignEdit = () => {
     setRulesByType(groupedRules);
   };
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
   const handleRuleToggle = (type: string, ruleId: number) => {
     const current = selectedRules[type] || [];
     if (current.includes(ruleId)) {
@@ -110,19 +119,48 @@ const CampaignEdit = () => {
   };
 
   const handleRuleTypeAdd = () => {
-    setRuleTypes((prev) => [...prev, RULE_TYPES[0]]);
+    if (availableRuleTypes.length === 0) return;
+    setRuleTypes((prev) => [...prev, '']);
   };
 
-  const handleRuleTypeChange = (index: number, value: string) => {
+  const handleRuleTypeChange = (index: number, newType: string) => {
+    const oldType = ruleTypes[index];
     const updated = [...ruleTypes];
-    updated[index] = value;
+    updated[index] = newType;
     setRuleTypes(updated);
+
+    setAvailableRuleTypes((prev) => {
+      let updatedList = prev.filter((t) => t !== newType);
+      if (oldType && oldType !== '' && !prev.includes(oldType)) {
+        updatedList = [...updatedList, oldType];
+      }
+      return updatedList;
+    });
+  };
+
+  const handleRuleTypeRemove = (index: number) => {
+    const removedType = ruleTypes[index];
+    const updated = [...ruleTypes];
+    updated.splice(index, 1);
+    setRuleTypes(updated);
+
+    const updatedSelectedRules = { ...selectedRules };
+    delete updatedSelectedRules[removedType];
+    setSelectedRules(updatedSelectedRules);
+
+    if (removedType && !availableRuleTypes.includes(removedType)) {
+      setAvailableRuleTypes((prev) => [...prev, removedType]);
+    }
   };
 
   const isTierSelected = (id: number) => tiers.some((t) => t.tier_id === id);
 
   const handleTierToggle = (tierId: number) => {
-    setTiers([{ tier_id: tierId, point_conversion_rate: 0 }]);
+    if (isTierSelected(tierId)) {
+      setTiers(tiers.filter((t) => t.tier_id !== tierId));
+    } else {
+      setTiers([...tiers, { tier_id: tierId, point_conversion_rate: 1 }]);
+    }
   };
 
   const handleConversionRateChange = (tierId: number, value: number) => {
@@ -173,7 +211,13 @@ const CampaignEdit = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+      <Card sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         ✏️ Edit Campaign
       </Typography>
@@ -222,54 +266,56 @@ const CampaignEdit = () => {
           </FormControl>
         </Grid>
 
+        {ruleTypes.map((type, idx) => (
+          <Grid key={idx} item xs={12}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <FormControl fullWidth>
+                <InputLabel>Rule Type</InputLabel>
+                <Select
+                  value={type}
+                  onChange={(e) => handleRuleTypeChange(idx, e.target.value)}
+                  label="Rule Type"
+                >
+                  {[type, ...availableRuleTypes.filter((t) => t !== type)].map((rt) => (
+                    <MenuItem key={rt} value={rt}>
+                      {rt}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button variant="outlined" color="error" onClick={() => handleRuleTypeRemove(idx)}>
+                ➖
+              </Button>
+            </Box>
+
+            <FormGroup sx={{ mt: 1 }}>
+              {(rulesByType[type] || []).map((rule) => (
+                <Box key={rule.id} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedRules[type]?.includes(rule.id) || false}
+                        onChange={() => handleRuleToggle(type, rule.id)}
+                      />
+                    }
+                    label={rule.name}
+                  />
+                  {rule.description && (
+                    <Typography variant="body1">
+                      ({htmlToPlainText(rule.description)})
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+            </FormGroup>
+          </Grid>
+        ))}
+
         <Grid item xs={12}>
-          <Button variant="outlined" onClick={handleRuleTypeAdd}>
+          <Button variant="outlined" onClick={handleRuleTypeAdd} disabled={availableRuleTypes.length === 0}>
             ➕ Add Rule Type
           </Button>
         </Grid>
-
-        {ruleTypes.map((type, idx) => (
-          <Grid key={idx} item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel>Rule Type</InputLabel>
-              <Select
-                value={type}
-                onChange={(e) => handleRuleTypeChange(idx, e.target.value)}
-                label="Rule Type"
-              >
-                {RULE_TYPES.map((rt) => (
-                  <MenuItem key={rt} value={rt}>
-                    {rt}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {type !== '' && rulesByType[type]?.length > 0 && (
-              <FormGroup sx={{ mt: 1 }}>
-                {rulesByType[type].map((rule) => (
-                  <Box key={rule.id} sx={{ display: 'flex', alignItems: 'center' }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedRules[type]?.includes(rule.id) || false}
-                          onChange={() => handleRuleToggle(type, rule.id)}
-                        />
-                      }
-                      label={rule.name}
-                    />
-                    {rule.description && (
-                      <Typography variant="body2" sx={{ ml: 1 }}>
-                        ({htmlToPlainText(rule.description)})
-                      </Typography>
-                    )}
-                  </Box>
-                ))}
-              </FormGroup>
-            )}
-
-          </Grid>
-        ))}
 
         <Grid item xs={12}>
           <Typography variant="subtitle1">Tiers</Typography>
@@ -282,7 +328,7 @@ const CampaignEdit = () => {
                 <Box key={tier.id} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <FormControlLabel
                     control={
-                      <Radio
+                      <Checkbox
                         checked={selected}
                         onChange={() => handleTierToggle(tier.id)}
                       />
@@ -292,7 +338,7 @@ const CampaignEdit = () => {
                   {selected && (
                     <TextField
                       type="number"
-                      label="Conversion Rate"
+                      label="Point Conversion Rate"
                       value={current?.point_conversion_rate ?? 1}
                       onChange={(e) =>
                         handleConversionRateChange(tier.id, Number(e.target.value))
@@ -322,6 +368,7 @@ const CampaignEdit = () => {
         </Button>
       </Box>
     </Card>
+    </>
   );
 };
 

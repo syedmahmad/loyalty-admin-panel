@@ -21,6 +21,8 @@ import {
   Select,
   Tooltip,
   IconButton,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { GET, DELETE } from '@/utils/AxiosUtility';
@@ -28,17 +30,22 @@ import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 import { toast } from 'react-toastify';
 
 const CampaignsList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [searchValue, setSearchValue] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
   const router = useRouter();
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = async (name = '') => {
     setLoading(true);
-    const res = await GET('/campaigns');
+    const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+    const query = name ? `?name=${encodeURIComponent(name)}` : '';
+    const res = await GET(`/campaigns/${clientInfo.id}${query}`);
     if (res?.data) {
       setCampaigns(res.data);
     }
@@ -57,7 +64,7 @@ const CampaignsList = () => {
       const res = await DELETE(`/campaigns/${id}`);
       if (res?.status === 200) {
         toast.success('Campaign deleted!');
-        fetchCampaigns();
+        fetchCampaigns(nameFilter);
       } else {
         toast.error('Failed to delete campaign');
       }
@@ -66,6 +73,15 @@ const CampaignsList = () => {
     }
   };
 
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      setNameFilter(searchValue);
+      fetchCampaigns(searchValue);
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [searchValue]);
+
   return (
     <Box sx={{ width: 900, mx: 'auto', mt: 4, px: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -73,22 +89,27 @@ const CampaignsList = () => {
           📋 All Campaigns
         </Typography>
 
-        <Box sx={{
-          gap: 1,
-          display: 'flex'
-        }}>
-        <Select
-          value={viewMode}
-          onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
-          size="small"
-        >
-          <MenuItem value="card">Card View</MenuItem>
-          <MenuItem value="table">Table View</MenuItem>
-        </Select>
-        <Button size="small" variant='contained' onClick={() => router.push('create')}>
-          Create Campaign
-        </Button>
+        <Box sx={{ gap: 1, display: 'flex' }}>
+          <Select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
+            size="small"
+          >
+            <MenuItem value="card">Card View</MenuItem>
+            <MenuItem value="table">Table View</MenuItem>
+          </Select>
+          <Button size="small" variant="contained" onClick={() => router.push('create')}>
+            Create Campaign
+          </Button>
         </Box>
+      </Box>
+
+      <Box mb={2}>
+        <TextField
+          placeholder="Search by name"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+        />
       </Box>
 
       {loading ? (
@@ -105,12 +126,24 @@ const CampaignsList = () => {
               <Grid item xs={12} md={6} key={campaign.id}>
                 <Card sx={{ borderRadius: 3 }}>
                   <CardContent>
-                    <Typography variant="h6" fontWeight={600}>
-                      {campaign.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          {campaign.name}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <IconButton onClick={() => router.push(`/campaigns/edit?id=${campaign.id}`)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      BU: {campaign.business_unit?.name || 'N/A'}
-                    </Typography>
+                        BU: {campaign.business_unit?.name || 'N/A'}
+                      </Typography>
                     <Typography variant="body2">
                       {dayjs(campaign.start_date).format('MMM D, YYYY')} -{' '}
                       {dayjs(campaign.end_date).format('MMM D, YYYY')}
@@ -124,14 +157,6 @@ const CampaignsList = () => {
                       </Tooltip>
                     </Box>
                   </CardContent>
-                  <CardActions>
-                    <IconButton onClick={() => router.push(`/campaigns/edit?id=${campaign.id}`)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </CardActions>
                 </Card>
               </Grid>
             );

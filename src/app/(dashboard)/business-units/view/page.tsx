@@ -19,6 +19,7 @@ import {
   DialogActions,
   Button,
   TablePagination,
+  TextField,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -35,8 +36,9 @@ type BusinessUnit = {
   location?: string;
 };
 
-const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
-  const response = await GET('/business-units');
+const fetchBusinessUnits = async (name: string = ''): Promise<BusinessUnit[]> => {
+  const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+  const response = await GET(`/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`);
   if (response?.status !== 200) {
     throw new Error('Failed to fetch business units');
   }
@@ -48,7 +50,6 @@ const deleteBusinessUnit = async (id: number): Promise<void> => {
   if (response?.status !== 200) {
     throw new Error('Failed to delete business unit');
   }
-  return response.data;
 };
 
 const BusinessUnitList = () => {
@@ -57,24 +58,33 @@ const BusinessUnitList = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchName, setSearchName] = useState('');
 
   const router = useRouter();
 
-  const loadData = async () => {
+  const loadData = async (name = '') => {
     setLoading(true);
     try {
-      const data = await fetchBusinessUnits();
+      const data = await fetchBusinessUnits(name);
       setUnits(data);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      loadData(searchName.trim());
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [searchName]);
+
   const handleDelete = async () => {
     if (confirmDeleteId !== null) {
       await deleteBusinessUnit(confirmDeleteId);
       setConfirmDeleteId(null);
-      await loadData();
+      await loadData(searchName.trim());
     }
   };
 
@@ -84,21 +94,25 @@ const BusinessUnitList = () => {
     setPage(0);
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const paginatedUnits = units.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
           🏢 Business Units
         </Typography>
-        <Button sx={{ mb: 2 }} variant='contained' onClick={() => router.push('create')}>
+        <Button variant="contained" onClick={() => router.push('create')}>
           Create Business Units
         </Button>
+      </Box>
+
+      <Box mb={2}>
+        <TextField
+          placeholder="Search by name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+        />
       </Box>
 
       {loading ? (
@@ -133,7 +147,7 @@ const BusinessUnitList = () => {
                     <TableCell align="center">{unit.description || '—'}</TableCell>
                     <TableCell align="center">{unit.location || '—'}</TableCell>
                     <TableCell align="center">
-                      <Tooltip title="View">
+                      <Tooltip title="Edit">
                         <IconButton
                           color="primary"
                           onClick={() => router.push(`/business-units/edit?id=${unit.id}`)}

@@ -7,11 +7,15 @@ import {
   CardContent,
   CircularProgress,
   Grid,
+  IconButton,
   MenuItem,
   TextField,
+  Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { Formik, Form } from 'formik';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import * as Yup from 'yup';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -33,7 +37,7 @@ const EditTierForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramId = searchParams.get('id');
-
+  const theme = useTheme();
   // const [rules, setRules] = useState<any[]>([]);
   // const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -60,8 +64,8 @@ const EditTierForm = () => {
     const resolveAllPromises = async () => {
       const fetchTiersAndBUs = async () => {
         const [tierListRes, buRes] = await Promise.all([
-          GET('/tiers'),
-          GET('/business-units'),
+          GET(`/tiers/${userId}`),
+          GET(`/business-units/${userId}`),
         ]);
         setTiers(tierListRes?.data.tiers || []);
         setBusinessUnits(buRes?.data || []);
@@ -81,7 +85,7 @@ const EditTierForm = () => {
 
   const fetchTierById = async (id: string) => {
     setLoading(true);
-    const res = await GET(`/tiers/${id}`);
+    const res = await GET(`/tiers/single/${id}`);
     if (!res?.data) {
       toast.error('Tier not found');
       return;
@@ -140,7 +144,13 @@ const EditTierForm = () => {
   }
 
   return (
-    <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+      <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
       <CardContent>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           ✏ Edit Tier
@@ -299,6 +309,7 @@ const EditTierForm = () => {
         )}
       </CardContent>
     </Card>
+    </>
   );
 };
 

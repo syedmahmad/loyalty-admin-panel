@@ -12,7 +12,11 @@ import {
   Grid,
   InputAdornment,
   MenuItem,
+  Tooltip,
+  IconButton,
+  useTheme,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
@@ -23,7 +27,8 @@ import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
 
 const fetchBusinessUnits = async () => {
-  const response = await GET('/business-units');
+  const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+  const response = await GET(`/business-units/${clientInfo.id}`);
   if (response?.status !== 200) {
     throw new Error('Failed to fetch business units');
   }
@@ -31,7 +36,7 @@ const fetchBusinessUnits = async () => {
 };
 
 const fetchBusinessUnitById = async (id: string) => {
-  const response = await GET(`/business-units/${id}`);
+  const response = await GET(`/business-units/single/${id}`);
   if (response?.status !== 200) {
     throw new Error('Failed to fetch business units');
   }
@@ -50,6 +55,7 @@ const BusinessUnitEditForm = () => {
   const params = useSearchParams();
   const paramId =  params.get('id') || null;
   const router = useRouter();
+  const theme = useTheme();
   const [businessUnits, setBusinessUnits] = useState<{ id: number; name: string }[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(paramId ?? null);
   const [initialValues, setInitialValues] = useState({
@@ -119,7 +125,14 @@ const BusinessUnitEditForm = () => {
   };
 
   return (
-    <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+
+      <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
       <CardContent>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
           ✏️ Edit Business Unit
@@ -251,6 +264,7 @@ const BusinessUnitEditForm = () => {
         ) : null}
       </CardContent>
     </Card>
+    </>
   );
 };
 

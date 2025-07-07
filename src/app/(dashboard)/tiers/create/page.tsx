@@ -9,7 +9,11 @@ import {
   TextField,
   Typography,
   CircularProgress,
+  Tooltip,
+  IconButton,
+  useTheme,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { useEffect, useState } from 'react';
@@ -24,7 +28,8 @@ type BusinessUnit = {
 };
 
 const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
-  const response = await GET('/business-units');
+  const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+  const response = await GET(`/business-units/${clientInfo.id}`);
   if (response?.status !== 200) {
     throw new Error('Failed to fetch business units');
   }
@@ -45,7 +50,7 @@ const CreateTierForm = () => {
   const [benefits, setBenefits] = useState<string>('');
   // const [rules, setRules] = useState<any[]>([]);
   // const [selectedRules, setSelectedRules] = useState<number[]>([]);
-
+  const theme = useTheme();
   const router = useRouter();
 
   const created_by = typeof window !== 'undefined'
@@ -120,7 +125,13 @@ const CreateTierForm = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
+    <>
+      <Tooltip title="Go Back">
+        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
+          <ArrowBackIcon /> &nbsp; Go Back
+        </IconButton>
+      </Tooltip>
+      <Card sx={{ maxWidth: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
       <CardContent>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           ➕ Create New Tier
@@ -262,6 +273,7 @@ const CreateTierForm = () => {
         </Formik>
       </CardContent>
     </Card>
+    </>
   );
 };
 

@@ -18,6 +18,7 @@ import {
   DialogActions,
   Button,
   TablePagination,
+  TextField,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -48,17 +49,26 @@ const TierList = () => {
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const router = useRouter();
 
-  const fetchTiers = async () => {
+  const fetchTiers = async (name = '') => {
     setLoading(true);
-    const res = await GET('/tiers');
-    setTiers(res?.data.tiers || []);
+    const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+    const res = await GET(`/tiers/${clientInfo.id}?name=${encodeURIComponent(name)}`);
+    setTiers(res?.data?.tiers || []);
     setLoading(false);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    setTimeout(() => {
+      fetchTiers(value);
+    }, 300);
   };
 
   const handleDelete = async () => {
@@ -67,7 +77,7 @@ const TierList = () => {
     const res = await DELETE(`/tiers/${deleteId}`);
     if (res?.status === 200) {
       toast.success('Tier deleted!');
-      fetchTiers();
+      fetchTiers(search);
     } else {
       toast.error('Failed to delete tier');
     }
@@ -85,29 +95,29 @@ const TierList = () => {
     fetchTiers();
   }, []);
 
-  if (loading) {
-    return (
-      <Box textAlign="center" mt={6}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Card sx={{ width: 900, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
         <Typography variant="h5" fontWeight={600} gutterBottom>
           🎯 Tier List
         </Typography>
-        <Button sx={{ mb: 2 }} variant='contained' onClick={() => router.push('create')}>
+        <Button variant='contained' onClick={() => router.push('create')}>
           Create Tier
         </Button>
       </Box>
 
-      {tiers.length === 0 ? (
-        <Typography mt={4} textAlign="center">
-          No tiers found.
-        </Typography>
+      <Box mb={2}>
+        <TextField
+          placeholder="Search by name"
+          value={search}
+          onChange={handleSearchChange}
+        />
+      </Box>
+
+      {loading ? (
+        <Box textAlign="center" mt={6}><CircularProgress /></Box>
+      ) : tiers.length === 0 ? (
+        <Typography mt={4} textAlign="center">No tiers found.</Typography>
       ) : (
         <>
           <TableContainer>
@@ -117,44 +127,24 @@ const TierList = () => {
                   <TableCell>Name</TableCell>
                   <TableCell>Min Points</TableCell>
                   <TableCell>Business Unit</TableCell>
-                  {/* <TableCell>Points Conversion Rate</TableCell> */}
                   <TableCell>Benefits</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
-
               <TableBody>
-                {tiers
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((tier) => (
-                    <TableRow key={tier.id}>
-                      <TableCell
-                        sx={{
-                          maxWidth: 200,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        <Tooltip title={tier.name}>
-                          <span>{tier.name}</span>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>{tier.min_points}</TableCell>
-                      <TableCell sx={{
-                          maxWidth: 200,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}>
-                          <Tooltip title={tier.business_unit?.name || '-'}>
-                          <span>{tier.business_unit?.name || '-'}</span>
-                        </Tooltip>
-                      </TableCell>
-                      {/* <TableCell>{tier.points_conversion_rate}</TableCell> */}
-                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {tiers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tier) => (
+                  <TableRow key={tier.id}>
+                    <TableCell>
+                      <Tooltip title={tier.name}><span>{tier.name}</span></Tooltip>
+                    </TableCell>
+                    <TableCell>{tier.min_points}</TableCell>
+                    <TableCell>
+                      <Tooltip title={tier.business_unit?.name || '-'}>
+                        <span>{tier.business_unit?.name || '-'}</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
                       <Tooltip
-                        placement="top-start"
                         title={
                           <span
                             dangerouslySetInnerHTML={{
@@ -163,24 +153,23 @@ const TierList = () => {
                           />
                         }
                       >
-                         <span>{htmlToPlainText(tier.benefits || '-')}</span>
+                        <span>{htmlToPlainText(tier.benefits || '-')}</span>
                       </Tooltip>
                     </TableCell>
-                      <TableCell align="right" sx={{ display: 'flex' }}>
-                        <Tooltip title="Edit">
-                          <IconButton onClick={() => router.push(`/tiers/edit?id=${tier.id}`)}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-
-                        <Tooltip title="Delete">
-                          <IconButton onClick={() => setDeleteId(tier.id)}>
-                            <DeleteIcon fontSize="small" color="error" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                    <TableCell align="right">
+                      <Tooltip title="Edit">
+                        <IconButton onClick={() => router.push(`/tiers/edit?id=${tier.id}`)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton onClick={() => setDeleteId(tier.id)}>
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -201,9 +190,7 @@ const TierList = () => {
         <DialogTitle>Are you sure you want to delete this tier?</DialogTitle>
         <DialogActions>
           <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
-          </Button>
+          <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>
     </Card>
