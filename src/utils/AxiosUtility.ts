@@ -2,11 +2,14 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const token = localStorage.getItem('token');
 
 const axiosInstance = () => axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
+        authorization: `Bearer ${token}`,
+        "user-secret": token
     },
 });
 

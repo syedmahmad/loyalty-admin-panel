@@ -65,13 +65,10 @@ const EditClient = ({
         updated_by: itemToBeEdited.updated_by || 1,
       };
 
-      const token = localStorage.getItem('token');
-
       await PATCH(`/tenants/${itemToBeEdited.id}`, payload, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          authorization: `Bearer ${token}`,
         },
       });
 

@@ -53,13 +53,10 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         updated_by: clientInfo.updated_by,
       };
 
-      const token = localStorage.getItem('token');
-
       const response = await POST("/tenants", payload, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          authorization: `Bearer ${token}`,
         },
       });
 
