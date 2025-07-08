@@ -56,6 +56,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
   const [tiers, setTiers] = useState<Tier[]>([]);
+  const [makes, setMakes] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
   const [couponTypes, setCouponTypes] = useState([]);
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<
@@ -149,6 +150,11 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setTiers(res?.data.tiers || []);
   };
 
+  const fetchMakes = async () => {
+    const res = await GET(`/coupons/vehicle/makes`);
+    setMakes(res?.data.makes || []);
+  };
+
   useEffect(() => {
     loadData();
     fetchCouponTypes();
@@ -159,7 +165,11 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       fetchTiers();
     }
 
-    const selectedCouponConditionNames:any = couponTypes.find(
+    if (selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC) {
+      fetchMakes();
+    }
+
+    const selectedCouponConditionNames: any = couponTypes.find(
       (singleCouponType: any) => {
         if (singleCouponType.id === values.coupon_type) {
           return singleCouponType;
@@ -230,7 +240,6 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   };
 
   const handleDelete = (idToDelete: any) => {
-    console.log("idToDelete::", idToDelete);
     setDynamicRows((prev) => prev.filter((c) => c.id !== idToDelete));
   };
 
@@ -325,7 +334,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                 ) => (
                   <Grid item xs={12} key={index}>
                     <Box display="flex" gap={1}>
-                      {selectedCouponType === "TIER_BASED" && (
+                      {selectedCouponType === COUPON_TYPE.TIER_BASED && (
                         <TextField
                           select
                           label="Tier"
@@ -341,10 +350,74 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                         >
                           {tiers?.map((tier) => (
                             <MenuItem key={tier.id} value={tier.id}>
-                              {tier.name}
+                              {tier.name} ({tier?.business_unit?.name})
                             </MenuItem>
                           ))}
                         </TextField>
+                      )}
+
+                      {selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC && (
+                        <>
+                          <TextField
+                            select
+                            label="Tier"
+                            value={row.tier || ""}
+                            onChange={(e) =>
+                              handleChangeCondition(
+                                row.id,
+                                "tier",
+                                e.target.value
+                              )
+                            }
+                            sx={{ minWidth: 150 }}
+                          >
+                            {tiers?.map((tier) => (
+                              <MenuItem key={tier.id} value={tier.id}>
+                                {tier.name} ({tier?.business_unit?.name})
+                              </MenuItem>
+                            ))}
+                          </TextField>
+
+                          <TextField
+                            select
+                            label="Tier"
+                            value={row.tier || ""}
+                            onChange={(e) =>
+                              handleChangeCondition(
+                                row.id,
+                                "tier",
+                                e.target.value
+                              )
+                            }
+                            sx={{ minWidth: 150 }}
+                          >
+                            {tiers?.map((tier) => (
+                              <MenuItem key={tier.id} value={tier.id}>
+                                {tier.name} ({tier?.business_unit?.name})
+                              </MenuItem>
+                            ))}
+                          </TextField>
+
+                          <TextField
+                            select
+                            label="Tier"
+                            value={row.tier || ""}
+                            onChange={(e) =>
+                              handleChangeCondition(
+                                row.id,
+                                "tier",
+                                e.target.value
+                              )
+                            }
+                            sx={{ minWidth: 150 }}
+                          >
+                            {tiers?.map((tier) => (
+                              <MenuItem key={tier.id} value={tier.id}>
+                                {tier.name} ({tier?.business_unit?.name})
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </>
                       )}
 
                       <TextField
@@ -676,7 +749,9 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   name="isActive"
                   color="primary"
                   checked={values.status === 1}
-                  onChange={(e) => setFieldValue("status", e.target.checked ? 1 : 0)}
+                  onChange={(e) =>
+                    setFieldValue("status", e.target.checked ? 1 : 0)
+                  }
                 />
               </Grid>
             </Grid>
@@ -721,7 +796,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </Grid>
       </form>
     </>
-  )
+  );
 };
 
 export default CreateCouponForm;

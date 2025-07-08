@@ -14,7 +14,7 @@ import {
   Switch,
   TextField,
   Tooltip,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { DateTime } from "luxon";
@@ -130,7 +130,9 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       discount_percentage: couponData?.discount_percentage || 0,
       discount_price: couponData?.discount_price || 0,
       usage_limit: couponData?.usage_limit || 1,
-      business_unit_ids: [] as number[],
+      business_unit_ids: couponData?.business_unit_id
+        ? [couponData.business_unit_id]
+        : [],
       once_per_customer: couponData?.once_per_customer || 0,
       reuse_interval: couponData?.reuse_interval || 0,
       conditions: couponData?.conditions || {},
@@ -253,9 +255,6 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setDynamicRows((prev) => prev.filter((c) => c.id !== idToDelete));
   };
 
-  console.log("couponData:::", couponData);
-  console.log("status :::", values.status)
-
   return (
     <>
       {couponData && (
@@ -364,7 +363,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                           >
                             {tiers?.map((tier) => (
                               <MenuItem key={tier.id} value={tier.id}>
-                                {tier.name}
+                                {tier.name} ({tier?.business_unit?.name})
                               </MenuItem>
                             ))}
                           </TextField>
@@ -762,7 +761,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </form>
       )}
     </>
-  )
+  );
 };
 
 export default EditCouponForm;

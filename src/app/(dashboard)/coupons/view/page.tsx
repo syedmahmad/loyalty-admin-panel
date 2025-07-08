@@ -284,6 +284,7 @@ const CouponList = () => {
         open={drawerOpen === "create"}
         onClose={handleCloseDrawer}
         title="Create Coupon"
+        width={900}
       >
         <CouponCreate
           onSuccess={() => {
@@ -295,7 +296,7 @@ const CouponList = () => {
 
       {/* Drawer for Edit */}
       {drawerOpen === "edit" && drawerId && (
-        <BaseDrawer open onClose={handleCloseDrawer} title="Edit Coupon">
+        <BaseDrawer open onClose={handleCloseDrawer} title="Edit Coupon" width={700}>
           <CouponEdit
             onSuccess={() => {
               handleCloseDrawer();
