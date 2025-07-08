@@ -22,7 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
-// import { RichTextEditor } from "@/components/TextEditor";
+import { RichTextEditor } from "@/components/TextEditor";
 import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
@@ -184,7 +184,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const handleSubmit = async (values: CouponFormValues) => {
     setLoading(true);
-    const payloads: any = values.business_unit_ids.map((buId: number) => ({
+    const payloads = values.business_unit_ids.map((buId: number) => ({
       code: values.code,
       coupon_type_id: values.coupon_type,
       conditions: dynamicRows,
@@ -210,7 +210,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }));
 
     const responses = await Promise.all(
-      payloads.map(async (payload: any) => {
+      payloads.map(async (payload) => {
         if (payload.business_unit_id === couponData.business_unit_id) {
           const res = await PUT(`/coupons/${selectedId}`, payload);
           return { success: true, status: res?.status };
@@ -246,7 +246,11 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     );
   }
 
-  const handleChangeCondition = (id: number, field: string, value: any) => {
+  const handleChangeCondition = (
+    id: number,
+    field: string,
+    value: number | string
+  ) => {
     setDynamicRows((prev) =>
       prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
@@ -735,7 +739,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
               </Grid>
             </Grid>
 
-            {/* <Grid item xs={12}>
+            <Grid item xs={12}>
                   <Typography variant="subtitle1" gutterBottom>
                     Benefits (optional)
                   </Typography>
@@ -744,7 +748,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     setValue={setBenefits}
                     language="en"
                   />
-                </Grid> */}
+                </Grid>
 
             <Grid item xs={12}>
               <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>

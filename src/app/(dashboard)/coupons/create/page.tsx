@@ -21,7 +21,7 @@ import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
-// import { RichTextEditor } from "@/components/TextEditor";
+import { RichTextEditor } from "@/components/TextEditor";
 import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
@@ -29,7 +29,7 @@ import {
 } from "@/constants/constants";
 import { generateRandomCode } from "@/utils/Index";
 import { useRouter } from "next/navigation";
-import { BusinessUnit, CouponFormValues, Tier } from "../types";
+import { BusinessUnit, CouponFormValues, Make, Model, Tier, Variant } from "../types";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
@@ -57,6 +57,8 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [benefits, setBenefits] = useState<string>("");
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [makes, setMakes] = useState([]);
+  const [models, setModels] = useState([]);
+  const [variants, setVariants] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
   const [couponTypes, setCouponTypes] = useState([]);
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<
@@ -147,7 +149,17 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const fetchMakes = async () => {
     const res = await GET(`/coupons/vehicle/makes`);
-    setMakes(res?.data.makes || []);
+    setMakes(res?.data?.data || []);
+  };
+
+  const fetchModelByMakeId = async (makeId: number) => {
+    const res = await GET(`/coupons/vehicle/models/${makeId}`);
+    setModels(res?.data?.data || []);
+  };
+
+  const fetchVariantByModelId = async (modelId: number) => {
+    const res = await GET(`/coupons/vehicle/variants/${modelId}`);
+    setVariants(res?.data?.data || []);
   };
 
   useEffect(() => {
@@ -174,9 +186,12 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setConditionOfCouponTypes(selectedCouponConditionNames?.conditions);
   }, [values.coupon_type]);
 
-  const handleSubmit = async (values: CouponFormValues, resetForm: () => void) => {
+  const handleSubmit = async (
+    values: CouponFormValues,
+    resetForm: () => void
+  ) => {
     setLoading(true);
-    const payloads: any = values.business_unit_ids.map((buId: number) => ({
+    const payloads = values.business_unit_ids.map((buId: number) => ({
       code: values.code,
       coupon_type_id: values.coupon_type,
       conditions: dynamicRows,
@@ -202,7 +217,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }));
 
     const responses = await Promise.all(
-      payloads.map((payload: any) => POST("/coupons", payload))
+      payloads.map((payload) => POST("/coupons", payload))
     );
 
     const anyFailed = responses.some((res) => res?.status !== 201);
@@ -219,7 +234,11 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   };
 
-  const handleChangeCondition = (id: number, field: string, value: any) => {
+  const handleChangeCondition = (
+    id: number,
+    field: string,
+    value: number | string
+  ) => {
     setDynamicRows((prev) =>
       prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
@@ -319,6 +338,9 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     operator: string;
                     value: string;
                     tier?: number;
+                    make?: number;
+                    model?: number;
+                    variant?:number
                   },
                   index
                 ) => (
@@ -344,6 +366,69 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                             </MenuItem>
                           ))}
                         </TextField>
+                      )}
+
+                      {selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC && (
+                        <>
+                          <TextField
+                            select
+                            label="Make"
+                            value={row.make || ""}
+                            onChange={(e) => {
+                              const makeId = Number(e.target.value);
+                              fetchModelByMakeId(makeId);
+                              handleChangeCondition(row.id, "make", makeId);
+                            }}
+                            sx={{ minWidth: 150 }}
+                          >
+                            {makes?.map((make: Make) => (
+                              <MenuItem key={make.MakeId} value={make.MakeId}>
+                                {make.Make}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+
+                          <TextField
+                            select
+                            label="Model"
+                            value={row.model || ""}
+                            onChange={(e) => {
+                              const modelId = Number(e.target.value);
+                              fetchVariantByModelId(modelId);
+                              handleChangeCondition(row.id, "model", modelId);
+                            }}
+                            sx={{ minWidth: 150 }}
+                          >
+                            {models?.map((model: Model) => (
+                              <MenuItem
+                                key={model.ModelId}
+                                value={model.ModelId}
+                              >
+                                {model.Model}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+
+                          <TextField
+                            select
+                            label="Variant"
+                            value={row.variant || ""}
+                            onChange={(e) => {
+                              const variantId = Number(e.target.value);
+                              handleChangeCondition(row.id, "variant", variantId);
+                            }}
+                            sx={{ minWidth: 150 }}
+                          >
+                            {variants?.map((variant: Variant) => (
+                              <MenuItem
+                                key={variant.TrimId}
+                                value={variant.TrimId}
+                              >
+                                {variant.Trim}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </>
                       )}
 
                       <TextField
@@ -683,16 +768,17 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           </Grid>
 
-          {/* <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Benefits (optional)
-                  </Typography>
-                  <RichTextEditor
-                    value={benefits}
-                    setValue={setBenefits}
-                    language="en"
-                  />
-                </Grid> */}
+          {/* Benefits */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Benefits (optional)
+            </Typography>
+            <RichTextEditor
+              value={benefits}
+              setValue={setBenefits}
+              language="en"
+            />
+          </Grid>
 
           <Grid item xs={12}>
             <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
@@ -709,16 +795,6 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
           </Grid>
           <br />
           <br />
-          {/* <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                size="large"
-                onClick={() => router.push('view')}
-                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-              >
-              Go Back
-            </Button> */}
         </Grid>
       </form>
     </>

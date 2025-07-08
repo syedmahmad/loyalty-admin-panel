@@ -19,7 +19,7 @@ export type CouponFormValues = {
   date_from: string;
   date_to: string;
   once_per_customer?: number;
-  reuse_interval?:number;
+  reuse_interval?: number;
   status: number;
   benefits: string;
   conditions: {
@@ -43,3 +43,9 @@ export type Tier = {
   benefits?: string;
   business_unit?: { name: string };
 };
+
+export type Make = { MakeId: number; Make: string };
+export type Model = { ModelId: number; Model: string };
+export type Variant = { TrimId: number; Trim: string };
+
+
