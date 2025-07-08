@@ -1,6 +1,6 @@
 "use client";
 
-import { GET, PUT } from "@/utils/AxiosUtility";
+import { GET, POST, PUT } from "@/utils/AxiosUtility";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
@@ -30,17 +30,7 @@ import {
 } from "@/constants/constants";
 import { generateRandomCode } from "@/utils/Index";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { CouponFormValues } from "../types";
-
-type Tier = {
-  id: number;
-  name: string;
-};
-
-type BusinessUnit = {
-  id: number;
-  name: string;
-};
+import { BusinessUnit, CouponFormValues, Tier } from "../types";
 
 const oncePerCustomer = [
   { name: "Enable", value: 1 },
@@ -167,11 +157,6 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }),
     enableReinitialize: true,
     onSubmit: async (values, { resetForm }) => {
-      console.log("values :::", values);
-      console.log("FINAL PAYLOAD::", {
-        ...values,
-        conditions: dynamicRows,
-      });
       await handleSubmit(values);
     },
   });
@@ -197,9 +182,9 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setConditionOfCouponTypes(selectedCouponConditionNames?.conditions);
   }, [values.coupon_type]);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: CouponFormValues) => {
     setLoading(true);
-    const payload = {
+    const payloads: any = values.business_unit_ids.map((buId: number) => ({
       code: values.code,
       coupon_type_id: values.coupon_type,
       conditions: dynamicRows,
@@ -214,19 +199,42 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       once_per_customer: values.once_per_customer,
       reuse_interval: values.reuse_interval,
       usage_limit: values.usage_limit,
+      business_unit_id: buId,
       date_from: values.date_from,
       date_to: values.date_to,
       status: values.status,
       benefits: benefits || "",
       updated_by: userId,
-    };
-    const res = await PUT(`/coupons/${selectedId}`, payload);
-    if (res?.status !== 200) {
-      toast.error("Failed to update coupon");
+      tenant_id: userId,
+      created_by: userId,
+    }));
+
+    const responses = await Promise.all(
+      payloads.map(async (payload: any) => {
+        if (payload.business_unit_id === couponData.business_unit_id) {
+          const res = await PUT(`/coupons/${selectedId}`, payload);
+          return { success: true, status: res?.status };
+        } else {
+          const res = await POST(`/coupons`, payload);
+          return { success: true, status: res?.status };
+        }
+      })
+    );
+
+    const anyFailed = !responses.some(
+      (res) => res.status === 201 || res.status === 200
+    );
+
+    if (anyFailed) {
+      setLoading(false);
+      toast.error("failed to update coupon");
     } else {
-      toast.success("Coupon updated!");
+      toast.success("coupons updated successfully!");
+      setBenefits("");
+      setLoading(false);
       onSuccess();
     }
+
     setLoading(false);
   };
 
@@ -238,7 +246,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     );
   }
 
-  const handleChangeCondition = (id: any, field: string, value: any) => {
+  const handleChangeCondition = (id: number, field: string, value: any) => {
     setDynamicRows((prev) =>
       prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
@@ -251,7 +259,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     ]);
   };
 
-  const handleDelete = (idToDelete: any) => {
+  const handleDelete = (idToDelete: number) => {
     setDynamicRows((prev) => prev.filter((c) => c.id !== idToDelete));
   };
 
@@ -337,7 +345,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                 {dynamicRows?.map(
                   (
                     row: {
-                      id: any;
+                      id: number;
                       type: string;
                       operator: string;
                       value: string;

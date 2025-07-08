@@ -108,11 +108,6 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       status: Yup.number().required(),
     }),
     onSubmit: async (values, { resetForm }) => {
-      console.log("values :::", values);
-      console.log("FINAL PAYLOAD::", {
-        ...values,
-        conditions: dynamicRows,
-      });
       await handleSubmit(values, resetForm);
     },
   });
@@ -179,7 +174,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setConditionOfCouponTypes(selectedCouponConditionNames?.conditions);
   }, [values.coupon_type]);
 
-  const handleSubmit = async (values: any, resetForm: () => void) => {
+  const handleSubmit = async (values: CouponFormValues, resetForm: () => void) => {
     setLoading(true);
     const payloads: any = values.business_unit_ids.map((buId: number) => ({
       code: values.code,
@@ -206,8 +201,6 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       updated_by: created_by,
     }));
 
-    console.log("payloads ::", payloads);
-
     const responses = await Promise.all(
       payloads.map((payload: any) => POST("/coupons", payload))
     );
@@ -226,7 +219,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   };
 
-  const handleChangeCondition = (id: any, field: string, value: any) => {
+  const handleChangeCondition = (id: number, field: string, value: any) => {
     setDynamicRows((prev) =>
       prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
@@ -239,15 +232,12 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     ]);
   };
 
-  const handleDelete = (idToDelete: any) => {
+  const handleDelete = (idToDelete: number) => {
     setDynamicRows((prev) => prev.filter((c) => c.id !== idToDelete));
   };
 
-  console.log("selectedCouponType ::", selectedCouponType);
-
   return (
     <>
-      {/* <pre>{JSON.stringify({ errors, touched, values }, null, 2)}</pre> */}
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -324,7 +314,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
               {dynamicRows.map(
                 (
                   row: {
-                    id: any;
+                    id: number;
                     type: string;
                     operator: string;
                     value: string;
@@ -354,70 +344,6 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                             </MenuItem>
                           ))}
                         </TextField>
-                      )}
-
-                      {selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC && (
-                        <>
-                          <TextField
-                            select
-                            label="Tier"
-                            value={row.tier || ""}
-                            onChange={(e) =>
-                              handleChangeCondition(
-                                row.id,
-                                "tier",
-                                e.target.value
-                              )
-                            }
-                            sx={{ minWidth: 150 }}
-                          >
-                            {tiers?.map((tier) => (
-                              <MenuItem key={tier.id} value={tier.id}>
-                                {tier.name} ({tier?.business_unit?.name})
-                              </MenuItem>
-                            ))}
-                          </TextField>
-
-                          <TextField
-                            select
-                            label="Tier"
-                            value={row.tier || ""}
-                            onChange={(e) =>
-                              handleChangeCondition(
-                                row.id,
-                                "tier",
-                                e.target.value
-                              )
-                            }
-                            sx={{ minWidth: 150 }}
-                          >
-                            {tiers?.map((tier) => (
-                              <MenuItem key={tier.id} value={tier.id}>
-                                {tier.name} ({tier?.business_unit?.name})
-                              </MenuItem>
-                            ))}
-                          </TextField>
-
-                          <TextField
-                            select
-                            label="Tier"
-                            value={row.tier || ""}
-                            onChange={(e) =>
-                              handleChangeCondition(
-                                row.id,
-                                "tier",
-                                e.target.value
-                              )
-                            }
-                            sx={{ minWidth: 150 }}
-                          >
-                            {tiers?.map((tier) => (
-                              <MenuItem key={tier.id} value={tier.id}>
-                                {tier.name} ({tier?.business_unit?.name})
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        </>
                       )}
 
                       <TextField
