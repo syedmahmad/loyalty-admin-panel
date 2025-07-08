@@ -23,6 +23,7 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  Pagination,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { GET, DELETE } from '@/utils/AxiosUtility';
@@ -40,9 +41,12 @@ const CampaignsList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-  const [searchValue, setSearchValue] = useState('');
+  const [searchName, setSearchValue] = useState('');
   const [nameFilter, setNameFilter] = useState('');
   const router = useRouter();
+   const [rowsPerPage, setRowsPerPage] = useState(1);
+  const [page, setPage] = useState(0);
+   const count = campaigns.length;
     const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
   const drawerId = searchParams.get('id');
@@ -65,7 +69,8 @@ const CampaignsList = () => {
   useEffect(() => {
     fetchCampaigns();
   }, []);
-
+ const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+ const campaignss = campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const handleDelete = async (id: number) => {
     const confirm = window.confirm('Are you sure you want to delete this campaign?');
     if (!confirm) return;
@@ -85,15 +90,15 @@ const CampaignsList = () => {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      setNameFilter(searchValue);
-      fetchCampaigns(searchValue);
+      setNameFilter(searchName);
+      fetchCampaigns(searchName);
     }, 300);
 
     return () => clearTimeout(debounce);
-  }, [searchValue]);
+  }, [searchName]);
 
   return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+    <Box sx={{ backgroundColor: '#F9FAFB',mt:"-25px" }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography
                   sx={{
@@ -113,13 +118,18 @@ const CampaignsList = () => {
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
             size="small"
-             sx={{ fontWeight: 600, textTransform: 'none' }}
+             sx={{ backgroundColor: '#fff',
+             fontFamily:'Outfit',
+        fontWeight: 600,}}
           >
             <MenuItem value="card" >Card View</MenuItem>
             <MenuItem value="table">Table View</MenuItem>
           </Select>
           <Button size="small" variant="outlined" onClick={() => router.push('/campaigns/view?drawer=create')}
-              sx={{ fontWeight: 600, textTransform: 'none' }}>
+              sx={{ backgroundColor: '#fff',
+             fontFamily:'Outfit',
+        fontWeight: 600,
+   }}>
             Create 
           </Button>
         </Box>
@@ -128,10 +138,39 @@ const CampaignsList = () => {
       <Box mb={2}>
         <TextField
           placeholder="Search by name"
-          value={searchValue}
+           value={searchName}
           onChange={(e) => setSearchValue(e.target.value)}
+          sx={{
+      backgroundColor: '#fff',
+      fontFamily: 'Outfit',
+      fontWeight: 400,
+      fontStyle: 'normal',
+      fontSize: '15px',
+      lineHeight: '22px',
+       borderBottom: '1px solid #e0e0e0',
+      borderRadius: 2,
+      '& .MuiInputBase-input': {
+        fontFamily: 'Outfit',
+        fontWeight: 400,
+        fontSize: '15px',
+        lineHeight: '22px',
+      },
+    }}
+    InputProps={{
+      startAdornment: (
+        <InputAdornment position="start">
+          <SearchIcon sx={{ color: '#9e9e9e' }} />
+        </InputAdornment>
+      ),
+      sx: {
+        borderRadius: 2,
+        fontFamily: 'Outfit',
+        fontWeight: 400,
+      },
+    }}
         />
       </Box>
+      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
 
       {loading ? (
         <Box textAlign="center" mt={6}>
@@ -184,6 +223,7 @@ const CampaignsList = () => {
           })}
         </Grid>
       ) : (
+        <>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -194,11 +234,11 @@ const CampaignsList = () => {
                 <TableCell>End Date</TableCell>
                 <TableCell>Rules</TableCell>
                 <TableCell>Tiers</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell align='right'>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {campaigns.map((campaign) => {
+              {campaignss.map((campaign) => {
                 const ruleNames = campaign.rules?.map((r: any) => r.rule?.name).join(', ') || 'No Rules';
                 const tierNames = campaign.tiers?.map((t: any) => t.tier?.name).join(', ') || 'No Tiers';
 
@@ -219,7 +259,7 @@ const CampaignsList = () => {
                         <span>{campaign.tiers?.length || 0}</span>
                       </Tooltip>
                     </TableCell>
-                    <TableCell>
+                    <TableCell align="right">
                      <IconButton onClick={() =>router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`)}>
                      <EditIcon />
                       </IconButton>
@@ -230,9 +270,78 @@ const CampaignsList = () => {
                   </TableRow>
                 );
               })}
+               {campaigns.length === 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={4} align="center">
+                                    No campaigns found.
+                                  </TableCell>
+                                </TableRow>
+                              )}
             </TableBody>
           </Table>
         </TableContainer>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTop: '1px solid #E0E0E0', // top border line
+            paddingY: 2,
+            paddingX: 2,
+          }}
+        >
+          {/* Previous Button */}
+          <Button
+            variant="outlined"
+            onClick={() => handleChangePage(null, page - 1)}
+            disabled={page === 1}
+          sx={{
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              minWidth: 100
+            }}
+          >
+            ← Previous
+          </Button>
+        
+          {/* Pagination */}
+          <Pagination
+            count={count}
+            page={page}
+            onChange={handleChangePage}
+            shape="rounded"
+            siblingCount={1}
+            boundaryCount={1}
+            hidePrevButton
+            hideNextButton
+            sx={{
+              '& .MuiPaginationItem-root': {
+                borderRadius: '8px',
+                fontWeight: 500,
+                minWidth: '36px',
+                height: '36px'
+              }
+            }}
+          />
+        
+          {/* Next Button */}
+          <Button
+            variant="outlined"
+            onClick={() => handleChangePage(null, page + 1)}
+            disabled={page === count}
+         sx={{
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              minWidth: 100
+            }}
+          >
+            Next →
+          </Button>
+        </Box>
+        </>
+        
       )}
        {/* Drawer for Create */}
       <BaseDrawer
@@ -264,6 +373,7 @@ const CampaignsList = () => {
         </BaseDrawer>
       )}
     </Paper>
+    </Box>
   );
 };
 

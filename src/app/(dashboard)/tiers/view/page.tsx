@@ -17,9 +17,10 @@ import {
   DialogTitle,
   DialogActions,
   Button,
-  TablePagination,
+  InputAdornment,
   TextField,
   Paper,
+  Pagination,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useRouter,useSearchParams } from 'next/navigation';
@@ -32,6 +33,7 @@ import { marked } from 'marked';
 import BaseDrawer from '@/components/drawer/basedrawer';
 import TierCreate from '../create/page';
 import TierEdit from '../edit/page';
+import SearchIcon from '@mui/icons-material/Search';
 
 type Tier = {
   id: number;
@@ -55,8 +57,8 @@ const TierList = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
+  const [rowsPerPage, setRowsPerPage] = useState(1);
+  const count = tiers.length;
   const router = useRouter();
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
@@ -104,8 +106,8 @@ const TierList = () => {
     fetchTiers();
   }, []);
 
-  return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+  return (<Box sx={{ backgroundColor: '#F9FAFB',mt:"-25px" }}>
+    
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" , mb:2 }}>
         <Typography
                     sx={{
@@ -118,7 +120,10 @@ const TierList = () => {
                     Tier List
                   </Typography>
         <Button variant='outlined' onClick={() => router.push('/tiers/view?drawer=create')}
-            sx={{ fontWeight: 600, textTransform: 'none' }}>
+            sx={{ backgroundColor: '#fff',
+                  fontFamily:'Outfit',
+                  fontWeight: 600,
+   }}>
           Create 
         </Button>
       </Box>
@@ -128,8 +133,35 @@ const TierList = () => {
           placeholder="Search by name"
           value={search}
           onChange={handleSearchChange}
+          sx={{
+      backgroundColor: '#fff',
+      fontFamily: 'Outfit',
+      fontWeight: 400,
+      fontStyle: 'normal',
+      fontSize: '15px',
+      
+       borderBottom: '1px solid #e0e0e0',
+      borderRadius: 2,
+      '& .MuiInputBase-input': {
+        fontFamily: 'Outfit',
+        fontWeight: 400,
+        fontSize: '15px',
+       
+      },
+    }} InputProps={{ startAdornment: (
+        <InputAdornment position="start">
+          <SearchIcon sx={{ color: '#9e9e9e' }} />
+        </InputAdornment>
+      ),
+      sx: {
+        borderRadius: 2,
+        fontFamily: 'Outfit',
+        fontWeight: 400,
+      },
+    }}
         />
       </Box>
+      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
 
       {loading ? (
         <Box textAlign="center" mt={6}><CircularProgress /></Box>
@@ -191,15 +223,66 @@ const TierList = () => {
             </Table>
           </TableContainer>
 
-          <TablePagination
-            component="div"
-            count={tiers.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTop: '1px solid #E0E0E0', // top border line
+              paddingY: 2,
+              paddingX: 2,
+            }}
+          >
+            {/* Previous Button */}
+            <Button
+              variant="outlined"
+              onClick={() => handleChangePage(null, page - 1)}
+              disabled={page === 1}
+            sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 3,
+                minWidth: 100
+              }}
+            >
+              ← Previous
+            </Button>
+          
+            {/* Pagination */}
+            <Pagination
+              count={count}
+              page={page}
+              onChange={handleChangePage}
+              shape="rounded"
+              siblingCount={1}
+              boundaryCount={1}
+              hidePrevButton
+              hideNextButton
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  borderRadius: '8px',
+                  fontWeight: 500,
+                  minWidth: '36px',
+                  height: '36px'
+                }
+              }}
+            />
+          
+            {/* Next Button */}
+            <Button
+              variant="outlined"
+              onClick={() => handleChangePage(null, page + 1)}
+              disabled={page === count}
+           sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 3,
+                minWidth: 100
+              }}
+            >
+              Next →
+            </Button>
+          </Box>
         </>
       )}
 
@@ -232,6 +315,7 @@ const TierList = () => {
         </BaseDrawer>
 )};
     </Paper>
+    </Box>
   );
 };
 

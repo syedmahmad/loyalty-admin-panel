@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
-import { alpha, ListItemButton, ListItemIcon, 
+import { alpha, Box, ListItemButton, ListItemIcon, 
   ListItemText, Typography, useMediaQuery } from '@mui/material';
 
 // project import
@@ -16,6 +16,7 @@ import { activeItem, openDrawer } from '../../../../../store/reducers/menu';
 // types
 import { LinkTarget, NavItemType } from '../../../../../types/menu';
 // import { ThemeMode } from '../../../../../types/config';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'; 
 
 // ==============================|| NAVIGATION - LIST ITEM ||============================== //
 
@@ -134,12 +135,32 @@ const NavItem = ({ item, level }: Props) => {
           )}
           {drawerOpen && (
             <ListItemText
-              primary={
-                <Typography variant="h6" sx={{ color: isSelected ? iconSelectedColor : textColor }}>
-                  {item.title}
-                </Typography>
-              }
-            />
+          
+       primary={
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Typography
+        variant="h6"
+        sx={{
+          color: isSelected ? iconSelectedColor : textColor,
+          fontFamily: 'Outfit, sans-serif',
+          fontWeight: 450,
+          fontStyle: 'normal',
+          fontSize: '18px',
+          lineHeight: '22px',
+        }}
+      >
+        {item.title}
+      </Typography>
+      <ChevronRightIcon sx={{ fontSize: '20px', color: textColor }} />
+    </Box>
+  }
+/>
           )}
         </ListItemButton>
     </>

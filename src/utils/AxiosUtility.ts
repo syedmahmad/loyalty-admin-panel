@@ -19,7 +19,6 @@ const handleError = (error: any) => {
 
 const GET = async (endPoint: string, config?: any) => {
   try {
-    debugger;
     const response = await axiosInstance().get(endPoint, config);
     return response;
   } catch (error) {

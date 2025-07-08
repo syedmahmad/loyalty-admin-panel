@@ -17,7 +17,7 @@ type BaseDrawerProps = {
   width?: number;
 };
 
-const BaseDrawer = ({ open, onClose, title, children, width = 500 }: BaseDrawerProps) => {
+const BaseDrawer = ({ open, onClose, title, children, width = 400 }: BaseDrawerProps) => {
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Box sx={{ width, display: 'flex', flexDirection: 'column', height: '100%' }}>
