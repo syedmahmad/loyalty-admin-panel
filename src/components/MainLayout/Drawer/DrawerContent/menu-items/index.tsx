@@ -10,6 +10,7 @@ import ExtensionIcon from '@mui/icons-material/Extension';
 import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LoyaltyIcon from '@mui/icons-material/Loyalty';
 
 
 // types
@@ -123,6 +124,14 @@ const menuItems: { items: NavItemType[] } = {
       url: "/tiers/view",
       privileges: [],
       icon: CrisisAlertIcon,
+    },
+     {
+      id: "coupons",
+      title: "Coupons",
+      type: "item",
+      url: "/coupons/view",
+      privileges: [],
+      icon: LoyaltyIcon,
     },
     {
       id: "campaigns",

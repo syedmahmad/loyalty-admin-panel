@@ -24,7 +24,6 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-
 import { useRouter,useSearchParams } from 'next/navigation';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
