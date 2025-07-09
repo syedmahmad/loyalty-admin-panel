@@ -51,7 +51,7 @@ const updateBusinessUnit = async (id: string, payload: any) => {
   return response.data;
 };
 
-const BusinessUnitEditForm = () => {
+const BusinessUnitEditForm =  ({ onSuccess }: { onSuccess: () => void }) => {
   const params = useSearchParams();
   const paramId =  params.get('id') || null;
   const router = useRouter();
@@ -116,7 +116,7 @@ const BusinessUnitEditForm = () => {
           .finally(() => setLoading(false));
       }
       toast.success('Business Unit updated!');
-      router.push('/business-units/view');
+          onSuccess();// router.push('/business-units/view');
     } catch (e) {
       console.log('Something went wrong', e);
     } finally {
@@ -126,17 +126,17 @@ const BusinessUnitEditForm = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
-      </Tooltip>
+      </Tooltip> */}
 
-      <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
+      {/* <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
       <CardContent>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
           ✏️ Edit Business Unit
-        </Typography>
+        </Typography> */}
 
         {!paramId && (
           <Grid container spacing={2} sx={{ mb: 1, width: '100%' }}>
@@ -228,31 +228,24 @@ const BusinessUnitEditForm = () => {
                     />
                   </Grid>
 
-                  <Grid item xs={12}>
+                      <Grid item xs={12}>
+                      <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
                     <Button
-                      variant="contained"
-                      color="primary"
-                      type="submit"
-                      disabled={loading}
-                      fullWidth
-                      size="large"
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                    >
-                      {loading ? <CircularProgress size={24} /> : 'Update Business Unit'}
-                    </Button>
-                    <br />
-                    <br />
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      fullWidth
-                      size="large"
-                      onClick={() => router.push('view')}
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Go Back
-                    </Button>
+                       variant="outlined"
+                        color="primary"
+                        type="submit"
+                        disabled={loading}
+                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight:550  }}
+                        >
+                       {loading ? <CircularProgress size={24} /> : 'Update'}
+                       </Button>
+                    </Box>
                   </Grid>
+                  
+                    <br />
+                    <br />
+                  
+                  
                 </Grid>
               </Form>
             )}
@@ -262,8 +255,8 @@ const BusinessUnitEditForm = () => {
             <CircularProgress />
           </Box>
         ) : null}
-      </CardContent>
-    </Card>
+      {/* </CardContent>
+    </Card> */}
     </>
   );
 };

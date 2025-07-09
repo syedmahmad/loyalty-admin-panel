@@ -6,6 +6,7 @@ import {
   useTheme,
   TextField,
   MenuItem,
+  Box,
 } from "@mui/material";
 import { CustomTextfield } from "@/components/CustomTextField";
 import { POST } from "@/utils/AxiosUtility";
@@ -82,6 +83,14 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
     <Grid2 container spacing={3}>
       <Grid2 xs={12}>
         <Typography
+         sx={{
+                      color: 'rgba(0, 0, 0, 0.87)',
+                      fontFamily: 'Outfit',
+                      fontSize: '32px',
+                      fontWeight:600 ,
+                       
+                       
+                    }}
           variant="h4"
           color={theme.palette.primary.dark}
           textTransform="capitalize"
@@ -142,15 +151,24 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         </TextField>
       </Grid2>
 
-      <Grid2 xs={12}>
+      <Grid2 xs={12} md={12} sx={{ mt: 2 }}>
+      <Box
+       sx={{
+      display: 'flex',
+      justifyContent: 'center', 
+      alignItems: 'center',     
+      width: '100%',
+    }}
+  >
         <Button
-          variant="contained"
+          variant="outlined"
           color="primary"
           onClick={handleSubmit}
-          fullWidth
+        
         >
           Register Tenants
         </Button>
+        </Box>
       </Grid2>
     </Grid2>
   );

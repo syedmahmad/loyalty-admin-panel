@@ -75,19 +75,26 @@ const ClientInfo = ({ clientInfo, reFetch }: any) => {
       </Grid2>
 
       <Grid2 xs={12} md={12} sx={{ mt: 2 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          endIcon={<KeyboardArrowRightIcon />}
-          onClick={() => {
-            localStorage.setItem("client-info", JSON.stringify(clientInfo));
-            window.location.pathname = "/business-units/view";
-          }}
-        >
-          Details
-        </Button>
-      </Grid2>
-
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',     
+      width: '100%',
+    }}
+  >
+    <Button
+      variant="outlined"
+      endIcon={<KeyboardArrowRightIcon />}
+      onClick={() => {
+        localStorage.setItem("client-info", JSON.stringify(clientInfo));
+        window.location.pathname = "/business-units/view";
+      }}
+    >
+      Details
+    </Button>
+  </Box>
+</Grid2>
       {openEditClientInfoModal && (
         <EditClientModal
           itemToBeEdited={itemToBeEdited}

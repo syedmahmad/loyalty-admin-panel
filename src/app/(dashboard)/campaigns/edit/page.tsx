@@ -34,7 +34,7 @@ const htmlToPlainText = (htmlString: string): string => {
   return tempDiv.textContent || tempDiv.innerText || '';
 };
 
-const CampaignEdit = () => {
+const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const params = useSearchParams();
   const paramId = params.get('id') || null;
@@ -199,7 +199,8 @@ const CampaignEdit = () => {
       const res = await PUT(`/campaigns/${paramId}`, payload);
       if (res?.status === 200) {
         toast.success('Campaign updated!');
-        router.push('/campaigns/view');
+       // router.push('/campaigns/view');
+       onSuccess();
       } else {
         toast.error('Update failed');
       }
@@ -212,7 +213,7 @@ const CampaignEdit = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
@@ -220,7 +221,7 @@ const CampaignEdit = () => {
       <Card sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         ✏️ Edit Campaign
-      </Typography>
+      </Typography> */}
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
@@ -363,11 +364,12 @@ const CampaignEdit = () => {
       </Grid>
 
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+        <Button variant="outlined" onClick={handleSubmit} disabled={loading}
+          sx={{ fontWeight: 600, textTransform: 'none' }}>
           {loading ? <CircularProgress size={24} /> : 'Update Campaign'}
         </Button>
       </Box>
-    </Card>
+    
     </>
   );
 };

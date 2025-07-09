@@ -10,6 +10,8 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
+  Pagination,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -22,12 +24,16 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+
+import { useRouter,useSearchParams } from 'next/navigation';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import { GET, DELETE } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import RuleCreateForm from '../create/page';
+import RuleEdit from '../edit/page';
+import BaseDrawer from '@/components/drawer/basedrawer';
 
 type Rule = {
   id: number;
@@ -50,9 +56,14 @@ const RuleList = () => {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [nameFilter, setNameFilter] = useState('');
-  const [searchValue, setSearchValue] = useState('');
+  const [searchName, setSearchName] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+   const count = rules.length; // your total data count
+
+  const [rowsPerPage, setRowsPerPage] = useState(1);
+    const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+  const drawerId = searchParams.get('id');
 
   const router = useRouter();
 
@@ -64,6 +75,18 @@ const RuleList = () => {
     setRules(res?.data || []);
     setLoading(false);
   };
+  const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl);
+  };
+  //  const fetchRules = async () => {
+  //   setLoading(true);
+  //   const res = await GET('/rules');
+  //   setRules(res?.data || []);
+  //   setLoading(false);
+  // };
+
+  
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -83,12 +106,12 @@ const RuleList = () => {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      setNameFilter(searchValue);
-      fetchRules(searchValue);
+      setNameFilter(searchName);
+      fetchRules(searchName);
     }, 300);
 
     return () => clearTimeout(debounce);
-  }, [searchValue]);
+  }, [searchName]);
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,24 +120,72 @@ const RuleList = () => {
   };
 
   return (
-    <Card sx={{ p: 3, mt: 4, borderRadius: 3, width: '100%', maxWidth: 1200, mx: 'auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          🧩 Rules List
-        </Typography>
-        <Button variant="contained" onClick={() => router.push('create')}>
-          Create Rule
-        </Button>
-      </Box>
+   <Box sx={{ backgroundColor: '#F9FAFB', mt:"-25px"}}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' , alignItems: 'center',mb:1 }}>
+          <Typography
+               sx={{
+                 color: 'rgba(0, 0, 0, 0.87)',
+                 fontFamily: 'Outfit',
+                 fontSize: '32px',
+                 fontWeight:600 
+            
 
-      <Box mt={2} mb={2}>
+                  
+               }}
+             >
+            Rules
+             </Typography>
+           <Button variant="outlined" onClick={() => router.push('/rules/view?drawer=create')}
+              sx={{
+       backgroundColor: '#fff',
+          fontFamily:'Outfit',
+         fontWeight: 600,
+     
+      
+     }}>
+             Create
+           </Button>
+         </Box>
+      
+
+      
+        <Box mb={2}>
         <TextField
-          size="medium"
+         size="small"
           placeholder="Search by name"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          sx={{
+            backgroundColor: '#fff',
+            fontFamily: 'Outfit',
+            fontWeight: 400,
+            fontStyle: 'normal',
+            fontSize: '15px',
+            lineHeight: '22px',
+             borderBottom: '1px solid #e0e0e0',
+            borderRadius: 2,
+            '& .MuiInputBase-input': {
+              fontFamily: 'Outfit',
+              fontWeight: 400,
+              fontSize: '15px',
+              lineHeight: '22px',
+              
+            },
+          }}
+          InputProps={{ startAdornment: (
+        <InputAdornment position="start">
+          <SearchIcon sx={{ color: '#9e9e9e' }} />
+        </InputAdornment>
+      ),
+            sx: {
+              borderRadius: 2,
+              fontFamily: 'Outfit',
+              fontWeight: 400,
+            },
+          }}
         />
       </Box>
+      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
 
       {loading ? (
         <Box mt={4} textAlign="center">
@@ -160,7 +231,8 @@ const RuleList = () => {
                     <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent_on_invoice ?? '-' : '-'}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="Edit">
-                        <IconButton onClick={() => router.push(`/rules/edit?id=${rule.id}`)}>
+                        <IconButton onClick={() => router.push(`/rules/view?drawer=edit&id=${rule.id}`)
+                        }>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -171,20 +243,78 @@ const RuleList = () => {
                       </Tooltip>
                     </TableCell>
                   </TableRow>
-                ))}
+                ))} 
+                {rules.length === 0 && (
+                                  <TableRow>
+                                    <TableCell colSpan={4} align="center">
+                                      No Rule found.
+                                    </TableCell>
+                                  </TableRow>
+                                )} 
               </TableBody>
             </Table>
           </TableContainer>
 
-          <TablePagination
-            component="div"
-            count={rules.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
+         <Box
+           sx={{
+             display: 'flex',
+             justifyContent: 'space-between',
+             alignItems: 'center',
+             borderTop: '1px solid #E0E0E0', // top border line
+             paddingY: 2,
+             paddingX: 2,
+           }}
+         >
+           {/* Previous Button */}
+           <Button
+             variant="outlined"
+             onClick={() => handleChangePage(null, page - 1)}
+             disabled={page === 1}
+           sx={{
+               textTransform: 'none',
+               borderRadius: 2,
+               px: 3,
+               minWidth: 100
+             }}
+           >
+             ← Previous
+           </Button>
+         
+           {/* Pagination */}
+           <Pagination
+             count={count}
+             page={page}
+             onChange={handleChangePage}
+             shape="rounded"
+             siblingCount={1}
+             boundaryCount={1}
+             hidePrevButton
+             hideNextButton
+             sx={{
+               '& .MuiPaginationItem-root': {
+                 borderRadius: '8px',
+                 fontWeight: 500,
+                 minWidth: '36px',
+                 height: '36px'
+               }
+             }}
+           />
+         
+           {/* Next Button */}
+           <Button
+             variant="outlined"
+             onClick={() => handleChangePage(null, page + 1)}
+             disabled={page === count}
+          sx={{
+               textTransform: 'none',
+               borderRadius: 2,
+               px: 3,
+               minWidth: 100
+             }}
+           >
+             Next →
+           </Button>
+         </Box>
         </>
       )}
 
@@ -195,7 +325,35 @@ const RuleList = () => {
           <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>
-    </Card>
+    
+    {/* Drawer for Create */}
+      <BaseDrawer
+        open={drawerOpen === 'create'}
+        onClose={handleCloseDrawer}
+        title="Create Rule"
+      >
+        <RuleCreateForm onSuccess={() => {
+          handleCloseDrawer(); 
+          fetchRules(); 
+    }}/>
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Edit Rule"
+        >
+          <RuleEdit onSuccess={() => {
+          handleCloseDrawer(); 
+          fetchRules(); 
+    }}/>
+        </BaseDrawer>
+      )}
+      </Paper>
+      </Box>
+      
   );
 };
 

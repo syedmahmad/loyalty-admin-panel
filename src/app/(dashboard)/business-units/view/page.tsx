@@ -17,17 +17,24 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
+  InputAdornment,
   Button,
   TablePagination,
   TextField,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BusinessIcon from '@mui/icons-material/Business';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import { DELETE, GET } from '@/utils/AxiosUtility';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import BusinessUnitEditForm from '../edit/page';
+import BusinessUnitCreateForm from '../create/page';
+import Pagination from '@mui/material/Pagination';
 
 type BusinessUnit = {
   id: number;
@@ -59,8 +66,15 @@ const BusinessUnitList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchName, setSearchName] = useState('');
-
+   const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+   const drawerId = searchParams.get('id');
+ const count = units.length; // your total data count
   const router = useRouter();
+   const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl);
+  };
 
   const loadData = async (name = '') => {
     setLoading(true);
@@ -97,24 +111,70 @@ const BusinessUnitList = () => {
   const paginatedUnits = units.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          🏢 Business Units
-        </Typography>
-        <Button variant="contained" onClick={() => router.push('create')}>
-          Create Business Units
+    <Box sx={{ backgroundColor: '#F9FAFB',mt:"-25px" }}>
+         <Box sx={{ display: 'flex', justifyContent: 'space-between' , alignItems: 'center', mb: 1 }}>
+       <Typography
+            sx={{
+              color: 'rgba(0, 0, 0, 0.87)',
+              fontFamily: 'Outfit',
+              fontSize: '32px',
+              fontWeight:600 ,
+               
+               
+            }}
+          >
+            Business Units
+          </Typography>
+        <Button variant="outlined" onClick={() => router.push('/business-units/view?drawer=create')}
+           sx={{
+    backgroundColor: '#fff',
+       fontFamily:'Outfit',
+      fontWeight: 600,
+  
+   
+  }}>
+          Create
         </Button>
       </Box>
+  <Box mb={2}>
+  <TextField
+   size="small"
+    placeholder="Search by name"
+    value={searchName}
+    onChange={(e) => setSearchName(e.target.value)}
+    sx={{
+      backgroundColor: '#fff',
+      fontFamily: 'Outfit',
+      fontWeight: 400,
+      fontStyle: 'normal',
+      fontSize: '15px',
+      lineHeight: '22px',
+       borderBottom: '1px solid #e0e0e0',
+      borderRadius: 2,
+      '& .MuiInputBase-input': {
+        fontFamily: 'Outfit',
+        fontWeight: 400,
+        fontSize: '15px',
+        lineHeight: '22px',
+      },
+    }}
+    InputProps={{
+      startAdornment: (
+        <InputAdornment position="start">
+          <SearchIcon sx={{ color: '#9e9e9e' }} />
+        </InputAdornment>
+      ),
+      sx: {
+        borderRadius: 2,
+        fontFamily: 'Outfit',
+        fontWeight: 400,
+      },
+    }}
+  />
+</Box>
 
-      <Box mb={2}>
-        <TextField
-          placeholder="Search by name"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-        />
-      </Box>
-
+     <Paper elevation={3} sx={{  borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+     
       {loading ? (
         <Box mt={4} textAlign="center">
           <CircularProgress />
@@ -123,34 +183,35 @@ const BusinessUnitList = () => {
         <>
           <TableContainer>
             <Table size="small">
-              <TableHead>
+              <TableHead >
                 <TableRow>
-                  <TableCell align="center">
+                  <TableCell >
                     <BusinessIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
                     Name
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell >
                     <DescriptionIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
                     Description
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell >
                     <LocationOnIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
                     Location
                   </TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell  align='right'>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {paginatedUnits.map((unit) => (
                   <TableRow key={unit.id}>
-                    <TableCell align="center">{unit.name}</TableCell>
-                    <TableCell align="center">{unit.description || '—'}</TableCell>
-                    <TableCell align="center">{unit.location || '—'}</TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Edit">
+                    <TableCell >{unit.name}</TableCell>
+                    <TableCell >{unit.description || '—'}</TableCell>
+                    <TableCell  >{unit.location || '—'}</TableCell>
+                    <TableCell align="right" >
+                      <Tooltip title="Edit" >
                         <IconButton
                           color="primary"
-                          onClick={() => router.push(`/business-units/edit?id=${unit.id}`)}
+                          onClick={() => router.push(`/business-units/view?drawer=edit&id=${unit.id}`)
+                        }
                         >
                           <EditIcon />
                         </IconButton>
@@ -177,17 +238,71 @@ const BusinessUnitList = () => {
             </Table>
           </TableContainer>
 
-          <TablePagination
-            component="div"
-            count={units.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
-          />
-        </>
-      )}
+
+
+<Box
+  sx={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTop: '1px solid #E0E0E0', // top border line
+    paddingY: 2,
+    paddingX: 2,
+  }}
+>
+  {/* Previous Button */}
+  <Button
+    variant="outlined"
+    onClick={() => handleChangePage(null, page - 1)}
+    disabled={page === 1}
+  sx={{
+      textTransform: 'none',
+      borderRadius: 2,
+      px: 3,
+      minWidth: 100
+    }}
+  >
+    ← Previous
+  </Button>
+
+  {/* Pagination */}
+  <Pagination
+    count={count}
+    page={page}
+    onChange={handleChangePage}
+    shape="rounded"
+    siblingCount={1}
+    boundaryCount={1}
+    hidePrevButton
+    hideNextButton
+    sx={{
+      '& .MuiPaginationItem-root': {
+        borderRadius: '8px',
+        fontWeight: 500,
+        minWidth: '36px',
+        height: '36px'
+      }
+    }}
+  />
+
+  {/* Next Button */}
+  <Button
+    variant="outlined"
+    onClick={() => handleChangePage(null, page + 1)}
+    disabled={page === count}
+ sx={{
+      textTransform: 'none',
+      borderRadius: 2,
+      px: 3,
+      minWidth: 100
+    }}
+  >
+    Next →
+  </Button>
+</Box>
+ </>
+)}
+    
 
       <Dialog
         open={confirmDeleteId !== null}
@@ -203,7 +318,37 @@ const BusinessUnitList = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Paper>
+     
+        <BaseDrawer
+        open={drawerOpen === 'create'}
+        onClose={handleCloseDrawer}
+        title="Create Business"
+      >
+         <BusinessUnitCreateForm onSuccess={() => {
+          loadData();           
+          handleCloseDrawer(); 
+    }} />
+      </BaseDrawer>
+
+      {/* Drawer for Edit */}
+      {drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Edit Business"
+        >
+          <BusinessUnitEditForm onSuccess={() => {
+          handleCloseDrawer(); 
+          loadData(); 
+    }} />
+        </BaseDrawer>
+    
+  )}
+  </Paper>    
+    </Box>
+    
+    
+     
   );
 };
 

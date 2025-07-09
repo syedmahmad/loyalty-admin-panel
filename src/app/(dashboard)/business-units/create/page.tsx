@@ -13,6 +13,7 @@ import {
   Tooltip,
   IconButton,
   useTheme,
+  Box,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Formik, Form } from 'formik';
@@ -30,7 +31,7 @@ const BusinessUnitSchema = Yup.object().shape({
   location: Yup.string(),
 });
 
-const BusinessUnitCreateForm = () => {
+const BusinessUnitCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -66,7 +67,7 @@ const BusinessUnitCreateForm = () => {
       } else {
         resetForm();
         toast.success('Business Unit created successfully!');
-        router.push('/business-units/view');
+          onSuccess();  // router.push('/business-units/view');
       }
     } catch (err) {
       console.error(err);
@@ -86,19 +87,12 @@ const BusinessUnitCreateForm = () => {
 
   return (
     <>
-      <Tooltip title="Go Back">
+      {/* <Tooltip title="Go Back">
         <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
           <ArrowBackIcon /> &nbsp; Go Back
         </IconButton>
-      </Tooltip>
-
-      <Card sx={{ maxWidth: 600, mx: 'auto', mt: 4, p: 1, borderRadius: 4, boxShadow: 4 }}>
-        <CardContent>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            🚀 Create New Business Unit
-          </Typography>
-
-          <Formik
+      </Tooltip> */}
+           <Formik
             initialValues={{
               name: '',
               description: '',
@@ -167,37 +161,30 @@ const BusinessUnitCreateForm = () => {
                     />
                   </Grid>
 
-                  <Grid item xs={12}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      type="submit"
-                      disabled={loading}
-                      fullWidth
-                      size="large"
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                    >
-                      {loading ? <CircularProgress size={24} /> : 'Create Business Unit'}
-                    </Button>
+                             <Grid item xs={12}>
+                               <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                                 <Button
+                                       variant="outlined"
+                                       color="primary"
+                                        type="submit"
+                                         disabled={loading}
+                                     sx={{ borderRadius: 2, textTransform: 'none',fontWeight:550 }}
+                             >
+                                     {loading ? <CircularProgress size={24} /> : 'Create business'}
+                                       </Button>
+                                              </Box>
+                                          </Grid>
+
                     <br />
                     <br />
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      fullWidth
-                      size="large"
-                      onClick={() => router.push('view')}
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Go Back
-                    </Button>
+                    
                   </Grid>
-                </Grid>
+                
               </Form>
             )}
           </Formik>
-        </CardContent>
-    </Card>
+        
+   
     </>
   );
 };

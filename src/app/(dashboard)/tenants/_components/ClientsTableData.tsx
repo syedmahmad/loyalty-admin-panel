@@ -65,9 +65,18 @@ export const ClientsTableData = ({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-              }}
+               }}
+              
             >
               <Typography
+               sx={{
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            fontFamily: 'Outfit',
+                            fontSize: '32px',
+                            fontWeight:600 ,
+                             
+                             
+                          }}
                 variant="h3"
                 color={theme.palette.primary.dark}
                 textTransform="capitalize"
@@ -75,7 +84,7 @@ export const ClientsTableData = ({
                 Tenants Details
               </Typography>
               <Button
-                variant="contained"
+                variant="outlined"
                 sx={{
                   transition: "0.3s",
                   transform: "scale(1)",
