@@ -59,14 +59,11 @@ const RuleList = () => {
   const [searchName, setSearchName] = useState('');
   const [page, setPage] = useState(0);
    const count = rules.length; // your total data count
-
-  const [rowsPerPage, setRowsPerPage] = useState(1);
-    const searchParams = useSearchParams();
+ const [rowsPerPage, setRowsPerPage] = useState(7);
+   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
   const drawerId = searchParams.get('id');
-
   const router = useRouter();
-
   const fetchRules = async (name = '') => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
@@ -113,7 +110,7 @@ const RuleList = () => {
     return () => clearTimeout(debounce);
   }, [searchName]);
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage-1);
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -268,8 +265,8 @@ const RuleList = () => {
            {/* Previous Button */}
            <Button
              variant="outlined"
-             onClick={() => handleChangePage(null, page - 1)}
-             disabled={page === 1}
+             onClick={() => setPage(prev => prev - 1)}
+  disabled={page === 0}
            sx={{
                textTransform: 'none',
                borderRadius: 2,
@@ -283,7 +280,7 @@ const RuleList = () => {
            {/* Pagination */}
            <Pagination
              count={count}
-             page={page}
+             page={page+1}
              onChange={handleChangePage}
              shape="rounded"
              siblingCount={1}
@@ -303,8 +300,8 @@ const RuleList = () => {
            {/* Next Button */}
            <Button
              variant="outlined"
-             onClick={() => handleChangePage(null, page + 1)}
-             disabled={page === count}
+              onClick={() => setPage(prev => prev + 1)}
+  disabled={page === count - 1}
           sx={{
                textTransform: 'none',
                borderRadius: 2,
