@@ -30,7 +30,14 @@ import {
 } from "@/constants/constants";
 import { generateRandomCode } from "@/utils/Index";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { BusinessUnit, CouponFormValues, Tier } from "../types";
+import {
+  BusinessUnit,
+  CouponFormValues,
+  Make,
+  Model,
+  Tier,
+  Variant,
+} from "../types";
 
 const oncePerCustomer = [
   { name: "Enable", value: 1 },
@@ -39,11 +46,20 @@ const oncePerCustomer = [
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
-const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
+const EditCouponForm = ({
+  onSuccess,
+  handleDrawerWidth,
+}: {
+  onSuccess: () => void;
+  handleDrawerWidth: (selectedCouponType: string) => void;
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");
   const [tiers, setTiers] = useState<Tier[]>([]);
+  const [makes, setMakes] = useState([]);
+  const [models, setModels] = useState([]);
+  const [variants, setVariants] = useState([]);
   const [selectedId, setSelectedId] = useState<string>(paramId || "");
   const [couponData, setCouponData] = useState<any>(null);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
@@ -56,7 +72,14 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     { name: string }[]
   >([]);
   const [dynamicRows, setDynamicRows] = useState([
-    { id: generateId(), type: "", operator: "", value: "" },
+    {
+      id: generateId(),
+      type: "",
+      operator: "",
+      value: "",
+      models: [],
+      variants: [],
+    },
   ]);
 
   const userId =
@@ -68,16 +91,22 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
     const resolveAllPromises = async () => {
       const fetchTiersAndBUs = async (name: string = "") => {
-        const [tierListRes, buRes, couponTypesRes] = await Promise.all([
-          GET(`/tiers/${clientInfo.id}?name=${encodeURIComponent(name)}`),
-          GET(
-            `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
-          ),
-          GET("/coupon-types"),
-        ]);
+        const [tierListRes, buRes, couponTypesRes, makeRes] = await Promise.all(
+          [
+            GET(`/tiers/${clientInfo.id}?name=${encodeURIComponent(name)}`),
+            GET(
+              `/business-units/${clientInfo.id}?name=${encodeURIComponent(
+                name
+              )}`
+            ),
+            GET("/coupon-types"),
+            GET(`/coupons/vehicle/makes`),
+          ]
+        );
         setTiers(tierListRes?.data.tiers || []);
         setBusinessUnits(buRes?.data || []);
         setCouponTypes(couponTypesRes?.data.couponTypes || []);
+        setMakes(makeRes?.data?.data || []);
 
         if (paramId) {
           await fetchCouponById(paramId);
@@ -97,8 +126,37 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       (option: { id: number }) => option.id === couponData?.coupon_type_id
     );
     setSelectedCouponType(selectedOption?.type || "");
-    setDynamicRows(couponData?.conditions);
+
+    // setDynamicRows(couponData?.conditions);
+    if (couponData?.conditions?.length > 0) {
+      prefillRows(couponData?.conditions);
+    }
   }, [couponData?.coupon_type_id]);
+
+  const prefillRows = async (rowsFromApi: any[]) => {
+    const filledRows = await Promise.all(
+      rowsFromApi?.map(async (row) => {
+        let modelsRes;
+        let variantsRes;
+
+        if (row.make != null) {
+          modelsRes = await GET(`/coupons/vehicle/models/${row.make}`);
+        }
+
+        if (row.model != null) {
+          variantsRes = await GET(`/coupons/vehicle/variants/${row.model}`);
+        }
+
+        return {
+          ...row,
+          models: modelsRes?.data?.data || [],
+          variants: variantsRes?.data?.data || [],
+        };
+      })
+    );
+
+    setDynamicRows(filledRows);
+  };
 
   const fetchCouponById = async (id: string) => {
     setLoading(true);
@@ -111,6 +169,48 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setCouponData(res.data);
     setBenefits(res.data.benefits || "");
     setLoading(false);
+  };
+
+  const fetchMakes = async () => {
+    const res = await GET(`/coupons/vehicle/makes`);
+    setMakes(res?.data?.data || []);
+  };
+
+  const fetchModelByMakeId = async (rowId: number, makeId: number) => {
+    const res = await GET(`/coupons/vehicle/models/${makeId}`);
+    const models = res?.data?.data || [];
+    setDynamicRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              make: makeId,
+              model: undefined,
+              variant: undefined,
+              models,
+              variants: [],
+            }
+          : row
+      )
+    );
+  };
+
+  const fetchVariantByModelId = async (rowId: number, modelId: number) => {
+    const res = await GET(`/coupons/vehicle/variants/${modelId}`);
+    const variants = res?.data?.data || [];
+
+    setDynamicRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              model: modelId,
+              variant: undefined,
+              variants,
+            }
+          : row
+      )
+    );
   };
 
   const formik = useFormik<CouponFormValues>({
@@ -180,6 +280,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
       }
     );
     setConditionOfCouponTypes(selectedCouponConditionNames?.conditions);
+    handleDrawerWidth(selectedCouponConditionNames?.coupon_type)
   }, [values.coupon_type]);
 
   const handleSubmit = async (values: CouponFormValues) => {
@@ -187,7 +288,7 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const payloads = values.business_unit_ids.map((buId: number) => ({
       code: values.code,
       coupon_type_id: values.coupon_type,
-      conditions: dynamicRows,
+      conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
       errors: {
         general_error_message_en: values.general_error_message_en,
         general_error_message_ar: values.general_error_message_ar,
@@ -259,7 +360,14 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const handleAdd = () => {
     setDynamicRows((prev) => [
       ...prev,
-      { id: generateId(), type: "", operator: "", value: "" },
+      {
+        id: generateId(),
+        type: "",
+        operator: "",
+        value: "",
+        models: [],
+        variants: [],
+      },
     ]);
   };
 
@@ -327,7 +435,14 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   setSelectedCouponType(selectedOption.type || "");
                   setFieldValue("conditions", {});
                   setDynamicRows([
-                    { id: generateId(), type: "", operator: "", value: "" },
+                    {
+                      id: generateId(),
+                      type: "",
+                      operator: "",
+                      value: "",
+                      models: [],
+                      variants: [],
+                    },
                   ]);
                   setTimeout(() => formik.validateForm(), 0);
                 }}
@@ -354,6 +469,11 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                       operator: string;
                       value: string;
                       tier?: number;
+                      make?: number;
+                      model?: number;
+                      variant?: number;
+                      models?: Model[];
+                      variants?: Variant[];
                     },
                     index
                   ) => (
@@ -379,6 +499,82 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                               </MenuItem>
                             ))}
                           </TextField>
+                        )}
+
+                        {selectedCouponType ===
+                          COUPON_TYPE.VEHICLE_SPECIFIC && (
+                          <>
+                            <TextField
+                              select
+                              label="Make"
+                              value={row.make || ""}
+                              onChange={(e) => {
+                                const makeId = Number(e.target.value);
+                                fetchModelByMakeId(row.id, makeId);
+                                handleChangeCondition(row.id, "make", makeId);
+                              }}
+                              sx={{ minWidth: 150 }}
+                            >
+                              {makes?.map((make: Make) => (
+                                <MenuItem key={make.MakeId} value={make.MakeId}>
+                                  {make.Make}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+
+                            {row?.models && (
+                              <TextField
+                                select
+                                label="Model"
+                                value={row.model || ""}
+                                onChange={(e) => {
+                                  const modelId = Number(e.target.value);
+                                  fetchVariantByModelId(row.id, modelId);
+                                  handleChangeCondition(
+                                    row.id,
+                                    "model",
+                                    modelId
+                                  );
+                                }}
+                                sx={{ minWidth: 150 }}
+                              >
+                                {row?.models?.map((model: Model) => (
+                                  <MenuItem
+                                    key={model.ModelId}
+                                    value={model.ModelId}
+                                  >
+                                    {model.Model}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            )}
+
+                            {row?.variants && (
+                              <TextField
+                                select
+                                label="Variant"
+                                value={row.variant || ""}
+                                onChange={(e) => {
+                                  const variantId = Number(e.target.value);
+                                  handleChangeCondition(
+                                    row.id,
+                                    "variant",
+                                    variantId
+                                  );
+                                }}
+                                sx={{ minWidth: 150 }}
+                              >
+                                {row?.variants?.map((variant: Variant) => (
+                                  <MenuItem
+                                    key={variant.TrimId}
+                                    value={variant.TrimId}
+                                  >
+                                    {variant.Trim}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            )}
+                          </>
                         )}
 
                         <TextField
@@ -740,15 +936,15 @@ const EditCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
 
             <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Benefits (optional)
-                  </Typography>
-                  <RichTextEditor
-                    value={benefits}
-                    setValue={setBenefits}
-                    language="en"
-                  />
-                </Grid>
+              <Typography variant="subtitle1" gutterBottom>
+                Benefits (optional)
+              </Typography>
+              <RichTextEditor
+                value={benefits}
+                setValue={setBenefits}
+                language="en"
+              />
+            </Grid>
 
             <Grid item xs={12}>
               <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>

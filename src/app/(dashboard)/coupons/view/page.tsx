@@ -32,6 +32,7 @@ import { toast } from "react-toastify";
 import CouponCreate from "../create/page";
 import CouponEdit from "../edit/page";
 import { htmlToPlainText } from "@/utils/Index";
+import { COUPON_TYPE } from "@/constants/constants";
 
 type Coupon = {
   id: number;
@@ -51,6 +52,7 @@ const CouponList = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [drawerWidth, setDrawerWidth] = useState(700);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -110,6 +112,12 @@ const CouponList = () => {
       </Box>
     );
   }
+
+  const handleDrawerWidth = (selectedCouponType: string) => {
+    setDrawerWidth(
+      selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC ? 900 : 700
+    );
+  };
 
   return (
     <>
@@ -290,13 +298,14 @@ const CouponList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Coupon"
-          width={700}
+          width={drawerWidth}
         >
           <CouponCreate
             onSuccess={() => {
               handleCloseDrawer();
               fetchCoupons();
             }}
+            handleDrawerWidth={handleDrawerWidth}
           />
         </BaseDrawer>
 
@@ -306,13 +315,15 @@ const CouponList = () => {
             open
             onClose={handleCloseDrawer}
             title="Edit Coupon"
-            width={700}
+            width={drawerWidth}
           >
             <CouponEdit
               onSuccess={() => {
                 handleCloseDrawer();
                 fetchCoupons();
               }}
+            handleDrawerWidth={handleDrawerWidth}
+
             />
           </BaseDrawer>
         )}

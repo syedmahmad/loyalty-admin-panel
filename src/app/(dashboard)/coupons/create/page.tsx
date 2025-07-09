@@ -29,7 +29,14 @@ import {
 } from "@/constants/constants";
 import { generateRandomCode } from "@/utils/Index";
 import { useRouter } from "next/navigation";
-import { BusinessUnit, CouponFormValues, Make, Model, Tier, Variant } from "../types";
+import {
+  BusinessUnit,
+  CouponFormValues,
+  Make,
+  Model,
+  Tier,
+  Variant,
+} from "../types";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
@@ -51,7 +58,13 @@ const oncePerCustomer = [
   { name: "Disable", value: 0 },
 ];
 
-const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
+const CreateCouponForm = ({
+  onSuccess,
+  handleDrawerWidth,
+}: {
+  onSuccess: () => void;
+  handleDrawerWidth: (selectedCouponType: string) => void;
+}) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
@@ -65,7 +78,14 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     { name: string }[]
   >([]);
   const [dynamicRows, setDynamicRows] = useState([
-    { id: generateId(), type: "", operator: "", value: "" },
+    {
+      id: generateId(),
+      type: "",
+      operator: "",
+      value: "",
+      models: [],
+      variants: [],
+    },
   ]);
 
   const router = useRouter();
@@ -152,14 +172,42 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setMakes(res?.data?.data || []);
   };
 
-  const fetchModelByMakeId = async (makeId: number) => {
+  const fetchModelByMakeId = async (rowId: number, makeId: number) => {
     const res = await GET(`/coupons/vehicle/models/${makeId}`);
-    setModels(res?.data?.data || []);
+
+    const models = res?.data?.data || [];
+    setDynamicRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              make: makeId,
+              model: undefined,
+              variant: undefined,
+              models,
+              variants: [],
+            }
+          : row
+      )
+    );
   };
 
-  const fetchVariantByModelId = async (modelId: number) => {
+  const fetchVariantByModelId = async (rowId: number, modelId: number) => {
     const res = await GET(`/coupons/vehicle/variants/${modelId}`);
-    setVariants(res?.data?.data || []);
+    const variants = res?.data?.data || [];
+
+    setDynamicRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              model: modelId,
+              variant: undefined,
+              variants,
+            }
+          : row
+      )
+    );
   };
 
   useEffect(() => {
@@ -168,6 +216,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   }, []);
 
   useEffect(() => {
+    handleDrawerWidth(selectedCouponType);
     if (selectedCouponType === COUPON_TYPE.TIER_BASED) {
       fetchTiers();
     }
@@ -194,7 +243,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const payloads = values.business_unit_ids.map((buId: number) => ({
       code: values.code,
       coupon_type_id: values.coupon_type,
-      conditions: dynamicRows,
+      conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
       errors: {
         general_error_message_en: values.general_error_message_en,
         general_error_message_ar: values.general_error_message_ar,
@@ -247,7 +296,14 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const handleAdd = () => {
     setDynamicRows((prev) => [
       ...prev,
-      { id: generateId(), type: "", operator: "", value: "" },
+      {
+        id: generateId(),
+        type: "",
+        operator: "",
+        value: "",
+        models: [],
+        variants: [],
+      },
     ]);
   };
 
@@ -340,7 +396,9 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     tier?: number;
                     make?: number;
                     model?: number;
-                    variant?:number
+                    variant?: number;
+                    models?: Model[];
+                    variants?: Variant[];
                   },
                   index
                 ) => (
@@ -376,7 +434,7 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                             value={row.make || ""}
                             onChange={(e) => {
                               const makeId = Number(e.target.value);
-                              fetchModelByMakeId(makeId);
+                              fetchModelByMakeId(row.id, makeId);
                               handleChangeCondition(row.id, "make", makeId);
                             }}
                             sx={{ minWidth: 150 }}
@@ -388,46 +446,54 @@ const CreateCouponForm = ({ onSuccess }: { onSuccess: () => void }) => {
                             ))}
                           </TextField>
 
-                          <TextField
-                            select
-                            label="Model"
-                            value={row.model || ""}
-                            onChange={(e) => {
-                              const modelId = Number(e.target.value);
-                              fetchVariantByModelId(modelId);
-                              handleChangeCondition(row.id, "model", modelId);
-                            }}
-                            sx={{ minWidth: 150 }}
-                          >
-                            {models?.map((model: Model) => (
-                              <MenuItem
-                                key={model.ModelId}
-                                value={model.ModelId}
-                              >
-                                {model.Model}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                          {row?.models && (
+                            <TextField
+                              select
+                              label="Model"
+                              value={row.model || ""}
+                              onChange={(e) => {
+                                const modelId = Number(e.target.value);
+                                fetchVariantByModelId(row.id, modelId);
+                                handleChangeCondition(row.id, "model", modelId);
+                              }}
+                              sx={{ minWidth: 150 }}
+                            >
+                              {row?.models?.map((model: Model) => (
+                                <MenuItem
+                                  key={model.ModelId}
+                                  value={model.ModelId}
+                                >
+                                  {model.Model}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          )}
 
-                          <TextField
-                            select
-                            label="Variant"
-                            value={row.variant || ""}
-                            onChange={(e) => {
-                              const variantId = Number(e.target.value);
-                              handleChangeCondition(row.id, "variant", variantId);
-                            }}
-                            sx={{ minWidth: 150 }}
-                          >
-                            {variants?.map((variant: Variant) => (
-                              <MenuItem
-                                key={variant.TrimId}
-                                value={variant.TrimId}
-                              >
-                                {variant.Trim}
-                              </MenuItem>
-                            ))}
-                          </TextField>
+                          {row?.variants && (
+                            <TextField
+                              select
+                              label="Variant"
+                              value={row.variant || ""}
+                              onChange={(e) => {
+                                const variantId = Number(e.target.value);
+                                handleChangeCondition(
+                                  row.id,
+                                  "variant",
+                                  variantId
+                                );
+                              }}
+                              sx={{ minWidth: 150 }}
+                            >
+                              {row?.variants?.map((variant: Variant) => (
+                                <MenuItem
+                                  key={variant.TrimId}
+                                  value={variant.TrimId}
+                                >
+                                  {variant.Trim}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          )}
                         </>
                       )}
 
