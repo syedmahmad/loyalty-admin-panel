@@ -44,7 +44,7 @@ const CampaignsList = () => {
   const [searchName, setSearchValue] = useState('');
   const [nameFilter, setNameFilter] = useState('');
   const router = useRouter();
-   const [rowsPerPage, setRowsPerPage] = useState(1);
+   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [page, setPage] = useState(0);
    const count = campaigns.length;
     const searchParams = useSearchParams();
@@ -69,7 +69,7 @@ const CampaignsList = () => {
   useEffect(() => {
     fetchCampaigns();
   }, []);
- const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+ const handleChangePage = (_: unknown, newPage: number) => setPage(newPage-1);
  const campaignss = campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const handleDelete = async (id: number) => {
     const confirm = window.confirm('Are you sure you want to delete this campaign?');
@@ -170,9 +170,10 @@ const CampaignsList = () => {
     }}
         />
       </Box>
-      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto', boxShadow: 'none',border : 'none',transition : 'none', bgcolor : '#fafafb', pb : 2 }}>
 
       {loading ? (
+
         <Box textAlign="center" mt={6}>
           <CircularProgress />
         </Box>
@@ -184,9 +185,11 @@ const CampaignsList = () => {
 
             return (
               <Grid item xs={12} sm={6} md={4} key={campaign.id}>
-                <Card sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 
+                         <Card
+                           sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: 'none',border : 'none',transition : 'none' }}>
+                    <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' , boxShadow: 'none',transition : 'none'}}>
                       <Box>
                         <Typography variant="h6" fontWeight={600}>
                           {campaign.name}
@@ -218,10 +221,12 @@ const CampaignsList = () => {
                     </Box>
                   </CardContent>
                 </Card>
+                
               </Grid>
             );
           })}
         </Grid>
+      
       ) : (
         <>
         <TableContainer component={Paper}>
@@ -293,8 +298,8 @@ const CampaignsList = () => {
           {/* Previous Button */}
           <Button
             variant="outlined"
-            onClick={() => handleChangePage(null, page - 1)}
-            disabled={page === 1}
+            onClick={() => setPage(prev => prev - 1)}
+  disabled={page === 0}
           sx={{
               textTransform: 'none',
               borderRadius: 2,
@@ -308,7 +313,7 @@ const CampaignsList = () => {
           {/* Pagination */}
           <Pagination
             count={count}
-            page={page}
+            page={page+1}
             onChange={handleChangePage}
             shape="rounded"
             siblingCount={1}
@@ -328,8 +333,7 @@ const CampaignsList = () => {
           {/* Next Button */}
           <Button
             variant="outlined"
-            onClick={() => handleChangePage(null, page + 1)}
-            disabled={page === count}
+             disabled={page === count - 1} 
          sx={{
               textTransform: 'none',
               borderRadius: 2,

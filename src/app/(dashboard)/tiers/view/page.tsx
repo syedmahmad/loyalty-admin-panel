@@ -57,8 +57,9 @@ const TierList = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(7);
   const count = tiers.length;
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
@@ -96,7 +97,10 @@ const TierList = () => {
     setDeleteId(null);
   };
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangePage = (_: unknown, newPage: number) => {
+  setPage(newPage - 1); 
+};
+  
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -236,8 +240,8 @@ const TierList = () => {
             {/* Previous Button */}
             <Button
               variant="outlined"
-              onClick={() => handleChangePage(null, page - 1)}
-              disabled={page === 1}
+               onClick={() => setPage(prev => prev - 1)}
+  disabled={page === 0} 
             sx={{
                 textTransform: 'none',
                 borderRadius: 2,
@@ -251,7 +255,7 @@ const TierList = () => {
             {/* Pagination */}
             <Pagination
               count={count}
-              page={page}
+              page={page+1}
               onChange={handleChangePage}
               shape="rounded"
               siblingCount={1}
@@ -271,8 +275,8 @@ const TierList = () => {
             {/* Next Button */}
             <Button
               variant="outlined"
-              onClick={() => handleChangePage(null, page + 1)}
-              disabled={page === count}
+    onClick={() => setPage(prev => prev + 1)}
+  disabled={page === count - 1}
            sx={{
                 textTransform: 'none',
                 borderRadius: 2,

@@ -64,13 +64,14 @@ const BusinessUnitList = () => {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(7);
   const [searchName, setSearchName] = useState('');
    const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
    const drawerId = searchParams.get('id');
  const count = units.length; // your total data count
   const router = useRouter();
+  
    const handleCloseDrawer = () => {
     const currentUrl = window.location.pathname;
     router.push(currentUrl);
@@ -102,7 +103,8 @@ const BusinessUnitList = () => {
     }
   };
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangePage = (_: unknown, newPage: number) =>{setPage(newPage-1);
+  };
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -253,8 +255,8 @@ const BusinessUnitList = () => {
   {/* Previous Button */}
   <Button
     variant="outlined"
-    onClick={() => handleChangePage(null, page - 1)}
-    disabled={page === 1}
+    onClick={() => setPage(prev => prev - 1)}
+  disabled={page === 0} 
   sx={{
       textTransform: 'none',
       borderRadius: 2,
@@ -268,7 +270,7 @@ const BusinessUnitList = () => {
   {/* Pagination */}
   <Pagination
     count={count}
-    page={page}
+    page={page+1}
     onChange={handleChangePage}
     shape="rounded"
     siblingCount={1}
@@ -288,8 +290,8 @@ const BusinessUnitList = () => {
   {/* Next Button */}
   <Button
     variant="outlined"
-    onClick={() => handleChangePage(null, page + 1)}
-    disabled={page === count}
+   onClick={() => setPage(prev => prev + 1)}
+  disabled={page === count - 1}
  sx={{
       textTransform: 'none',
       borderRadius: 2,
