@@ -472,7 +472,6 @@ const CouponList = () => {
           onClose={handleCloseDrawer}
           title="Create Coupon"
           width={drawerWidth} 
-          
         >
           <CouponCreate
             onSuccess={() => {
@@ -489,8 +488,7 @@ const CouponList = () => {
             open
             onClose={handleCloseDrawer}
             title="Edit Coupon"
-              width={drawerWidth} 
-           
+            width={drawerWidth} 
           >
             <CouponEdit
               onSuccess={() => {
