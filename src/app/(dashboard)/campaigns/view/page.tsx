@@ -40,7 +40,7 @@ import CampaignEdit from '../edit/page';
 const CampaignsList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [searchName, setSearchValue] = useState('');
   const [nameFilter, setNameFilter] = useState('');
   const router = useRouter();

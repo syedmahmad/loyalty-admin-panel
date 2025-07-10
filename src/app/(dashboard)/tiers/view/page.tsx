@@ -64,7 +64,7 @@ const TierList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const count = tiers.length;
    const totalPages = Math.ceil(count / rowsPerPage);
-   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const router = useRouter();
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
