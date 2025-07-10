@@ -80,7 +80,7 @@ const BusinessUnitList = () => {
  const totalPages = Math.ceil(count / rowsPerPage);
   const router = useRouter();
   
-   const handleCloseDrawer = () => {
+  const handleCloseDrawer = () => {
     const currentUrl = window.location.pathname;
     router.push(currentUrl);
   };
@@ -149,9 +149,9 @@ const BusinessUnitList = () => {
                     </Select>
         <Button variant="outlined" onClick={() => router.push('/business-units/view?drawer=create')}
            sx={{
-    backgroundColor: '#fff',
-       fontFamily:'Outfit',
-      fontWeight: 600,
+              backgroundColor: '#fff',
+              fontFamily:'Outfit',
+              fontWeight: 600,
   
    
   }}>
@@ -315,7 +315,7 @@ const BusinessUnitList = () => {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-      borderTop: '1px solid #E0E0E0',
+      
     paddingY: 2,
     paddingX: 2,
   }}
