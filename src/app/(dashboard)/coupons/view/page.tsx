@@ -59,7 +59,7 @@ const CouponList = () => {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
-   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [drawerWidth, setDrawerWidth] = useState(700);
    const count = coupons.length; 

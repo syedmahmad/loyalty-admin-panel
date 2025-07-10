@@ -70,7 +70,7 @@ const BusinessUnitList = () => {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
-   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [searchName, setSearchName] = useState('');
    const searchParams = useSearchParams();

@@ -61,7 +61,7 @@ const RuleList = () => {
   const [nameFilter, setNameFilter] = useState('');
   const [searchName, setSearchName] = useState('');
   const [page, setPage] = useState(0);
-   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
    const count = rules.length; 
  
  const [rowsPerPage, setRowsPerPage] = useState(7);
