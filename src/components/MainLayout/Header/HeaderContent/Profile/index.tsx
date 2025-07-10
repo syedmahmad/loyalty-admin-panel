@@ -121,8 +121,8 @@ const Profile = () => {
     theme.palette.mode === ThemeMode.DARK ? "grey.200" : "grey.300";
 
   const pathname = usePathname();
-  const userInfo = JSON.parse(localStorage.getItem("user")!);
-  const clientName = `${userInfo.first_name} ${userInfo.last_name}`;
+  const userInfo = JSON.parse(localStorage.getItem("client-info")!);
+  const clientName = `${userInfo.name}`;
   const shouldShowClientName = pathname !== "/" && pathname !== "/tenants";
 
   const downMd = useMediaQuery(theme.breakpoints.down("md"));
