@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 export const numberToOrdinal = (n: any) => {
   if (typeof n !== "number" || n < 1 || n > 9) {
     throw new Error("Input must be a number between 1 and 9.");
@@ -20,17 +21,19 @@ export const numberToOrdinal = (n: any) => {
 };
 
 export const generateRandomCode = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `${result}`;
+  const hex = uuidv4().replace(/-/g, "").slice(0, 8);
+  const chunks = hex.match(/.{1,4}/g) || [];
+
+  return chunks
+    .map((part) => parseInt(part, 16).toString(36))
+    .join("")
+    .slice(0, 6)
+    .toUpperCase();
 };
 
 export const htmlToPlainText = (htmlString: string): string => {
-  if (!htmlString) return '';
-  const tempDiv = document.createElement('div');
+  if (!htmlString) return "";
+  const tempDiv = document.createElement("div");
   tempDiv.innerHTML = htmlString;
-  return tempDiv.textContent || tempDiv.innerText || '';
+  return tempDiv.textContent || tempDiv.innerText || "";
 };

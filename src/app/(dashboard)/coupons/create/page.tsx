@@ -96,6 +96,7 @@ const CreateCouponForm = ({
 
   const formik = useFormik<CouponFormValues>({
     initialValues: {
+      coupon_title: "",
       code: "",
       coupon_type: "",
       discount_percentage: 0,
@@ -115,14 +116,23 @@ const CreateCouponForm = ({
       status: 1,
     },
     validationSchema: Yup.object({
+      coupon_title: Yup.string().required("Coupon title is required"),
       code: Yup.string().required("Code is required"),
       coupon_type: Yup.string().required("Coupon type is required"),
+
+      discount_percentage: Yup.number()
+        .typeError("Discount percentage must be a number")
+        .min(0, "Discount percentage cannot be negative"),
+
+      discount_price: Yup.number()
+        .typeError("Discount price must be a number")
+        .min(0, "Discount price cannot be negative"),
+
       usage_limit: Yup.number().min(1).required("Usage limit is required"),
       business_unit_ids: Yup.array().min(
         1,
         "Select at least one business unit"
       ),
-      // once_per_customer: Yup.number().required(),
       date_from: Yup.date().required("Start date is required"),
       date_to: Yup.date()
         .min(Yup.ref("date_from"), "End date must be after start date")
@@ -239,8 +249,19 @@ const CreateCouponForm = ({
     values: CouponFormValues,
     resetForm: () => void
   ) => {
+    const hasEmptyFields = dynamicRows.some(
+      (row) => !row.type || !row.operator || !row.value
+    );
+
+    if (hasEmptyFields) {
+      toast.error(`Please fill all required fields for ${selectedCouponType} coupon type`);
+      return;
+    }
+
+
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
+      coupon_title: values.coupon_title,
       code: values.code,
       coupon_type_id: values.coupon_type,
       conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
@@ -250,11 +271,11 @@ const CreateCouponForm = ({
         exception_error_message_en: values.exception_error_message_en,
         exception_error_message_ar: values.exception_error_message_ar,
       },
-      discount_percentage: values.discount_percentage,
-      discount_price: values.discount_price,
+      discount_percentage: values.discount_percentage || 0,
+      discount_price: values.discount_price || 0,
       once_per_customer: values.once_per_customer,
       reuse_interval: values.reuse_interval,
-      usage_limit: values.usage_limit,
+      usage_limit: values.usage_limit || 0,
       date_from: values.date_from,
       date_to: values.date_to,
       status: values.status,
@@ -266,11 +287,20 @@ const CreateCouponForm = ({
     }));
 
     const responses = await Promise.all(
-      payloads.map((payload) => POST("/coupons", payload))
+      payloads.map(async (payload) => {
+        try {
+          const res = await POST("/coupons", payload);
+          return { success: true, status: res?.status, data: res?.data };
+        } catch (error: any) {
+          return {
+            success: false,
+            status: error?.response?.status || 500,
+            message: error?.response?.data?.message || "Unknown error",
+          };
+        }
+      })
     );
-
     const anyFailed = responses.some((res) => res?.status !== 201);
-
     if (anyFailed) {
       setLoading(false);
       toast.error("failed to create coupon");
@@ -315,6 +345,21 @@ const CreateCouponForm = ({
     <>
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
+          {/* Coupon Title */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Coupon Title"
+              value={values.coupon_title}
+              name="coupon_title"
+              onChange={handleChange}
+              error={!!touched.coupon_title && !!errors.coupon_title}
+              helperText={touched.coupon_title && errors.coupon_title}
+            />
+          </Grid>
+
+          {/* Coupon Code */}
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -577,6 +622,7 @@ const CreateCouponForm = ({
                   type="number"
                   value={values.discount_percentage}
                   onChange={handleChange}
+                  inputProps={{ min: 0 }}
                   InputProps={{
                     endAdornment: selectedCouponType ? (
                       <InputAdornment position="end">
@@ -610,6 +656,7 @@ const CreateCouponForm = ({
                   name="discount_price"
                   label="Fixed Discount Amount"
                   type="number"
+                  inputProps={{ min: 0 }}
                   value={values.discount_price}
                   onChange={handleChange}
                   InputProps={{
@@ -642,6 +689,7 @@ const CreateCouponForm = ({
               label="Usage Limit"
               placeholder="Usage Limit"
               type="number"
+              inputProps={{ min: 1 }}
               value={values.usage_limit}
               onChange={handleChange}
               error={!!touched.usage_limit && !!errors.usage_limit}
