@@ -34,9 +34,9 @@ const CampaignList = () => {
 
   return (
     <Box px={4} py={6}>
-      <Typography variant="h4" gutterBottom>🎯 Active Loyalty Campaigns</Typography>
+      <Typography variant="h4" gutterBottom> Active Loyalty Campaigns</Typography>
       <TextField
-        fullWidth
+        
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);

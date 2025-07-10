@@ -170,9 +170,10 @@ const CampaignsList = () => {
     }}
         />
       </Box>
-      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto', boxShadow: 'none',border : 'none',transition : 'none', bgcolor : '#fafafb', pb : 2 }}>
 
       {loading ? (
+
         <Box textAlign="center" mt={6}>
           <CircularProgress />
         </Box>
@@ -184,9 +185,11 @@ const CampaignsList = () => {
 
             return (
               <Grid item xs={12} sm={6} md={4} key={campaign.id}>
-                <Card sx={{ borderRadius: 3 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 
+                         <Card
+                           sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: 'none',border : 'none',transition : 'none' }}>
+                    <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' , boxShadow: 'none',transition : 'none'}}>
                       <Box>
                         <Typography variant="h6" fontWeight={600}>
                           {campaign.name}
@@ -218,10 +221,12 @@ const CampaignsList = () => {
                     </Box>
                   </CardContent>
                 </Card>
+                
               </Grid>
             );
           })}
         </Grid>
+      
       ) : (
         <>
         <TableContainer component={Paper}>
