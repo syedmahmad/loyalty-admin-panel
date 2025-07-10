@@ -12,6 +12,7 @@ import {
   DialogActions,
   DialogTitle,
   IconButton,
+  Pagination,
   Paper,
   Table,
   TableBody,

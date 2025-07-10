@@ -4,14 +4,18 @@ import {
   Box,
   Button,
   Card,
+  CardContent,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogTitle,
+  Grid,
   IconButton,
   InputAdornment,
+  MenuItem,
   Pagination,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -57,8 +61,11 @@ const RuleList = () => {
   const [nameFilter, setNameFilter] = useState('');
   const [searchName, setSearchName] = useState('');
   const [page, setPage] = useState(0);
-   const count = rules.length; // your total data count
+   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+   const count = rules.length; 
+ 
  const [rowsPerPage, setRowsPerPage] = useState(7);
+    const totalPages = Math.ceil(count / rowsPerPage);
    const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
   const drawerId = searchParams.get('id');
@@ -131,6 +138,18 @@ const RuleList = () => {
              >
             Rules
              </Typography>
+              <Box sx={{ gap: 1, display: 'flex' }}>
+              <Select
+                                   value={viewMode}
+                                   onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
+                                   size="small"
+                                    sx={{ backgroundColor: '#fff',
+                                    fontFamily:'Outfit',
+                               fontWeight: 600,}}
+                                 >
+                                   <MenuItem value="card" >Card View</MenuItem>
+                                   <MenuItem value="table">Table View</MenuItem>
+                                 </Select>
            <Button variant="outlined" onClick={() => router.push('/rules/view?drawer=create')}
               sx={{
        backgroundColor: '#fff',
@@ -142,7 +161,7 @@ const RuleList = () => {
              Create
            </Button>
          </Box>
-      
+      </Box>
 
       
         <Box mb={2}>
@@ -181,19 +200,99 @@ const RuleList = () => {
           }}
         />
       </Box>
-      <Paper elevation={3} sx={{ borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
+      <Paper elevation={3}
+  sx={{
+    borderRadius: 3,
+    maxWidth: '100%',
+    overflow: 'auto',
+    border: 'none',
+    transition: 'none',
+    bgcolor: '#fafafb',
+    boxShadow: viewMode === 'card' ? 'none' : undefined,}}>
 
       {loading ? (
-        <Box mt={4} textAlign="center">
-          <CircularProgress />
-        </Box>
-      ) : rules.length === 0 ? (
-        <Typography mt={3} textAlign="center">
-          No rules found.
-        </Typography>
-      ) : (
+  <Box mt={4} textAlign="center">
+    <CircularProgress />
+  </Box>
+) : rules.length === 0 ? (
+  <Typography mt={3} textAlign="center">
+    No rules found.
+  </Typography>
+) : viewMode === 'card' ? (
+  <Grid container spacing={3}>
+    {rules.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((rule) => (
+      <Grid item xs={12} sm={6} md={4} key={rule.id}>
+        <Card
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxShadow: 'none',
+            border: '1px solid #e0e0e0',
+            transition: 'none',
+          }}
+        >
+          <CardContent>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Typography variant="h6" fontWeight={600}>
+                {rule.name}
+              </Typography>
+              <Box>
+                <IconButton onClick={() => router.push(`/rules/view?drawer=edit&id=${rule.id}`)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton color="error" onClick={() => setDeleteId(rule.id)}>
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            </Box>
+
+            <Typography variant="body2" color="text.secondary" mt={1}>
+              Type: {rule.rule_type}
+            </Typography>
+
+            {rule.rule_type === 'event based earn' && (
+              <Typography variant="body2" mt={1}>
+                Event: {rule.event_triggerer || '-'}
+              </Typography>
+            )}
+
+            {rule.rule_type === 'dynamic rule' && (
+              <>
+                <Typography variant="body2" mt={1}>
+                  Condition: {rule.condition_type || '-'} {rule.condition_operator || '-'} {rule.condition_value || '-'}
+                </Typography>
+              </>
+            )}
+
+            {rule.rule_type === 'burn' && (
+              <>
+                <Typography variant="body2" mt={1}>
+                  Max Redeem: {rule.max_redeemption_points_limit ?? '-'}
+                </Typography>
+                <Typography variant="body2">
+                  Conversion: {rule.points_conversion_factor ?? '-'}
+                </Typography>
+                <Typography variant="body2">
+                  Max Burn %: {rule.max_burn_percent_on_invoice ?? '-'}
+                </Typography>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Grid>
+    ))}
+  </Grid>
+) :  (
         <>
-          <TableContainer>
+          <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -251,7 +350,7 @@ const RuleList = () => {
             </Table>
           </TableContainer>
 
-         <Box
+         <Box component={Paper}
            sx={{
              display: 'flex',
              justifyContent: 'space-between',
@@ -278,7 +377,7 @@ const RuleList = () => {
          
            {/* Pagination */}
            <Pagination
-             count={count}
+             count={totalPages}
              page={page+1}
              onChange={handleChangePage}
              shape="rounded"
@@ -300,7 +399,7 @@ const RuleList = () => {
            <Button
              variant="outlined"
               onClick={() => setPage(prev => prev + 1)}
-  disabled={page === count - 1}
+  disabled={page === totalPages - 1}
           sx={{
                textTransform: 'none',
                borderRadius: 2,

@@ -21,6 +21,12 @@ import {
   Button,
   TablePagination,
   TextField,
+  CardContent,
+  Grid,
+  Card,
+  Select,
+  MenuItem,
+  
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -64,12 +70,14 @@ const BusinessUnitList = () => {
   const [loading, setLoading] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
+   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [searchName, setSearchName] = useState('');
    const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
    const drawerId = searchParams.get('id');
- const count = units.length; // your total data count
+ const count = units.length; 
+ const totalPages = Math.ceil(count / rowsPerPage);
   const router = useRouter();
   
    const handleCloseDrawer = () => {
@@ -114,7 +122,7 @@ const BusinessUnitList = () => {
 
   return (
     <Box sx={{ backgroundColor: '#F9FAFB',mt:"-25px" }}>
-         <Box sx={{ display: 'flex', justifyContent: 'space-between' , alignItems: 'center', mb: 1 }}>
+         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
        <Typography
             sx={{
               color: 'rgba(0, 0, 0, 0.87)',
@@ -127,6 +135,18 @@ const BusinessUnitList = () => {
           >
             Business Units
           </Typography>
+          <Box sx={{ gap: 1, display: 'flex' }}>
+          <Select
+                      value={viewMode}
+                      onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
+                      size="small"
+                       sx={{ backgroundColor: '#fff',
+                       fontFamily:'Outfit',
+                  fontWeight: 600,}}
+                    >
+                      <MenuItem value="card" >Card View</MenuItem>
+                      <MenuItem value="table">Table View</MenuItem>
+                    </Select>
         <Button variant="outlined" onClick={() => router.push('/business-units/view?drawer=create')}
            sx={{
     backgroundColor: '#fff',
@@ -137,6 +157,7 @@ const BusinessUnitList = () => {
   }}>
           Create
         </Button>
+        </Box>
       </Box>
   <Box mb={2}>
   <TextField
@@ -175,14 +196,61 @@ const BusinessUnitList = () => {
   />
 </Box>
 
-     <Paper elevation={3} sx={{  borderRadius: 3, maxWidth: '100%', overflow: 'auto' }}>
-     
-      {loading ? (
-        <Box mt={4} textAlign="center">
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
+   <Paper
+  elevation={3}
+  sx={{
+    borderRadius: 3,
+    maxWidth: '100%',
+    overflow: 'auto',
+    border: 'none',
+    transition: 'none',
+    bgcolor: '#fafafb',
+    boxShadow: viewMode === 'card' ? 'none' : undefined,}}
+>
+  {loading ? (
+    <Box mt={6} textAlign="center">
+      <CircularProgress />
+    </Box>
+  ) : viewMode === 'card' ? (
+    <Grid container spacing={3} sx={{boxShadow:'none'}}>
+      {paginatedUnits.map((unit) => (
+        <Grid item xs={12} sm={6} md={4} key={unit.id}>
+          <Card
+             sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: 'none',border : 'none',transition : 'none' }}>
+            <CardContent sx={{boxShadow:"none"}}>
+               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' , boxShadow: 'none',transition : 'none'}}>
+              <Box >
+                <Typography variant="h6" fontWeight={600}>
+                  {unit.name}
+                </Typography>
+                </Box>
+                <Box>
+                  <IconButton onClick={() => router.push(`/business-units/view?drawer=edit&id=${unit.id}`)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton color="error" onClick={() => setConfirmDeleteId(unit.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+              <Typography variant="body2" color="text.secondary" mt={1}>
+                {unit.description || 'No Description'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mt={1}>
+                 {unit.location || 'No Location'}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+      {paginatedUnits.length === 0 && (
+        <Grid item xs={12}>
+          <Typography align="center">No business units found.</Typography>
+        </Grid>
+      )}
+    </Grid>
+  ) :(
+        <Box component={Paper}>
           <TableContainer>
             <Table size="small">
               <TableHead >
@@ -242,12 +310,12 @@ const BusinessUnitList = () => {
 
 
 
-<Box
+<Box component={Paper}
   sx={{
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTop: '1px solid #E0E0E0', // top border line
+      borderTop: '1px solid #E0E0E0',
     paddingY: 2,
     paddingX: 2,
   }}
@@ -269,7 +337,7 @@ const BusinessUnitList = () => {
 
   {/* Pagination */}
   <Pagination
-    count={count}
+    count={totalPages}
     page={page+1}
     onChange={handleChangePage}
     shape="rounded"
@@ -291,7 +359,7 @@ const BusinessUnitList = () => {
   <Button
     variant="outlined"
    onClick={() => setPage(prev => prev + 1)}
-  disabled={page === count - 1}
+  disabled={page === totalPages - 1}
  sx={{
       textTransform: 'none',
       borderRadius: 2,
@@ -302,7 +370,7 @@ const BusinessUnitList = () => {
     Next →
   </Button>
 </Box>
- </>
+ </Box>
 )}
     
 

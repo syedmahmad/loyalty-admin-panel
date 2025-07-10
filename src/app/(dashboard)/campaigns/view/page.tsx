@@ -40,13 +40,14 @@ import CampaignEdit from '../edit/page';
 const CampaignsList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [searchName, setSearchValue] = useState('');
   const [nameFilter, setNameFilter] = useState('');
   const router = useRouter();
    const [rowsPerPage, setRowsPerPage] = useState(7);
   const [page, setPage] = useState(0);
    const count = campaigns.length;
+   const totalPages = Math.ceil(count / rowsPerPage);
     const searchParams = useSearchParams();
   const drawerOpen = searchParams.get('drawer');
   const drawerId = searchParams.get('id');
@@ -285,7 +286,7 @@ const CampaignsList = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        <Box
+        <Box component={Paper}
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -312,7 +313,7 @@ const CampaignsList = () => {
         
           {/* Pagination */}
           <Pagination
-            count={count}
+            count={totalPages}
             page={page+1}
             onChange={handleChangePage}
             shape="rounded"
@@ -333,7 +334,7 @@ const CampaignsList = () => {
           {/* Next Button */}
           <Button
             variant="outlined"
-             disabled={page === count - 1} 
+             disabled={page === totalPages - 1} 
          sx={{
               textTransform: 'none',
               borderRadius: 2,
