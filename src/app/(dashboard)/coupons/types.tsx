@@ -6,6 +6,7 @@ export type ConditionField = {
 };
 
 export type CouponFormValues = {
+  coupon_title:string;
   exception_error_message_ar: string;
   exception_error_message_en: string;
   general_error_message_ar: string;
