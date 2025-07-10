@@ -121,7 +121,8 @@ const Profile = () => {
     theme.palette.mode === ThemeMode.DARK ? "grey.200" : "grey.300";
 
   const pathname = usePathname();
-  const clientName = localStorage.getItem("client-name");
+  const userInfo = JSON.parse(localStorage.getItem("user")!);
+  const clientName = `${userInfo.first_name} ${userInfo.last_name}`;
   const shouldShowClientName = pathname !== "/" && pathname !== "/tenants";
 
   const downMd = useMediaQuery(theme.breakpoints.down("md"));
@@ -174,7 +175,7 @@ const Profile = () => {
                 <Typography>Client Name</Typography>
                 <Tooltip title={clientName || ""} arrow>
                   <Typography
-                    variant="h3"
+                    variant="h5"
                     color={theme.palette.primary.dark}
                     textTransform="capitalize"
                   >
