@@ -1,23 +1,23 @@
 export const COUPON_TYPE_ARRAY = [
   {
     id: 1,
-    type: "DISCOUNT",
+    type: "VEHICLE_SPECIFIC",
   },
   {
     id: 2,
-    type: "CASHBACK",
+    type: "USER_SPECIFIC",
   },
   {
     id: 3,
-    type: "TIER_BASED",
+    type: "TIME_LIMITED",
   },
   {
     id: 4,
-    type: "REFERRAL",
+    type: "PRODUCT_SPECIFIC",
   },
   {
     id: 5,
-    type: "BIRTHDAY",
+    type: "GEO_TARGETED",
   },
   {
     id: 6,
@@ -25,23 +25,23 @@ export const COUPON_TYPE_ARRAY = [
   },
   {
     id: 7,
-    type: "GEO_TARGETED",
+    type: "BIRTHDAY",
   },
   {
     id: 8,
-    type: "PRODUCT_SPECIFIC",
+    type: "REFERRAL",
   },
   {
     id: 9,
-    type: "TIME_LIMITED",
+    type: "TIER_BASED",
   },
   {
     id: 10,
-    type: "USER_SPECIFIC",
+    type: "CASHBACK",
   },
   {
     id: 11,
-    type: "VEHICLE_SPECIFIC",
+    type: "DISCOUNT",
   },
 ];
 
