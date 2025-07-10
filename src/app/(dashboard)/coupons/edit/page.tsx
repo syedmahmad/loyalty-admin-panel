@@ -215,6 +215,7 @@ const EditCouponForm = ({
 
   const formik = useFormik<CouponFormValues>({
     initialValues: {
+      coupon_title: couponData?.coupon_title || "",
       code: couponData?.code || "",
       coupon_type: couponData?.coupon_type_id || "",
       discount_percentage: couponData?.discount_percentage || 0,
@@ -242,8 +243,16 @@ const EditCouponForm = ({
       status: couponData?.status,
     },
     validationSchema: Yup.object({
+      coupon_title: Yup.string().required("Coupon title is required"),
       code: Yup.string().required("Code is required"),
       coupon_type: Yup.string().required("Coupon type is required"),
+      discount_percentage: Yup.number()
+        .typeError("Discount percentage must be a number")
+        .min(0, "Discount percentage cannot be negative"),
+
+      discount_price: Yup.number()
+        .typeError("Discount price must be a number")
+        .min(0, "Discount price cannot be negative"),
       usage_limit: Yup.number().min(1).required("Usage limit is required"),
       business_unit_ids: Yup.array().min(
         1,
@@ -280,12 +289,23 @@ const EditCouponForm = ({
       }
     );
     setConditionOfCouponTypes(selectedCouponConditionNames?.conditions);
-    handleDrawerWidth(selectedCouponConditionNames?.coupon_type)
+    handleDrawerWidth(selectedCouponConditionNames?.coupon_type);
   }, [values.coupon_type]);
 
   const handleSubmit = async (values: CouponFormValues) => {
+    const hasEmptyFields = dynamicRows.some(
+      (row) => !row.type || !row.operator || !row.value
+    );
+
+    if (hasEmptyFields) {
+      toast.error(
+        `Please fill all required fields for ${selectedCouponType} coupon type`
+      );
+      return;
+    }
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
+      coupon_title: values.coupon_title,
       code: values.code,
       coupon_type_id: values.coupon_type,
       conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
@@ -295,8 +315,8 @@ const EditCouponForm = ({
         exception_error_message_en: values.exception_error_message_en,
         exception_error_message_ar: values.exception_error_message_ar,
       },
-      discount_percentage: values.discount_percentage,
-      discount_price: values.discount_price,
+      discount_percentage: values.discount_percentage || 0,
+      discount_price: values.discount_price || 0,
       once_per_customer: values.once_per_customer,
       reuse_interval: values.reuse_interval,
       usage_limit: values.usage_limit,
@@ -380,6 +400,19 @@ const EditCouponForm = ({
       {couponData && (
         <form onSubmit={formik.handleSubmit}>
           <Grid container spacing={2}>
+            {/* Coupon Title */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Coupon Title"
+                value={values.coupon_title}
+                name="coupon_title"
+                onChange={handleChange}
+                error={!!touched.coupon_title && !!errors.coupon_title}
+                helperText={touched.coupon_title && errors.coupon_title}
+              />
+            </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -663,6 +696,7 @@ const EditCouponForm = ({
                     name="discount_percentage"
                     label="Discount (%)"
                     type="number"
+                    inputProps={{ min: 0 }}
                     value={values.discount_percentage}
                     onChange={handleChange}
                     InputProps={{
@@ -698,6 +732,7 @@ const EditCouponForm = ({
                     name="discount_price"
                     label="Fixed Discount Amount"
                     type="number"
+                    inputProps={{ min: 0 }}
                     value={values.discount_price}
                     onChange={handleChange}
                     InputProps={{
@@ -731,6 +766,7 @@ const EditCouponForm = ({
                 label="Usage Limit"
                 placeholder="Usage Limit"
                 type="number"
+                inputProps={{ min: 1 }}
                 value={values.usage_limit}
                 onChange={handleChange}
                 error={!!touched.usage_limit && !!errors.usage_limit}
