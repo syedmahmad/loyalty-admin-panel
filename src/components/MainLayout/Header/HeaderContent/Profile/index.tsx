@@ -172,7 +172,7 @@ const Profile = () => {
             >
               {/* Left Side - Client Name */}
               <Box>
-                <Typography>Client Name</Typography>
+                <Typography>Tenant Name</Typography>
                 <Tooltip title={clientName || ""} arrow>
                   <Typography
                     variant="h5"
