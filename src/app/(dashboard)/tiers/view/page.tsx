@@ -413,10 +413,10 @@ const TierList = () => {
             }}
           />
         </BaseDrawer>
-)};
+)}
     </Paper>
     </Box>
   );
-};
+}
 
 export default TierList;
