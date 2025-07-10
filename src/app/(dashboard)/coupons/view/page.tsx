@@ -35,6 +35,7 @@ import { htmlToPlainText } from "@/utils/Index";
 import { COUPON_TYPE } from "@/constants/constants";
 
 type Coupon = {
+  coupon_title: ReactNode;
   id: number;
   code: string;
   discount_percentage: string;
@@ -173,6 +174,7 @@ const CouponList = () => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>Title</TableCell>
                     <TableCell>Code</TableCell>
                     <TableCell>Discount (%)</TableCell>
                     <TableCell>Discount Price</TableCell>
@@ -189,6 +191,7 @@ const CouponList = () => {
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((coupon) => (
                       <TableRow key={coupon.id}>
+                        <TableCell>{coupon.coupon_title}</TableCell>
                         <TableCell
                           sx={{
                             maxWidth: 200,
