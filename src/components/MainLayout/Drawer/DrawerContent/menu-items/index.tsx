@@ -11,6 +11,7 @@ import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LoyaltyIcon from '@mui/icons-material/Loyalty';
+import GroupIcon from '@mui/icons-material/Group';
 
 
 // types
@@ -174,6 +175,14 @@ const menuItems: { items: NavItemType[] } = {
       url: "/rewards",
       privileges: [],
       icon: EmojiEventsIcon,
+    },
+    {
+      id: "customers",
+      title: "Customers",
+      type: "item",
+      url: "/customers",
+      privileges: [],
+      icon: GroupIcon,
     },
   ],
 };
