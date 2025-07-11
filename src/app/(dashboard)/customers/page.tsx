@@ -23,7 +23,7 @@ import {
 import { GET, PATCH } from '@/utils/AxiosUtility';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-
+import { useRouter } from 'next/navigation'
 type Customer = {
   id: number;
   external_customer_id: string;
@@ -58,7 +58,11 @@ const CustomerList = () => {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const router = useRouter()
 
+  const handleRowClick = (id: number) => {
+    router.push(`/customers/${id}`)
+  }
   const loadData = async (searchTerm = '') => {
     setLoading(true);
     try {
@@ -143,7 +147,7 @@ const CustomerList = () => {
                 </TableHead>
                 <TableBody>
                   {paginated.map((c) => (
-                    <TableRow key={c.id}>
+                    <TableRow key={c.id}  onClick={() => handleRowClick(c.id)}>
                       <TableCell>{c.name}</TableCell>
                       <TableCell>{c.email}</TableCell>
                       <TableCell>{c.phone}</TableCell>

@@ -34,7 +34,7 @@ import {
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import CouponCreate from "../create/page";
 import CouponEdit from "../edit/page";
@@ -301,7 +301,7 @@ const CouponList = () => {
                     <TableCell>Usage Limit</TableCell>
                     <TableCell>Number of times used</TableCell>
                     <TableCell>Benefits</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell >Actions</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -472,6 +472,7 @@ const CouponList = () => {
           onClose={handleCloseDrawer}
           title="Create Coupon"
           width={drawerWidth} 
+          
         >
           <CouponCreate
             onSuccess={() => {
@@ -488,7 +489,8 @@ const CouponList = () => {
             open
             onClose={handleCloseDrawer}
             title="Edit Coupon"
-            width={drawerWidth} 
+              width={drawerWidth} 
+           
           >
             <CouponEdit
               onSuccess={() => {
