@@ -1,9 +1,18 @@
 "use client";
 
+import { RichTextEditor } from "@/components/TextEditor";
+import {
+  COUPON_TYPE,
+  COUPON_TYPE_ARRAY,
+  tooltipMessages,
+} from "@/constants/constants";
 import { GET, POST, PUT } from "@/utils/AxiosUtility";
+import { generateRandomCode } from "@/utils/Index";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
+  Autocomplete,
   Box,
   Button,
   CircularProgress,
@@ -18,33 +27,21 @@ import {
 } from "@mui/material";
 import { useFormik } from "formik";
 import { DateTime } from "luxon";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
-import { RichTextEditor } from "@/components/TextEditor";
-import {
-  COUPON_TYPE,
-  COUPON_TYPE_ARRAY,
-  tooltipMessages,
-} from "@/constants/constants";
-import { generateRandomCode } from "@/utils/Index";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   BusinessUnit,
   CouponFormValues,
+  dynamicRows,
   Make,
   Model,
-  Tier,
-  Variant,
+  Tier
 } from "../types";
 
-const oncePerCustomer = [
-  { name: "Enable", value: 1 },
-  { name: "Disable", value: 0 },
-];
-
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
+const selectAllVariants = { TrimId: "all", Trim: "Select All" };
 
 const EditCouponForm = ({
   onSuccess,
@@ -53,7 +50,6 @@ const EditCouponForm = ({
   onSuccess: () => void;
   handleDrawerWidth: (selectedCouponType: string) => void;
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -68,6 +64,8 @@ const EditCouponForm = ({
   const [benefits, setBenefits] = useState<string>("");
   const [couponTypes, setCouponTypes] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
+  const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
+
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<
     { name: string }[]
   >([]);
@@ -79,6 +77,26 @@ const EditCouponForm = ({
       value: "",
       models: [],
       variants: [],
+    },
+  ]);
+
+  const [dynamicCouponTypesRows, setDynamicCouponTypesRows] = useState([
+    {
+      id: generateId(),
+      coupon_type: "",
+      selectedCouponType: "",
+      conditionOfCouponTypes: [],
+      dynamicRows: [
+        {
+          id: generateId(),
+          type: "",
+          operator: "",
+          value: "",
+          models: [],
+          variants: [],
+        },
+      ],
+      conditions: [],
     },
   ]);
 
@@ -127,11 +145,96 @@ const EditCouponForm = ({
     );
     setSelectedCouponType(selectedOption?.type || "");
 
-    // setDynamicRows(couponData?.conditions);
-    if (couponData?.conditions?.length > 0) {
-      prefillRows(couponData?.conditions);
-    }
+    // if (couponData?.conditions?.length > 0) {
+    //   prefillRows(couponData?.conditions);
+    // }
   }, [couponData?.coupon_type_id]);
+
+  useEffect(() => {
+    if (couponData?.complex_coupon) {
+      const updatedCoupons = couponData?.complex_coupon.map((coupon: any) => {
+        if (coupon.selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC) {
+          setSelectedCouponTypeId(coupon?.coupon_type);
+        }
+
+        const selectedCouponTypeInfo: any = couponTypes.find(
+          (type: any) => type.id === coupon.coupon_type
+        );
+
+        return {
+          ...coupon,
+          conditionOfCouponTypes: selectedCouponTypeInfo?.conditions || [],
+        };
+      });
+      setDynamicCouponTypesRows(updatedCoupons);
+    }
+
+    if (couponData?.coupon_type_id) {
+      setSelectedCouponTypeId(couponData?.coupon_type_id);
+      const selectedCouponTypeInfo: any = couponTypes.find(
+        (singleCouponType: any) => {
+          if (singleCouponType.id === couponData?.coupon_type_id) {
+            return singleCouponType;
+          }
+        }
+      );
+
+      const fetchPrefilledRows = async () => {
+        const prefillDynamicRows = await prefillRows(couponData?.conditions);
+
+        setDynamicCouponTypesRows((prev) =>
+          prev.map((row) => {
+            return {
+              ...row,
+              coupon_type: couponData?.coupon_type_id,
+              conditionOfCouponTypes: selectedCouponTypeInfo?.conditions || [],
+              dynamicRows: prefillDynamicRows
+                ? prefillDynamicRows
+                : couponData?.conditions,
+              selectedCouponType: selectedCouponType,
+            };
+          })
+        );
+      };
+
+      fetchPrefilledRows();
+    }
+  }, [couponData]);
+
+  useEffect(() => {
+    if (selectedCouponTypeId) {
+      const selectedCouponTypeInfo: any = couponTypes.find(
+        (singleCouponType: any) => {
+          if (singleCouponType.id === selectedCouponTypeId) {
+            return singleCouponType;
+          }
+        }
+      );
+
+      setDynamicCouponTypesRows((prev: any[]) =>
+        prev.map((row: any) =>
+          row.coupon_type === selectedCouponTypeId
+            ? {
+                ...row,
+                conditionOfCouponTypes:
+                  selectedCouponTypeInfo?.conditions || [],
+                dynamicRows: [
+                  {
+                    id: generateId(),
+                    type: "",
+                    operator: "",
+                    value: "",
+                    models: [],
+                    variants: [],
+                  },
+                ],
+                selectedCouponType: selectedCouponType,
+              }
+            : row
+        )
+      );
+    }
+  }, [selectedCouponTypeId]);
 
   const prefillRows = async (rowsFromApi: any[]) => {
     const filledRows = await Promise.all(
@@ -155,7 +258,7 @@ const EditCouponForm = ({
       })
     );
 
-    setDynamicRows(filledRows);
+    return filledRows;
   };
 
   const fetchCouponById = async (id: string) => {
@@ -179,16 +282,15 @@ const EditCouponForm = ({
   const fetchModelByMakeId = async (rowId: number, makeId: number) => {
     const res = await GET(`/coupons/vehicle/models/${makeId}`);
     const models = res?.data?.data || [];
-    setDynamicRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
+
+    setDynamicCouponTypesRows((prev: any[]) =>
+      prev.map((row: any) =>
+        row.coupon_type === selectedCouponTypeId
           ? {
               ...row,
-              make: makeId,
-              model: undefined,
-              variant: undefined,
-              models,
-              variants: [],
+              dynamicRows: row.dynamicRows.map((dRow: any) =>
+                dRow.id === rowId ? { ...dRow, models: models } : dRow
+              ),
             }
           : row
       )
@@ -199,14 +301,14 @@ const EditCouponForm = ({
     const res = await GET(`/coupons/vehicle/variants/${modelId}`);
     const variants = res?.data?.data || [];
 
-    setDynamicRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
+    setDynamicCouponTypesRows((prev: any[]) =>
+      prev.map((row: any) =>
+        row.coupon_type === selectedCouponTypeId
           ? {
               ...row,
-              model: modelId,
-              variant: undefined,
-              variants,
+              dynamicRows: row.dynamicRows.map((dRow: any) =>
+                dRow.id === rowId ? { ...dRow, variants: variants } : dRow
+              ),
             }
           : row
       )
@@ -225,6 +327,7 @@ const EditCouponForm = ({
         ? [couponData.business_unit_id]
         : [],
       once_per_customer: couponData?.once_per_customer || 0,
+      max_usage_per_user: couponData?.max_usage_per_user || 1,
       reuse_interval: couponData?.reuse_interval || 0,
       conditions: couponData?.conditions || {},
       general_error_message_en:
@@ -245,7 +348,7 @@ const EditCouponForm = ({
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
       code: Yup.string().required("Code is required"),
-      coupon_type: Yup.string().required("Coupon type is required"),
+      // coupon_type: Yup.string().required("Coupon type is required"),
       discount_percentage: Yup.number()
         .typeError("Discount percentage must be a number")
         .min(0, "Discount percentage cannot be negative"),
@@ -293,22 +396,36 @@ const EditCouponForm = ({
   }, [values.coupon_type]);
 
   const handleSubmit = async (values: CouponFormValues) => {
-    const hasEmptyFields = dynamicRows.some(
-      (row) => !row.type || !row.operator || !row.value
-    );
+    const condtionsArr =
+      dynamicCouponTypesRows.length > 1
+        ? null
+        : dynamicCouponTypesRows[0].dynamicRows.map(
+            ({ models, variants, ...rest }) => rest
+          );
 
-    if (hasEmptyFields) {
-      toast.error(
-        `Please fill all required fields for ${selectedCouponType} coupon type`
-      );
-      return;
-    }
-    setLoading(true);
+    const complexCouponArr =
+      dynamicCouponTypesRows.length > 1
+        ? dynamicCouponTypesRows.map(({ dynamicRows, ...rest }) => ({
+            ...rest,
+            dynamicRows: dynamicRows.map(
+              ({ models, variants, ...cleanedRow }) => cleanedRow
+            ),
+          }))
+        : null;
+
+    const coupon_type_id =
+      dynamicCouponTypesRows.length > 1
+        ? null
+        : dynamicCouponTypesRows[0].coupon_type;
+
     const payloads = values.business_unit_ids.map((buId: number) => ({
       coupon_title: values.coupon_title,
       code: values.code,
-      coupon_type_id: values.coupon_type,
-      conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
+      // coupon_type_id: values.coupon_type,
+      // conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
+      coupon_type_id: coupon_type_id,
+      complex_coupon: complexCouponArr,
+      conditions: condtionsArr,
       errors: {
         general_error_message_en: values.general_error_message_en,
         general_error_message_ar: values.general_error_message_ar,
@@ -317,7 +434,8 @@ const EditCouponForm = ({
       },
       discount_percentage: values.discount_percentage || 0,
       discount_price: values.discount_price || 0,
-      once_per_customer: values.once_per_customer,
+      // once_per_customer: values.once_per_customer,
+      max_usage_per_user: values.max_usage_per_user || 1,
       reuse_interval: values.reuse_interval,
       usage_limit: values.usage_limit,
       business_unit_id: buId,
@@ -368,31 +486,133 @@ const EditCouponForm = ({
   }
 
   const handleChangeCondition = (
+    parentId: number,
     id: number,
     field: string,
-    value: number | string
+    value: number | string | (number | string)[]
   ) => {
-    setDynamicRows((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
+    setDynamicCouponTypesRows((prev: any[]) =>
+      prev.map((row: any) =>
+        row.id === parentId
+          ? {
+              ...row,
+              dynamicRows: row.dynamicRows.map((dRow: any) =>
+                dRow.id === id ? { ...dRow, [field]: value } : dRow
+              ),
+            }
+          : row
+      )
     );
   };
 
-  const handleAdd = () => {
-    setDynamicRows((prev) => [
+  const handleAdd = (parentId: any) => {
+    const newDynamicRow = {
+      id: generateId(),
+      type: "",
+      operator: "",
+      value: "",
+      models: [],
+      variants: [],
+    };
+
+    setDynamicCouponTypesRows((prev) =>
+      prev.map((row) => {
+        return row.id === parentId
+          ? {
+              ...row,
+              dynamicRows: [...row.dynamicRows, newDynamicRow],
+            }
+          : row;
+      })
+    );
+  };
+
+  const handleDelete = (parentId: number, idToDelete: number) => {
+    setDynamicCouponTypesRows((prev) =>
+      prev.map((row) =>
+        row.id === parentId
+          ? {
+              ...row,
+              dynamicRows: row.dynamicRows.filter((dr) => dr.id !== idToDelete),
+            }
+          : row
+      )
+    );
+  };
+
+  const handleAddCouponTypeRows = () => {
+    setDynamicCouponTypesRows((prev) => [
       ...prev,
       {
         id: generateId(),
-        type: "",
-        operator: "",
-        value: "",
-        models: [],
-        variants: [],
+        coupon_type: "",
+        selectedCouponType: "",
+        conditionOfCouponTypes: [],
+        dynamicRows: [],
+        conditions: [],
       },
     ]);
   };
 
-  const handleDelete = (idToDelete: number) => {
-    setDynamicRows((prev) => prev.filter((c) => c.id !== idToDelete));
+  const handleDeleteCouponTypeRows = (idToDelete: number) => {
+    setDynamicCouponTypesRows((prev) =>
+      prev.filter((c) => c.id !== idToDelete)
+    );
+  };
+
+  const renderServiceTypeName = (
+    conditionType: string,
+    row: any,
+    dynamicCouponTypesRow: any
+  ) => {
+    switch (conditionType) {
+      case COUPON_TYPE.PRODUCT_SPECIFIC:
+      case COUPON_TYPE.SERVICE_BASED:
+        return (
+          <TextField
+            label="Condition Type"
+            fullWidth
+            value={row.type}
+            onChange={(e) =>
+              handleChangeCondition(
+                dynamicCouponTypesRow.id,
+                row.id,
+                "type",
+                e.target.value
+              )
+            }
+          />
+        );
+
+      case COUPON_TYPE.BIRTHDAY:
+        return null;
+
+      default:
+        return (
+          <TextField
+            select
+            label="Condition Type"
+            fullWidth
+            value={row.type}
+            onChange={(e) =>
+              handleChangeCondition(
+                dynamicCouponTypesRow.id,
+                row.id,
+                "type",
+                e.target.value
+              )
+            }
+          >
+            {(dynamicCouponTypesRow.conditionOfCouponTypes ?? []).map(
+              (option: { name: string }) => (
+                <MenuItem key={option.name} value={option.name}>
+                  {option.name}
+                </MenuItem>
+              )
+            )}
+          </TextField>
+        );
+    }
   };
 
   return (
@@ -413,6 +633,8 @@ const EditCouponForm = ({
                 helperText={touched.coupon_title && errors.coupon_title}
               />
             </Grid>
+
+            {/* Coupon Code */}
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -452,240 +674,385 @@ const EditCouponForm = ({
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                select
-                fullWidth
-                name="coupon_type"
-                label="Coupon Type"
-                value={values.coupon_type}
-                onChange={(e) => {
-                  handleChange(e);
-                  const selectedCouponId = Number(e.target.value);
-                  const selectedOption: any = COUPON_TYPE_ARRAY.find(
-                    (option: { id: number }) => option.id === selectedCouponId
-                  );
-                  setSelectedCouponType(selectedOption.type || "");
-                  setFieldValue("conditions", {});
-                  setDynamicRows([
-                    {
-                      id: generateId(),
-                      type: "",
-                      operator: "",
-                      value: "",
-                      models: [],
-                      variants: [],
-                    },
-                  ]);
-                  setTimeout(() => formik.validateForm(), 0);
-                }}
-                error={!!touched.coupon_type && !!errors.coupon_type}
-                helperText={touched.coupon_type && errors.coupon_type}
-              >
-                {couponTypes.map(
-                  (option: { id: number; coupon_type: string }) => (
-                    <MenuItem key={option.coupon_type} value={option.id}>
-                      {option.coupon_type}
-                    </MenuItem>
-                  )
-                )}
-              </TextField>
-            </Grid>
-
-            {values.coupon_type !== "" && (
-              <>
-                {dynamicRows?.map(
-                  (
-                    row: {
-                      id: number;
-                      type: string;
-                      operator: string;
-                      value: string;
-                      tier?: number;
-                      make?: number;
-                      model?: number;
-                      variant?: number;
-                      models?: Model[];
-                      variants?: Variant[];
-                    },
-                    index
-                  ) => (
-                    <Grid item xs={12} key={index}>
-                      <Box display="flex" gap={1}>
-                        {selectedCouponType === COUPON_TYPE.TIER_BASED && (
-                          <TextField
-                            select
-                            label="Tier"
-                            value={row.tier || ""}
-                            onChange={(e) =>
-                              handleChangeCondition(
-                                row.id,
-                                "tier",
-                                e.target.value
-                              )
-                            }
-                            sx={{ minWidth: 150 }}
-                          >
-                            {tiers?.map((tier) => (
-                              <MenuItem key={tier.id} value={tier.id}>
-                                {tier.name} ({tier?.business_unit?.name})
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        )}
-
-                        {selectedCouponType ===
-                          COUPON_TYPE.VEHICLE_SPECIFIC && (
-                          <>
+            {/* Dynamic CouponType Rows */}
+            {dynamicCouponTypesRows.map(
+              (dynamicCouponTypesRow, couponTypesRowIndex) => (
+                <Grid item xs={12} key={couponTypesRowIndex}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={11}>
+                      <Box
+                        border={1}
+                        borderColor="grey.400"
+                        borderRadius={2}
+                        padding={2}
+                      >
+                        <Grid container spacing={2}>
+                          <Grid item xs={12}>
                             <TextField
                               select
-                              label="Make"
-                              value={row.make || ""}
+                              fullWidth
+                              name="coupon_type"
+                              label="Coupon Type"
+                              value={dynamicCouponTypesRow.coupon_type}
                               onChange={(e) => {
-                                const makeId = Number(e.target.value);
-                                fetchModelByMakeId(row.id, makeId);
-                                handleChangeCondition(row.id, "make", makeId);
+                                const selectedId = Number(e.target.value);
+                                const updatedRows: any =
+                                  dynamicCouponTypesRows.map((row, i) =>
+                                    i === couponTypesRowIndex
+                                      ? { ...row, coupon_type: selectedId }
+                                      : row
+                                  );
+                                setDynamicCouponTypesRows(updatedRows);
+
+                                const selectedOption: any =
+                                  COUPON_TYPE_ARRAY.find(
+                                    (option: { id: number }) =>
+                                      option.id === selectedId
+                                  );
+                                setSelectedCouponType(
+                                  selectedOption?.type || ""
+                                );
+                                setSelectedCouponTypeId(selectedId);
+                                setFieldValue("conditions", {});
+                                setTimeout(() => formik.validateForm(), 0);
                               }}
-                              sx={{ minWidth: 150 }}
+                              error={
+                                !!touched.coupon_type && !!errors.coupon_type
+                              }
+                              helperText={
+                                touched.coupon_type && errors.coupon_type
+                              }
                             >
-                              {makes?.map((make: Make) => (
-                                <MenuItem key={make.MakeId} value={make.MakeId}>
-                                  {make.Make}
-                                </MenuItem>
-                              ))}
+                              {couponTypes.map(
+                                (option: {
+                                  id: number;
+                                  coupon_type: string;
+                                }) => (
+                                  <MenuItem
+                                    key={option.coupon_type}
+                                    value={option.id}
+                                  >
+                                    {option.coupon_type}
+                                  </MenuItem>
+                                )
+                              )}
                             </TextField>
+                          </Grid>
 
-                            {row?.models && (
-                              <TextField
-                                select
-                                label="Model"
-                                value={row.model || ""}
-                                onChange={(e) => {
-                                  const modelId = Number(e.target.value);
-                                  fetchVariantByModelId(row.id, modelId);
-                                  handleChangeCondition(
-                                    row.id,
-                                    "model",
-                                    modelId
-                                  );
-                                }}
-                                sx={{ minWidth: 150 }}
-                              >
-                                {row?.models?.map((model: Model) => (
-                                  <MenuItem
-                                    key={model.ModelId}
-                                    value={model.ModelId}
-                                  >
-                                    {model.Model}
-                                  </MenuItem>
-                                ))}
-                              </TextField>
-                            )}
+                          {dynamicCouponTypesRow.coupon_type !== "" && (
+                            <>
+                              {dynamicCouponTypesRow.dynamicRows.map(
+                                (row: dynamicRows, index) => (
+                                  <Grid item xs={12} key={index}>
+                                    <Box display="flex" gap={1}>
+                                      {dynamicCouponTypesRow?.selectedCouponType ===
+                                        COUPON_TYPE.TIER_BASED && (
+                                        <TextField
+                                          select
+                                          label="Tier"
+                                          value={row.tier || ""}
+                                          onChange={(e) =>
+                                            handleChangeCondition(
+                                              dynamicCouponTypesRow.id,
+                                              row.id,
+                                              "tier",
+                                              e.target.value
+                                            )
+                                          }
+                                          sx={{ minWidth: 150 }}
+                                        >
+                                          {tiers?.map((tier) => (
+                                            <MenuItem
+                                              key={tier.id}
+                                              value={tier.id}
+                                            >
+                                              {tier.name} (
+                                              {tier?.business_unit?.name})
+                                            </MenuItem>
+                                          ))}
+                                        </TextField>
+                                      )}
 
-                            {row?.variants && (
-                              <TextField
-                                select
-                                label="Variant"
-                                value={row.variant || ""}
-                                onChange={(e) => {
-                                  const variantId = Number(e.target.value);
-                                  handleChangeCondition(
-                                    row.id,
-                                    "variant",
-                                    variantId
-                                  );
-                                }}
-                                sx={{ minWidth: 150 }}
-                              >
-                                {row?.variants?.map((variant: Variant) => (
-                                  <MenuItem
-                                    key={variant.TrimId}
-                                    value={variant.TrimId}
-                                  >
-                                    {variant.Trim}
-                                  </MenuItem>
-                                ))}
-                              </TextField>
-                            )}
-                          </>
-                        )}
+                                      {dynamicCouponTypesRow?.selectedCouponType ===
+                                        COUPON_TYPE.VEHICLE_SPECIFIC && (
+                                        <>
+                                          <TextField
+                                            select
+                                            label="Make"
+                                            value={row.make || ""}
+                                            onChange={(e) => {
+                                              const makeId = Number(
+                                                e.target.value
+                                              );
+                                              fetchModelByMakeId(
+                                                row.id,
+                                                makeId
+                                              );
+                                              handleChangeCondition(
+                                                dynamicCouponTypesRow.id,
+                                                row.id,
+                                                "make",
+                                                makeId
+                                              );
+                                            }}
+                                            sx={{ minWidth: 150 }}
+                                          >
+                                            {makes?.map((make: Make) => (
+                                              <MenuItem
+                                                key={make.MakeId}
+                                                value={make.MakeId}
+                                              >
+                                                {make.Make}
+                                              </MenuItem>
+                                            ))}
+                                          </TextField>
 
-                        <TextField
-                          select
-                          label="Condition Type"
-                          fullWidth
-                          value={row.type}
-                          onChange={(e) =>
-                            handleChangeCondition(
-                              row.id,
-                              "type",
-                              e.target.value
-                            )
-                          }
-                        >
-                          {(conditionOfCouponTypes ?? []).map(
-                            (option: { name: string }) => (
-                              <MenuItem key={option.name} value={option.name}>
-                                {option.name}
-                              </MenuItem>
-                            )
+                                          {row?.models && (
+                                            <TextField
+                                              select
+                                              label="Model"
+                                              value={row.model || ""}
+                                              onChange={(e) => {
+                                                const modelId = Number(
+                                                  e.target.value
+                                                );
+                                                fetchVariantByModelId(
+                                                  row.id,
+                                                  modelId
+                                                );
+                                                handleChangeCondition(
+                                                  dynamicCouponTypesRow.id,
+                                                  row.id,
+                                                  "model",
+                                                  modelId
+                                                );
+                                              }}
+                                              sx={{ minWidth: 150 }}
+                                            >
+                                              {row?.models?.map(
+                                                (model: Model) => (
+                                                  <MenuItem
+                                                    key={model.ModelId}
+                                                    value={model.ModelId}
+                                                  >
+                                                    {model.Model}
+                                                  </MenuItem>
+                                                )
+                                              )}
+                                            </TextField>
+                                          )}
+
+                                          {row?.variants && (
+                                            // <TextField
+                                            //   select
+                                            //   label="Variant"
+                                            //   value={row.variant || ""}
+                                            //   onChange={(e) => {
+                                            //     const variantId = Number(
+                                            //       e.target.value
+                                            //     );
+                                            //     handleChangeCondition(
+                                            //       dynamicCouponTypesRow.id,
+                                            //       row.id,
+                                            //       "variant",
+                                            //       variantId
+                                            //     );
+                                            //   }}
+                                            //   sx={{ minWidth: 150 }}
+                                            // >
+                                            //   {row?.variants?.map(
+                                            //     (variant: Variant) => (
+                                            //       <MenuItem
+                                            //         key={variant.TrimId}
+                                            //         value={variant.TrimId}
+                                            //       >
+                                            //         {variant.Trim}
+                                            //       </MenuItem>
+                                            //     )
+                                            //   )}
+                                            // </TextField>
+                                            <Autocomplete
+                                              multiple
+                                              options={[
+                                                selectAllVariants,
+                                                ...(row.variants || []),
+                                              ]}
+                                              getOptionLabel={(option) =>
+                                                option.Trim || ""
+                                              }
+                                              value={
+                                                Array.isArray(row.variant) &&
+                                                row.variant.includes("all")
+                                                  ? [selectAllVariants]
+                                                  : row.variants?.filter(
+                                                      (variant) =>
+                                                        (
+                                                          row.variant || []
+                                                        ).includes(
+                                                          variant.TrimId
+                                                        )
+                                                    ) || []
+                                              }
+                                              onChange={(event, newValue) => {
+                                                const isSelectAllSelected =
+                                                  newValue.some(
+                                                    (v) => v.TrimId === "all"
+                                                  );
+
+                                                let updatedValues;
+
+                                                if (isSelectAllSelected) {
+                                                  updatedValues = ["all"];
+                                                } else {
+                                                  updatedValues = newValue.map(
+                                                    (v) => v.TrimId
+                                                  );
+                                                }
+
+                                                handleChangeCondition(
+                                                  dynamicCouponTypesRow.id,
+                                                  row.id,
+                                                  "variant",
+                                                  updatedValues
+                                                );
+                                              }}
+                                              isOptionEqualToValue={(
+                                                option,
+                                                value
+                                              ) =>
+                                                option.TrimId === value.TrimId
+                                              }
+                                              renderInput={(params) => (
+                                                <TextField
+                                                  {...params}
+                                                  label="Variant"
+                                                  sx={{ minWidth: 150 }}
+                                                />
+                                              )}
+                                            />
+                                          )}
+                                        </>
+                                      )}
+
+                                      {renderServiceTypeName(
+                                        dynamicCouponTypesRow?.selectedCouponType,
+                                        row,
+                                        dynamicCouponTypesRow
+                                      )}
+
+                                      {dynamicCouponTypesRow?.selectedCouponType !==
+                                        COUPON_TYPE.BIRTHDAY && (
+                                        <>
+                                          <TextField
+                                            select
+                                            fullWidth
+                                            label="Condition Operator"
+                                            value={row.operator}
+                                            onChange={(e) =>
+                                              handleChangeCondition(
+                                                dynamicCouponTypesRow.id,
+                                                row.id,
+                                                "operator",
+                                                e.target.value
+                                              )
+                                            }
+                                          >
+                                            <MenuItem value="==">
+                                              Equal To (==)
+                                            </MenuItem>
+                                            <MenuItem value="!=">
+                                              Not Equal (!=)
+                                            </MenuItem>
+                                            <MenuItem value=">">
+                                              Greater Than (&gt;)
+                                            </MenuItem>
+                                            <MenuItem value=">=">
+                                              Greater Than or Equal (&gt;=)
+                                            </MenuItem>
+                                            <MenuItem value="<">
+                                              Less Than (&lt;)
+                                            </MenuItem>
+                                            <MenuItem value="<=">
+                                              Less Than or Equal (&lt;=)
+                                            </MenuItem>
+                                          </TextField>
+
+                                          <TextField
+                                            label="Value"
+                                            fullWidth
+                                            value={row.value}
+                                            onChange={(e) =>
+                                              handleChangeCondition(
+                                                dynamicCouponTypesRow.id,
+                                                row.id,
+                                                "value",
+                                                e.target.value
+                                              )
+                                            }
+                                          />
+
+                                          {index === 0 && (
+                                            <IconButton
+                                              onClick={() =>
+                                                handleAdd(
+                                                  dynamicCouponTypesRow.id
+                                                )
+                                              }
+                                            >
+                                              <AddIcon
+                                                fontSize="small"
+                                                color="primary"
+                                              />
+                                            </IconButton>
+                                          )}
+
+                                          {index >= 1 && (
+                                            <IconButton
+                                              onClick={() =>
+                                                handleDelete(
+                                                  dynamicCouponTypesRow.id,
+                                                  row.id
+                                                )
+                                              }
+                                            >
+                                              <DeleteIcon
+                                                fontSize="small"
+                                                color="error"
+                                              />
+                                            </IconButton>
+                                          )}
+                                        </>
+                                      )}
+                                    </Box>
+                                  </Grid>
+                                )
+                              )}
+                            </>
                           )}
-                        </TextField>
-
-                        <TextField
-                          select
-                          fullWidth
-                          label="Condition Operator"
-                          value={row.operator}
-                          onChange={(e) =>
-                            handleChangeCondition(
-                              row.id,
-                              "operator",
-                              e.target.value
-                            )
-                          }
-                        >
-                          <MenuItem value="==">Equal To (==)</MenuItem>
-                          <MenuItem value="!=">Not Equal (!=)</MenuItem>
-                          <MenuItem value=">">Greater Than (&gt;)</MenuItem>
-                          <MenuItem value=">=">
-                            Greater Than or Equal (&gt;=)
-                          </MenuItem>
-                          <MenuItem value="<">Less Than (&lt;)</MenuItem>
-                          <MenuItem value="<=">
-                            Less Than or Equal (&lt;=)
-                          </MenuItem>
-                        </TextField>
-
-                        <TextField
-                          label="Value"
-                          fullWidth
-                          value={row.value}
-                          onChange={(e) =>
-                            handleChangeCondition(
-                              row.id,
-                              "value",
-                              e.target.value
-                            )
-                          }
-                        />
-
-                        {index === 0 && (
-                          <IconButton onClick={handleAdd}>
-                            <AddIcon fontSize="small" color="primary" />
-                          </IconButton>
-                        )}
-
-                        {index >= 1 && (
-                          <IconButton onClick={() => handleDelete(row.id)}>
-                            <DeleteIcon fontSize="small" color="error" />
-                          </IconButton>
-                        )}
+                        </Grid>
                       </Box>
                     </Grid>
-                  )
-                )}
-              </>
+
+                    <Grid item xs={1}>
+                      {couponTypesRowIndex === 0 && (
+                        <IconButton onClick={handleAddCouponTypeRows}>
+                          <AddIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      )}
+
+                      {couponTypesRowIndex >= 1 && (
+                        <IconButton
+                          onClick={() =>
+                            handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
+                          }
+                        >
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Grid>
+              )
             )}
 
             {selectedCouponType !== COUPON_TYPE.TIER_BASED && (
@@ -759,6 +1126,7 @@ const EditCouponForm = ({
               </>
             )}
 
+            {/* Usage Limit */}
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -799,49 +1167,42 @@ const EditCouponForm = ({
               </TextField>
             </Grid>
 
-            {/* Once Per Customer */}
+            {/* Max Usage Per User */}
             <Grid item xs={12}>
               <TextField
-                select
                 fullWidth
-                name="once_per_customer"
-                label="Once Per Customer"
-                value={values.once_per_customer ? 1 : 0}
-                onChange={(e) => {
-                  const selected = Number(e.target.value);
-                  setFieldValue("once_per_customer", selected === 1);
-                }}
+                variant="outlined"
+                label="Max Usage Per User"
+                value={values.max_usage_per_user}
+                type="number"
+                inputProps={{ min: 1 }}
+                name="max_usage_per_user"
+                onChange={handleChange}
                 error={
-                  !!touched.once_per_customer && !!errors.once_per_customer
+                  !!touched.max_usage_per_user && !!errors.max_usage_per_user
                 }
                 helperText={
-                  touched.once_per_customer && errors.once_per_customer
+                  touched.max_usage_per_user && errors.max_usage_per_user
                 }
-              >
-                {oncePerCustomer?.map((option, index) => (
-                  <MenuItem key={option.name} value={option.value}>
-                    {option.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              />
             </Grid>
 
             {/* Reuse Interval */}
-            {Boolean(values.once_per_customer) && (
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  label="Reuse Interval (in days)"
-                  value={values.reuse_interval}
-                  type="number"
-                  name="reuse_interval"
-                  onChange={handleChange}
-                  error={!!touched.reuse_interval && !!errors.reuse_interval}
-                  helperText={touched.reuse_interval && errors.reuse_interval}
-                />
-              </Grid>
-            )}
+            {/* {Boolean(values.once_per_customer) && ( */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Reuse Interval (in days)"
+                value={values.reuse_interval}
+                type="number"
+                name="reuse_interval"
+                onChange={handleChange}
+                error={!!touched.reuse_interval && !!errors.reuse_interval}
+                helperText={touched.reuse_interval && errors.reuse_interval}
+              />
+            </Grid>
+            {/* )} */}
 
             {/* Expiry Date */}
             <Grid item xs={12}>

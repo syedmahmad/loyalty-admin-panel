@@ -8,10 +8,6 @@ export const COUPON_TYPE_ARRAY = [
     type: "USER_SPECIFIC",
   },
   {
-    id: 3,
-    type: "TIME_LIMITED",
-  },
-  {
     id: 4,
     type: "PRODUCT_SPECIFIC",
   },
@@ -21,7 +17,7 @@ export const COUPON_TYPE_ARRAY = [
   },
   {
     id: 6,
-    type: "USAGE_BASED",
+    type: "SERVICE_BASED",
   },
   {
     id: 7,
@@ -51,10 +47,9 @@ export const COUPON_TYPE = {
   TIER_BASED: "TIER_BASED",
   REFERRAL: "REFERRAL",
   BIRTHDAY: "BIRTHDAY",
-  USAGE_BASED: "USAGE_BASED",
+  SERVICE_BASED: "SERVICE_BASED",
   GEO_TARGETED: "GEO_TARGETED",
   PRODUCT_SPECIFIC: "PRODUCT_SPECIFIC",
-  TIME_LIMITED: "TIME_LIMITED",
   USER_SPECIFIC: "USER_SPECIFIC",
   VEHICLE_SPECIFIC: "VEHICLE_SPECIFIC",
 };
@@ -70,10 +65,9 @@ export const tooltipMessages: {
     TIER_BASED: "Not required. Discount is defined per user tier.",
     REFERRAL: "Optional: Used when offering percentage-based rewards.",
     BIRTHDAY: "Set the percentage discount for birthday offers.",
-    USAGE_BASED: "Used to offer discount after specific usage count.",
+    SERVICE_BASED: "Used to offer discount after specific usage",
     GEO_TARGETED: "Apply discount based on user's location.",
     PRODUCT_SPECIFIC: "Applies percentage discount to specific products.",
-    TIME_LIMITED: "Valid within the specified time window.",
   },
   discountPrice: {
     DISCOUNT:
@@ -82,9 +76,8 @@ export const tooltipMessages: {
     REFERRAL: "Fixed cashback or reward amount for referral.",
     TIER_BASED: "Not used here — discount comes from tier mapping.",
     BIRTHDAY: "Fixed discount for birthday-related purchases.",
-    USAGE_BASED: "Fixed discount after Nth usage.",
+    SERVICE_BASED: "Fixed discount",
     GEO_TARGETED: "Flat discount based on user’s location.",
-    PRODUCT_SPECIFIC: "Flat amount discount for specific products.",
-    TIME_LIMITED: "Flat discount available within the active period.",
+    PRODUCT_SPECIFIC: "Flat amount discount for specific products."
   },
 };

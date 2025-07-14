@@ -6,7 +6,7 @@ export type ConditionField = {
 };
 
 export type CouponFormValues = {
-  coupon_title:string;
+  coupon_title: string;
   exception_error_message_ar: string;
   exception_error_message_en: string;
   general_error_message_ar: string;
@@ -16,6 +16,7 @@ export type CouponFormValues = {
   code: string;
   coupon_type: string;
   usage_limit: number;
+  max_usage_per_user: number;
   business_unit_ids: number[];
   date_from: string;
   date_to: string;
@@ -49,4 +50,16 @@ export type Make = { MakeId: number; Make: string };
 export type Model = { ModelId: number; Model: string };
 export type Variant = { TrimId: number; Trim: string };
 
-
+export type dynamicRows = {
+  id: number;
+  type: string;
+  operator: string;
+  value: string;
+  tier?: number;
+  make?: number;
+  model?: number;
+  // variant?: number;
+  variant?: (number | string)[];
+  models?: Model[];
+  variants?: Variant[];
+};
