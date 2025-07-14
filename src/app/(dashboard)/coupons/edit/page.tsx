@@ -577,9 +577,14 @@ const EditCouponForm = ({
     switch (conditionType) {
       case COUPON_TYPE.PRODUCT_SPECIFIC:
       case COUPON_TYPE.SERVICE_BASED:
+      case COUPON_TYPE.GEO_TARGETED:
         return (
           <TextField
-            label="Condition Type"
+            label={`Condition Type ${
+              conditionType === COUPON_TYPE.GEO_TARGETED
+                ? "(eg: You can enter values like Pakistan, != India, or != Karachi. Leave it blank to allow all locations.)"
+                : ""
+            }`}
             fullWidth
             value={row.type}
             onChange={(e) =>
@@ -972,6 +977,7 @@ const EditCouponForm = ({
                                           {![
                                             COUPON_TYPE.BIRTHDAY,
                                             COUPON_TYPE.PRODUCT_SPECIFIC,
+                                            COUPON_TYPE.GEO_TARGETED
                                           ].includes(
                                             dynamicCouponTypesRow?.selectedCouponType
                                           ) && (
