@@ -37,7 +37,7 @@ import {
   dynamicRows,
   Make,
   Model,
-  Tier
+  Tier,
 } from "../types";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
@@ -843,34 +843,6 @@ const EditCouponForm = ({
                                           )}
 
                                           {row?.variants && (
-                                            // <TextField
-                                            //   select
-                                            //   label="Variant"
-                                            //   value={row.variant || ""}
-                                            //   onChange={(e) => {
-                                            //     const variantId = Number(
-                                            //       e.target.value
-                                            //     );
-                                            //     handleChangeCondition(
-                                            //       dynamicCouponTypesRow.id,
-                                            //       row.id,
-                                            //       "variant",
-                                            //       variantId
-                                            //     );
-                                            //   }}
-                                            //   sx={{ minWidth: 150 }}
-                                            // >
-                                            //   {row?.variants?.map(
-                                            //     (variant: Variant) => (
-                                            //       <MenuItem
-                                            //         key={variant.TrimId}
-                                            //         value={variant.TrimId}
-                                            //       >
-                                            //         {variant.Trim}
-                                            //       </MenuItem>
-                                            //     )
-                                            //   )}
-                                            // </TextField>
                                             <Autocomplete
                                               multiple
                                               options={[
@@ -940,8 +912,12 @@ const EditCouponForm = ({
                                         dynamicCouponTypesRow
                                       )}
 
-                                      {dynamicCouponTypesRow?.selectedCouponType !==
-                                        COUPON_TYPE.BIRTHDAY && (
+                                      {![
+                                        COUPON_TYPE.BIRTHDAY,
+                                        COUPON_TYPE.PRODUCT_SPECIFIC,
+                                      ].includes(
+                                        dynamicCouponTypesRow?.selectedCouponType
+                                      ) && (
                                         <>
                                           <TextField
                                             select
@@ -990,7 +966,12 @@ const EditCouponForm = ({
                                               )
                                             }
                                           />
+                                        </>
+                                      )}
 
+                                      {dynamicCouponTypesRow?.selectedCouponType !==
+                                        COUPON_TYPE.BIRTHDAY && (
+                                        <>
                                           {index === 0 && (
                                             <IconButton
                                               onClick={() =>

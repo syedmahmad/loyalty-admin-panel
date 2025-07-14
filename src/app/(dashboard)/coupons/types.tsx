@@ -51,6 +51,7 @@ export type Model = { ModelId: number; Model: string };
 export type Variant = { TrimId: number; Trim: string };
 
 export type dynamicRows = {
+  year?: string;
   id: number;
   type: string;
   operator: string;

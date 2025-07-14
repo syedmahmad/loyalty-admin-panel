@@ -37,3 +37,14 @@ export const htmlToPlainText = (htmlString: string): string => {
   tempDiv.innerHTML = htmlString;
   return tempDiv.textContent || tempDiv.innerText || "";
 };
+
+export const getYearsArray = () => {
+  const startYear = 1985;
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+  const yearsArray = [];
+  for (let year = nextYear; year >= startYear; year--) {
+    yearsArray.push(year);
+  }
+  return yearsArray;
+};

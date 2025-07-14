@@ -28,7 +28,7 @@ import {
   COUPON_TYPE_ARRAY,
   tooltipMessages,
 } from "@/constants/constants";
-import { generateRandomCode } from "@/utils/Index";
+import { generateRandomCode, getYearsArray } from "@/utils/Index";
 import { useRouter } from "next/navigation";
 import {
   BusinessUnit,
@@ -786,8 +786,12 @@ const CreateCouponForm = ({
                                       dynamicCouponTypesRow
                                     )}
 
-                                    {dynamicCouponTypesRow?.selectedCouponType !==
-                                      COUPON_TYPE.BIRTHDAY && (
+                                    {![
+                                      COUPON_TYPE.BIRTHDAY,
+                                      COUPON_TYPE.PRODUCT_SPECIFIC,
+                                    ].includes(
+                                      dynamicCouponTypesRow?.selectedCouponType
+                                    ) && (
                                       <>
                                         <TextField
                                           select
@@ -836,7 +840,12 @@ const CreateCouponForm = ({
                                             )
                                           }
                                         />
+                                      </>
+                                    )}
 
+                                    {dynamicCouponTypesRow?.selectedCouponType !==
+                                      COUPON_TYPE.BIRTHDAY && (
+                                      <>
                                         {index === 0 && (
                                           <IconButton
                                             onClick={() =>

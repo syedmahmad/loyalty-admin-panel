@@ -34,7 +34,7 @@ import {
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import CouponCreate from "../create/page";
 import CouponEdit from "../edit/page";
@@ -43,7 +43,7 @@ import { COUPON_TYPE } from "@/constants/constants";
 import SearchIcon from "@mui/icons-material/Search";
 
 type Coupon = {
-  coupon_title: ReactNode;
+  coupon_title: string;
   id: number;
   code: string;
   discount_percentage: string;
