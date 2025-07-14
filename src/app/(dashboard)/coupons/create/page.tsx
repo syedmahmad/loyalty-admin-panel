@@ -210,8 +210,14 @@ const CreateCouponForm = ({
     setMakes(res?.data?.data || []);
   };
 
-  const fetchModelByMakeId = async (rowId: number, makeId: number) => {
-    const res = await GET(`/coupons/vehicle/models/${makeId}`);
+  const fetchModelByMakeId = async (
+    rowId: number,
+    makeId: number,
+    year: number
+  ) => {
+    const res = await GET(
+      `/coupons/vehicle/models?makeId=${makeId}&year=${year}`
+    );
     const models = res?.data?.data || [];
     setDynamicCouponTypesRows((prev: any[]) =>
       prev.map((row: any) =>
@@ -466,6 +472,7 @@ const CreateCouponForm = ({
                 e.target.value
               )
             }
+            sx={{ minWidth: 150 }}
           />
         );
 
@@ -665,7 +672,6 @@ const CreateCouponForm = ({
                                             const makeId = Number(
                                               e.target.value
                                             );
-                                            fetchModelByMakeId(row.id, makeId);
                                             handleChangeCondition(
                                               dynamicCouponTypesRow.id,
                                               row.id,
@@ -683,6 +689,40 @@ const CreateCouponForm = ({
                                               {make.Make}
                                             </MenuItem>
                                           ))}
+                                        </TextField>
+
+                                        <TextField
+                                          fullWidth
+                                          label="Year"
+                                          variant="outlined"
+                                          placeholder="Year"
+                                          size="medium"
+                                          select
+                                          value={row.year || ""}
+                                          onChange={(e) => {
+                                            const selectedYear = Number(
+                                              e.target.value
+                                            );
+                                            fetchModelByMakeId(
+                                              row.id,
+                                              row?.make || 0,
+                                              selectedYear
+                                            );
+                                            handleChangeCondition(
+                                              dynamicCouponTypesRow.id,
+                                              row.id,
+                                              "year",
+                                              selectedYear
+                                            );
+                                          }}
+                                          sx={{ minWidth: 150 }}
+                                        >
+                                          {getYearsArray().length &&
+                                            getYearsArray().map((item: any) => (
+                                              <MenuItem key={item} value={item}>
+                                                {item}
+                                              </MenuItem>
+                                            ))}
                                         </TextField>
 
                                         {row?.models && (

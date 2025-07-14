@@ -62,7 +62,7 @@ const CouponList = () => {
   const [page, setPage] = useState(0);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [rowsPerPage, setRowsPerPage] = useState(7);
-  const [drawerWidth, setDrawerWidth] = useState(900);
+  const [drawerWidth, setDrawerWidth] = useState(1100);
   const count = coupons.length;
   const totalPages = Math.ceil(count / rowsPerPage);
   const router = useRouter();
@@ -128,7 +128,7 @@ const CouponList = () => {
   const handleDrawerWidth = (selectedCouponType: string) => {
     setDrawerWidth(
       // selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC ? 900 : 700
-      900
+      1100
     );
   };
 
