@@ -8,35 +8,35 @@ export const COUPON_TYPE_ARRAY = [
     type: "USER_SPECIFIC",
   },
   {
-    id: 4,
+    id: 3,
     type: "PRODUCT_SPECIFIC",
   },
   {
-    id: 5,
+    id: 4,
     type: "GEO_TARGETED",
   },
   {
-    id: 6,
+    id: 5,
     type: "SERVICE_BASED",
   },
   {
-    id: 7,
+    id: 6,
     type: "BIRTHDAY",
   },
   {
-    id: 8,
+    id: 7,
     type: "REFERRAL",
   },
   {
-    id: 9,
+    id: 8,
     type: "TIER_BASED",
   },
   {
-    id: 10,
+    id: 9,
     type: "CASHBACK",
   },
   {
-    id: 11,
+    id: 10,
     type: "DISCOUNT",
   },
 ];
