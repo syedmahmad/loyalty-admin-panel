@@ -325,7 +325,7 @@ const CouponList = () => {
                     <TableCell>Usage Limit</TableCell>
                     <TableCell>Number of times used</TableCell>
                     <TableCell>Benefits</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell >Actions</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -496,7 +496,8 @@ const CouponList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Coupon"
-          width={drawerWidth}
+          width={drawerWidth} 
+          
         >
           <CouponCreate
             onSuccess={() => {
@@ -513,7 +514,8 @@ const CouponList = () => {
             open
             onClose={handleCloseDrawer}
             title="Edit Coupon"
-            width={drawerWidth}
+              width={drawerWidth} 
+           
           >
             <CouponEdit
               onSuccess={() => {
