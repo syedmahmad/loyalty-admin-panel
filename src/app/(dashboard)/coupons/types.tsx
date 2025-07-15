@@ -20,6 +20,7 @@ export type CouponFormValues = {
   business_unit_ids: number[];
   date_from: string;
   date_to: string;
+  validity_after_assignment:number
   once_per_customer?: number;
   reuse_interval?: number;
   status: number;

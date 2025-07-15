@@ -5,6 +5,7 @@ import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
   tooltipMessages,
+  tooltipMessagesValidityAfterAssignment,
 } from "@/constants/constants";
 import { GET, POST, PUT } from "@/utils/AxiosUtility";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
@@ -367,6 +368,7 @@ const EditCouponForm = ({
         DateTime.fromISO(couponData?.date_from).toFormat("yyyy-MM-dd") || "",
       date_to:
         DateTime.fromISO(couponData?.date_to).toFormat("yyyy-MM-dd") || "",
+      validity_after_assignment: couponData?.validity_after_assignment || 0,
       status: couponData?.status,
     },
     validationSchema: Yup.object({
@@ -465,6 +467,7 @@ const EditCouponForm = ({
       business_unit_id: buId,
       date_from: values.date_from,
       date_to: values.date_to,
+      validity_after_assignment: values.validity_after_assignment || 0,
       status: values.status,
       benefits: benefits || "",
       updated_by: userId,
@@ -593,6 +596,7 @@ const EditCouponForm = ({
       case COUPON_TYPE.PRODUCT_SPECIFIC:
       case COUPON_TYPE.SERVICE_BASED:
       case COUPON_TYPE.GEO_TARGETED:
+      case COUPON_TYPE.DISCOUNT:
         return (
           <TextField
             label={`Condition Type ${
@@ -1297,6 +1301,39 @@ const EditCouponForm = ({
                   />
                 </Grid>
               </Grid>
+            </Grid>
+
+            {/* Validity for user After Assigned */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Valid for (Days) After Assigned to User"
+                value={values.validity_after_assignment}
+                type="number"
+                inputProps={{ min: 0 }}
+                name="validity_after_assignment"
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title={tooltipMessagesValidityAfterAssignment}>
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+                error={
+                  !!touched.validity_after_assignment &&
+                  !!errors.validity_after_assignment
+                }
+                helperText={
+                  touched.validity_after_assignment &&
+                  errors.validity_after_assignment
+                }
+              />
             </Grid>
 
             {/* General failure Error */}

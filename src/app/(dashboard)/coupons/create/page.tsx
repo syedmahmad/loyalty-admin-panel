@@ -27,6 +27,7 @@ import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
   tooltipMessages,
+  tooltipMessagesValidityAfterAssignment,
 } from "@/constants/constants";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
 import { useRouter } from "next/navigation";
@@ -139,6 +140,7 @@ const CreateCouponForm = ({
       benefits: "",
       date_from: "",
       date_to: "",
+      validity_after_assignment: 0,
       status: 1,
     },
     validationSchema: Yup.object({
@@ -165,6 +167,10 @@ const CreateCouponForm = ({
       date_to: Yup.date()
         .min(Yup.ref("date_from"), "End date must be after start date")
         .required("End date is required"),
+      validity_after_assignment: Yup.number()
+        .typeError("Validity after assign must be a number")
+        .min(0, "Validity after assign cannot be negative")
+        .required("Validity after assign is required"),
       status: Yup.number().required(),
     }),
     onSubmit: async (values, { resetForm }) => {
@@ -341,6 +347,7 @@ const CreateCouponForm = ({
       usage_limit: values.usage_limit || 0,
       date_from: values.date_from,
       date_to: values.date_to,
+      validity_after_assignment: values.validity_after_assignment || 0,
       status: values.status,
       benefits: benefits || "",
       business_unit_id: buId,
@@ -460,6 +467,7 @@ const CreateCouponForm = ({
       case COUPON_TYPE.PRODUCT_SPECIFIC:
       case COUPON_TYPE.SERVICE_BASED:
       case COUPON_TYPE.GEO_TARGETED:
+      case COUPON_TYPE.DISCOUNT:
         return (
           <TextField
             label={`Condition Type ${
@@ -1139,6 +1147,39 @@ const CreateCouponForm = ({
                 />
               </Grid>
             </Grid>
+          </Grid>
+
+          {/* Validity for user After Assigned */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Valid for (Days) After Assigned to User"
+              value={values.validity_after_assignment}
+              type="number"
+              inputProps={{ min: 0 }}
+              name="validity_after_assignment"
+              onChange={handleChange}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title={tooltipMessagesValidityAfterAssignment}>
+                      <IconButton edge="end">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+              error={
+                !!touched.validity_after_assignment &&
+                !!errors.validity_after_assignment
+              }
+              helperText={
+                touched.validity_after_assignment &&
+                errors.validity_after_assignment
+              }
+            />
           </Grid>
 
           {/* General failure Error */}

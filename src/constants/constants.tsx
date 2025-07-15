@@ -78,6 +78,9 @@ export const tooltipMessages: {
     BIRTHDAY: "Fixed discount for birthday-related purchases.",
     SERVICE_BASED: "Fixed discount",
     GEO_TARGETED: "Flat discount based on user’s location.",
-    PRODUCT_SPECIFIC: "Flat amount discount for specific products."
+    PRODUCT_SPECIFIC: "Flat amount discount for specific products.",
   },
 };
+
+export const tooltipMessagesValidityAfterAssignment =
+  "How many days the coupon remains valid after it’s assigned to a user.";
