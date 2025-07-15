@@ -151,24 +151,39 @@ const EditCouponForm = ({
   }, [couponData?.coupon_type_id]);
 
   useEffect(() => {
+    // If complex Coupon
     if (couponData?.complex_coupon) {
-      const updatedCoupons = couponData?.complex_coupon.map((coupon: any) => {
-        if (coupon.selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC) {
-          setSelectedCouponTypeId(coupon?.coupon_type);
-        }
+      const fetchPrefilledRows = async () => {
+        const updatedCoupons = await Promise.all(
+          couponData.complex_coupon.map(async (coupon: any) => {
+            let prefillDynamicRows;
+            if (coupon.selectedCouponType === COUPON_TYPE.VEHICLE_SPECIFIC) {
+              setSelectedCouponTypeId(coupon?.coupon_type);
+              prefillDynamicRows = await prefillRows(coupon?.dynamicRows);
+            }
+            const selectedCouponTypeInfo: any = couponTypes.find(
+              (type: any) => type.id === coupon.coupon_type
+            );
 
-        const selectedCouponTypeInfo: any = couponTypes.find(
-          (type: any) => type.id === coupon.coupon_type
+            const newUpdatedDynamicRows = {
+              ...coupon,
+              conditionOfCouponTypes: selectedCouponTypeInfo?.conditions || [],
+            };
+
+            if (prefillDynamicRows) {
+              newUpdatedDynamicRows["dynamicRows"] = prefillDynamicRows;
+            }
+
+            return newUpdatedDynamicRows;
+          })
         );
 
-        return {
-          ...coupon,
-          conditionOfCouponTypes: selectedCouponTypeInfo?.conditions || [],
-        };
-      });
-      setDynamicCouponTypesRows(updatedCoupons);
+        setDynamicCouponTypesRows(updatedCoupons);
+      };
+      fetchPrefilledRows();
     }
 
+    // If simple Coupon
     if (couponData?.coupon_type_id) {
       setSelectedCouponTypeId(couponData?.coupon_type_id);
       const selectedCouponTypeInfo: any = couponTypes.find(
@@ -977,7 +992,7 @@ const EditCouponForm = ({
                                           {![
                                             COUPON_TYPE.BIRTHDAY,
                                             COUPON_TYPE.PRODUCT_SPECIFIC,
-                                            COUPON_TYPE.GEO_TARGETED
+                                            COUPON_TYPE.GEO_TARGETED,
                                           ].includes(
                                             dynamicCouponTypesRow?.selectedCouponType
                                           ) && (
