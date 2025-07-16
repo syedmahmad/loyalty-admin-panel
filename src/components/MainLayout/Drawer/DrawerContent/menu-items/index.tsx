@@ -1,10 +1,4 @@
 // assets
-import {
-  DashboardOutlined,
-  FileAddFilled,
-  EditFilled,
-  FundViewOutlined
-} from "@ant-design/icons";
 import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
@@ -12,7 +6,8 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LoyaltyIcon from '@mui/icons-material/Loyalty';
 import GroupIcon from '@mui/icons-material/Group';
-
+import SettingsIcon from '@mui/icons-material/Settings';
+import WalletIcon from '@mui/icons-material/Wallet';
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -185,34 +180,50 @@ const menuItems: { items: NavItemType[] } = {
       icon: GroupIcon,
     },
     {
-  id: "analytics",
-  title: " Analytics ",
-  type: "collapse", 
-  icon: GroupIcon,
-  children: [
-    {
-      id: "coupon",
-      title: "Coupon Analytic",
+      id: "wallet",
+      title: "Wallet",
       type: "item",
-      url: "/analytic/coupon",
+      url: "/wallet",
       privileges: [],
+      icon: WalletIcon,
     },
     {
-      id: "loyalty",
-      title: "Loyalty Analytic",
+      id: "settings",
+      title: "Settings",
       type: "item",
-      url: "/analytic/loyalty",
+      url: "/wallet/settings",
       privileges: [],
+      icon: SettingsIcon,
     },
-     {
-      id: "transcation",
-      title: "Transcation Analytic",
-      type: "item",
-      url: "/analytic/transcation",
-      privileges: [],
-    }
-  ]
-}
+//     {
+//   id: "analytics",
+//   title: " Analytics ",
+//   type: "collapse", 
+//   icon: GroupIcon,
+//   children: [
+//     {
+//       id: "coupon",
+//       title: "Coupon Analytic",
+//       type: "item",
+//       url: "/analytic/coupon",
+//       privileges: [],
+//     },
+//     {
+//       id: "loyalty",
+//       title: "Loyalty Analytic",
+//       type: "item",
+//       url: "/analytic/loyalty",
+//       privileges: [],
+//     },
+//      {
+//       id: "transcation",
+//       title: "Transcation Analytic",
+//       type: "item",
+//       url: "/analytic/transcation",
+//       privileges: [],
+//     }
+//   ]
+// }
 
 
   ],

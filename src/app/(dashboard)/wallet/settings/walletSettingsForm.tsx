@@ -7,8 +7,6 @@ import {
   TextField,
   Typography,
   MenuItem,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
@@ -35,7 +33,6 @@ export default function WalletSettingsForm({
     pending_days: '',
     expiration_method: 'none',
     expiration_value: '',
-    allow_negative_balance: false,
   });
 
   useEffect(() => {
@@ -45,7 +42,6 @@ export default function WalletSettingsForm({
         pending_days: existingData.pending_days || '',
         expiration_method: existingData.expiration_method || 'none',
         expiration_value: existingData.expiration_value || '',
-        allow_negative_balance: existingData.allow_negative_balance || false,
       });
     } else {
       setForm({
@@ -53,7 +49,6 @@ export default function WalletSettingsForm({
         pending_days: '',
         expiration_method: 'none',
         expiration_value: '',
-        allow_negative_balance: false,
       });
     }
   }, [existingData, open]);
@@ -68,10 +63,11 @@ export default function WalletSettingsForm({
 
   const handleSubmit = async () => {
     try {
+      const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
       const payload = {
         ...form,
         business_unit_id: businessUnitId,
-        created_by: 1, // Replace with actual admin ID if available
+        created_by: userInfo.id
       };
       await WalletService.saveSettings(payload);
       toast.success('Wallet settings saved!');
@@ -88,22 +84,28 @@ export default function WalletSettingsForm({
           Wallet Settings
         </Typography>
 
-        <TextField
-          select
-          fullWidth
-          size="small"
-          name="pending_method"
-          label="Pending Method"
-          value={form.pending_method}
-          onChange={handleChange}
-          sx={{ mb: 2 }}
-        >
-          {pendingOptions.map((opt) => (
-            <MenuItem key={opt} value={opt}>
-              {opt}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Box mb={2}>
+          <Typography variant="subtitle2">Pending Method</Typography>
+          <Typography variant="body2" color="text.secondary" mb={1}>
+            Determines if newly earned points should be locked (pending) for a certain number of days before they become spendable.
+            Useful for preventing immediate redemption and allowing for fraud checks or returns.
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            name="pending_method"
+            label="Pending Method"
+            value={form.pending_method}
+            onChange={handleChange}
+          >
+            {pendingOptions.map((opt) => (
+              <MenuItem key={opt} value={opt}>
+                {opt}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
 
         {form.pending_method === 'fixed_days' && (
           <TextField
@@ -118,22 +120,27 @@ export default function WalletSettingsForm({
           />
         )}
 
-        <TextField
-          select
-          fullWidth
-          size="small"
-          name="expiration_method"
-          label="Expiration Method"
-          value={form.expiration_method}
-          onChange={handleChange}
-          sx={{ mb: 2 }}
-        >
-          {expirationOptions.map((opt) => (
-            <MenuItem key={opt} value={opt}>
-              {opt}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Box mb={2}>
+          <Typography variant="subtitle2">Expiration Method</Typography>
+          <Typography variant="body2" color="text.secondary" mb={1}>
+            Controls how and when wallet points expire. Helps manage liabilities and encourages timely usage of rewards by customers.
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            name="expiration_method"
+            label="Expiration Method"
+            value={form.expiration_method}
+            onChange={handleChange}
+          >
+            {expirationOptions.map((opt) => (
+              <MenuItem key={opt} value={opt}>
+                {opt}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
 
         {form.expiration_method !== 'none' && (
           <TextField
@@ -149,17 +156,6 @@ export default function WalletSettingsForm({
             sx={{ mb: 2 }}
           />
         )}
-
-        <FormControlLabel
-          control={
-            <Switch
-              name="allow_negative_balance"
-              checked={form.allow_negative_balance}
-              onChange={handleChange}
-            />
-          }
-          label="Allow Negative Balance"
-        />
 
         <Box mt={3}>
           <Button variant="contained" fullWidth onClick={handleSubmit}>

@@ -16,7 +16,7 @@ import {
 import { useEffect, useState } from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { WalletService } from './service/wallet.service';
-import WalletDetailDrawer from './WalletDetailDrawer';
+import WalletDetailDrawer from './components/WalletDetailDrawer';
 
 interface BusinessUnit {
   id: number;
@@ -117,7 +117,9 @@ export default function WalletListPage() {
       )}
 
       <WalletDetailDrawer
+        fetchWallets={fetchWallets}
         wallet={selectedWallet}
+        selectedBU={selectedBU}
         open={!!selectedWallet}
         onClose={() => setSelectedWallet(null)}
       />
