@@ -180,50 +180,34 @@ const menuItems: { items: NavItemType[] } = {
       icon: GroupIcon,
     },
     {
-      id: "wallet",
-      title: "Wallet",
+  id: "analytics",
+  title: " Analytics ",
+  type: "collapse", 
+  icon: GroupIcon,
+  children: [
+    {
+      id: "coupon",
+      title: "Coupon Analytic",
       type: "item",
-      url: "/wallet",
+      url: "/analytic/coupon",
       privileges: [],
-      icon: WalletIcon,
     },
     {
-      id: "settings",
-      title: "Settings",
+      id: "loyalty",
+      title: "Loyalty Analytic",
       type: "item",
-      url: "/wallet/settings",
+      url: "/analytic/loyalty",
       privileges: [],
-      icon: SettingsIcon,
     },
-//     {
-//   id: "analytics",
-//   title: " Analytics ",
-//   type: "collapse", 
-//   icon: GroupIcon,
-//   children: [
-//     {
-//       id: "coupon",
-//       title: "Coupon Analytic",
-//       type: "item",
-//       url: "/analytic/coupon",
-//       privileges: [],
-//     },
-//     {
-//       id: "loyalty",
-//       title: "Loyalty Analytic",
-//       type: "item",
-//       url: "/analytic/loyalty",
-//       privileges: [],
-//     },
-//      {
-//       id: "transcation",
-//       title: "Transcation Analytic",
-//       type: "item",
-//       url: "/analytic/transcation",
-//       privileges: [],
-//     }
-//   ]
-// }
+     {
+      id: "transaction",
+      title: "Transaction Analytic",
+      type: "item",
+      url: "/analytic/transaction",
+      privileges: [],
+    }
+  ]
+}
 
 
   ],
