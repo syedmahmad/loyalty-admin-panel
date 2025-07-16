@@ -30,9 +30,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
   CartesianGrid,
-  Line,
+  
 } from 'recharts';
 import {
   StaticDatePicker,
