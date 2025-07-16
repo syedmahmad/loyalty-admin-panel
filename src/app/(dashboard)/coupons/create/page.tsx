@@ -1,6 +1,14 @@
 "use client";
 
+import { RichTextEditor } from "@/components/TextEditor";
+import {
+  COUPON_TYPE,
+  COUPON_TYPE_ARRAY,
+  tooltipMessages,
+  tooltipMessagesValidityAfterAssignment,
+} from "@/constants/constants";
 import { GET, POST } from "@/utils/AxiosUtility";
+import { generateRandomCode, getYearsArray } from "@/utils/Index";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -22,15 +30,6 @@ import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
-import { RichTextEditor } from "@/components/TextEditor";
-import {
-  COUPON_TYPE,
-  COUPON_TYPE_ARRAY,
-  tooltipMessages,
-  tooltipMessagesValidityAfterAssignment,
-} from "@/constants/constants";
-import { generateRandomCode, getYearsArray } from "@/utils/Index";
-import { useRouter } from "next/navigation";
 import {
   BusinessUnit,
   CouponFormValues,
@@ -38,7 +37,6 @@ import {
   Make,
   Model,
   Tier,
-  Variant,
 } from "../types";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);

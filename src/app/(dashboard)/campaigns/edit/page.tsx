@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -12,69 +13,86 @@ import {
   Grid,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   TextField,
   Tooltip,
   Typography,
   useTheme,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { DateTime } from 'luxon';
-import { useEffect, useState } from 'react';
-import { GET, PUT } from '@/utils/AxiosUtility';
-import { toast } from 'react-toastify';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { RichTextEditor } from '@/components/TextEditor';
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { DateTime } from "luxon";
+import { useEffect, useRef, useState } from "react";
+import { GET, PUT } from "@/utils/AxiosUtility";
+import { toast } from "react-toastify";
+import { useRouter, useSearchParams } from "next/navigation";
+import { RichTextEditor } from "@/components/TextEditor";
+import CouponCard from "@/components/cards/CouponCard";
 
 const htmlToPlainText = (htmlString: string): string => {
-  if (!htmlString) return '';
-  const tempDiv = document.createElement('div');
+  if (!htmlString) return "";
+  const tempDiv = document.createElement("div");
   tempDiv.innerHTML = htmlString;
-  return tempDiv.textContent || tempDiv.innerText || '';
+  return tempDiv.textContent || tempDiv.innerText || "";
 };
 
-const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
+const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const params = useSearchParams();
-  const paramId = params.get('id') || null;
+  const paramId = params.get("id") || null;
   const theme = useTheme();
-  const [name, setName] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [name, setName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [bus, setBus] = useState<number | null>(null);
   const [allBus, setAllBus] = useState<any[]>([]);
   const [rulesByType, setRulesByType] = useState<Record<string, any[]>>({});
-  const [selectedRules, setSelectedRules] = useState<Record<string, number[]>>({});
+  const [selectedRules, setSelectedRules] = useState<Record<string, number[]>>(
+    {}
+  );
   const [ruleTypes, setRuleTypes] = useState<string[]>([]);
   const [availableRuleTypes, setAvailableRuleTypes] = useState<string[]>([]);
-  const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate: number }[]>([]);
+  const [tiers, setTiers] = useState<
+    { tier_id: number; point_conversion_rate: number }[]
+  >([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
-  const [description, setDescription] = useState<string>('');
+  const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [allCoupons, setAllCoupons] = useState<any[]>([]);
+  const [selectedCoupons, setSelectedCoupons] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const ALL_RULE_TYPES = ['event based earn', 'spend and earn', 'burn', 'dynamic rule'];
+  const ALL_RULE_TYPES = [
+    "event based earn",
+    "spend and earn",
+    "burn",
+    "dynamic rule",
+  ];
 
   useEffect(() => {
     fetchInitialData();
   }, []);
 
   const fetchInitialData = async () => {
-    const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
-    const [buRes, tierRes, rulesRes, campaignRes] = await Promise.all([
-      GET(`business-units/${clientInfo.id}`),
-      GET(`tiers/${clientInfo.id}`),
-      GET(`rules/${clientInfo.id}`),
-      GET(`/campaigns/single/${paramId}`),
-    ]);
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const [buRes, tierRes, rulesRes, couponsRes, campaignRes] =
+      await Promise.all([
+        GET(`business-units/${clientInfo.id}`),
+        GET(`tiers/${clientInfo.id}`),
+        GET(`rules/${clientInfo.id}`),
+        GET(`/coupons/${clientInfo.id}?limit=5`),
+        GET(`/campaigns/single/${paramId}`),
+      ]);
 
     const campaign = campaignRes?.data;
 
     setName(campaign.name);
-    setStartDate(DateTime.fromISO(campaign.start_date).toFormat('yyyy-MM-dd'));
-    setEndDate(DateTime.fromISO(campaign.end_date).toFormat('yyyy-MM-dd'));
+    setStartDate(DateTime.fromISO(campaign.start_date).toFormat("yyyy-MM-dd"));
+    setEndDate(DateTime.fromISO(campaign.end_date).toFormat("yyyy-MM-dd"));
     setBus(campaign.business_unit_id);
-    setDescription(campaign.description || '');
+    setDescription(campaign.description || "");
+    setSelectedCoupons(campaign?.coupons.map((item: any) => item.coupon));
 
     setTiers(
       campaign.tiers.map((t: any) => ({
@@ -97,22 +115,29 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
     setSelectedRules(grouped);
     setRuleTypes(usedTypes);
     setAvailableRuleTypes(available);
+    setAllCoupons(couponsRes?.data?.coupons || []);
 
     setAllBus(buRes?.data || []);
     setAllTiers(tierRes?.data?.tiers || []);
 
-    const groupedRules = (rulesRes?.data || []).reduce((acc: any, rule: any) => {
-      acc[rule.rule_type] = acc[rule.rule_type] || [];
-      acc[rule.rule_type].push(rule);
-      return acc;
-    }, {});
+    const groupedRules = (rulesRes?.data || []).reduce(
+      (acc: any, rule: any) => {
+        acc[rule.rule_type] = acc[rule.rule_type] || [];
+        acc[rule.rule_type].push(rule);
+        return acc;
+      },
+      {}
+    );
     setRulesByType(groupedRules);
   };
 
   const handleRuleToggle = (type: string, ruleId: number) => {
     const current = selectedRules[type] || [];
     if (current.includes(ruleId)) {
-      setSelectedRules({ ...selectedRules, [type]: current.filter((id) => id !== ruleId) });
+      setSelectedRules({
+        ...selectedRules,
+        [type]: current.filter((id) => id !== ruleId),
+      });
     } else {
       setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
     }
@@ -120,7 +145,7 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
 
   const handleRuleTypeAdd = () => {
     if (availableRuleTypes.length === 0) return;
-    setRuleTypes((prev) => [...prev, '']);
+    setRuleTypes((prev) => [...prev, ""]);
   };
 
   const handleRuleTypeChange = (index: number, newType: string) => {
@@ -131,7 +156,7 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
 
     setAvailableRuleTypes((prev) => {
       let updatedList = prev.filter((t) => t !== newType);
-      if (oldType && oldType !== '' && !prev.includes(oldType)) {
+      if (oldType && oldType !== "" && !prev.includes(oldType)) {
         updatedList = [...updatedList, oldType];
       }
       return updatedList;
@@ -173,7 +198,7 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
 
   const handleSubmit = async () => {
     if (!name || !startDate || !endDate || !bus) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -183,6 +208,9 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
       tier_id: t.tier_id,
       point_conversion_rate: Number(t.point_conversion_rate),
     }));
+    const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
+      coupon_id: singleCpn.id,
+    }));
 
     const payload = {
       name,
@@ -191,24 +219,39 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
       business_unit_id: bus,
       rules: rulesPayload,
       tiers: tiersPayload,
+      coupons: couponsPayload,
       description,
     };
-
     setLoading(true);
     try {
       const res = await PUT(`/campaigns/${paramId}`, payload);
       if (res?.status === 200) {
-        toast.success('Campaign updated!');
-       // router.push('/campaigns/view');
-       onSuccess();
+        toast.success("Campaign updated!");
+        // router.push('/campaigns/view');
+        onSuccess();
       } else {
-        toast.error('Update failed');
+        toast.error("Update failed");
       }
     } catch (err) {
       console.error(err);
-      toast.error('An error occurred');
+      toast.error("An error occurred");
     }
     setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCoupons(searchTerm);
+  }, [searchTerm]);
+
+  const fetchCoupons = async (searchTerm: string) => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const couponsRes = await GET(
+      `/coupons/${clientInfo.id}?name=${encodeURIComponent(searchTerm)}&limit=5`
+    );
+    if (couponsRes?.status !== 200) {
+      throw new Error("Failed to fetch coupons");
+    }
+    setAllCoupons(couponsRes?.data?.coupons || []);
   };
 
   return (
@@ -225,7 +268,12 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TextField label="Campaign Name" fullWidth value={name} onChange={(e) => setName(e.target.value)} />
+          <TextField
+            label="Campaign Name"
+            fullWidth
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </Grid>
 
         <Grid item xs={6}>
@@ -254,7 +302,7 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
           <FormControl fullWidth>
             <InputLabel>Business Unit</InputLabel>
             <Select
-              value={bus || ''}
+              value={bus || ""}
               onChange={(e) => setBus(e.target.value as number)}
               label="Business Unit"
             >
@@ -277,25 +325,36 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
                   onChange={(e) => handleRuleTypeChange(idx, e.target.value)}
                   label="Rule Type"
                 >
-                  {[type, ...availableRuleTypes.filter((t) => t !== type)].map((rt) => (
-                    <MenuItem key={rt} value={rt}>
-                      {rt}
-                    </MenuItem>
-                  ))}
+                  {[type, ...availableRuleTypes.filter((t) => t !== type)].map(
+                    (rt) => (
+                      <MenuItem key={rt} value={rt}>
+                        {rt}
+                      </MenuItem>
+                    )
+                  )}
                 </Select>
               </FormControl>
-              <Button variant="outlined" color="error" onClick={() => handleRuleTypeRemove(idx)}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => handleRuleTypeRemove(idx)}
+              >
                 ➖
               </Button>
             </Box>
 
             <FormGroup sx={{ mt: 1 }}>
               {(rulesByType[type] || []).map((rule) => (
-                <Box key={rule.id} sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box
+                  key={rule.id}
+                  sx={{ display: "flex", alignItems: "center" }}
+                >
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={selectedRules[type]?.includes(rule.id) || false}
+                        checked={
+                          selectedRules[type]?.includes(rule.id) || false
+                        }
                         onChange={() => handleRuleToggle(type, rule.id)}
                       />
                     }
@@ -313,7 +372,11 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
         ))}
 
         <Grid item xs={12}>
-          <Button variant="outlined" onClick={handleRuleTypeAdd} disabled={availableRuleTypes.length === 0}>
+          <Button
+            variant="outlined"
+            onClick={handleRuleTypeAdd}
+            disabled={availableRuleTypes.length === 0}
+          >
             ➕ Add Rule Type
           </Button>
         </Grid>
@@ -326,7 +389,10 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
               const current = tiers.find((t) => t.tier_id === tier.id);
 
               return (
-                <Box key={tier.id} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Box
+                  key={tier.id}
+                  sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                >
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -342,7 +408,10 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
                       label="Point Conversion Rate"
                       value={current?.point_conversion_rate ?? 1}
                       onChange={(e) =>
-                        handleConversionRateChange(tier.id, Number(e.target.value))
+                        handleConversionRateChange(
+                          tier.id,
+                          Number(e.target.value)
+                        )
                       }
                       size="small"
                       sx={{ ml: 2, width: 180 }}
@@ -355,21 +424,85 @@ const CampaignEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
           </FormGroup>
         </Grid>
 
+        {/* Coupons */}
+        <Grid item xs={12}>
+          <Autocomplete
+            multiple
+            options={allCoupons}
+            getOptionLabel={(option) => option.coupon_title}
+            value={selectedCoupons}
+            onChange={(event, newValue: any) => setSelectedCoupons(newValue)}
+            filterSelectedOptions
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            loading={loading}
+            renderOption={(props, option) => (
+              <li {...props} key={option.id}>
+                {option.coupon_title}
+              </li>
+            )}
+            onInputChange={(event, newInputValue) => {
+              if (event?.type !== "change") return;
+              setSearchTerm(newInputValue);
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Coupons"
+                placeholder="Search Coupons..."
+                fullWidth
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {loading ? (
+                        <CircularProgress color="inherit" size={18} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+        </Grid>
+
+        {/* Show selected Coupons as a Card */}
+        <Grid item xs={12}>
+          <Grid container spacing={2}>
+            {selectedCoupons?.map((singleSelectedCoupon, index) => (
+              <Grid item xs={12} sm={3} md={4} key={index + 1}>
+                <CouponCard
+                  couponData={singleSelectedCoupon}
+                  selectedCoupons={selectedCoupons}
+                  setSelectedCoupons={setSelectedCoupons}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Grid>
+
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
             Description (optional)
           </Typography>
-          <RichTextEditor value={description} setValue={setDescription} language="en" />
+          <RichTextEditor
+            value={description}
+            setValue={setDescription}
+            language="en"
+          />
         </Grid>
       </Grid>
 
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="outlined" onClick={handleSubmit} disabled={loading}
-          sx={{ fontWeight: 600, textTransform: 'none' }}>
-          {loading ? <CircularProgress size={24} /> : 'Update Campaign'}
+        <Button
+          variant="outlined"
+          onClick={handleSubmit}
+          disabled={loading}
+          sx={{ fontWeight: 600, textTransform: "none" }}
+        >
+          {loading ? <CircularProgress size={24} /> : "Update Campaign"}
         </Button>
       </Box>
-    
     </>
   );
 };
