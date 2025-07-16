@@ -11,14 +11,11 @@ import {
 } from '@mui/material';
 import {
   LocalizationProvider,
-  DatePicker,
   StaticDatePicker,
 } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
-
 
 import {
   BarChart,
