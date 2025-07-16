@@ -18,8 +18,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 
 import {
-  BarChart,
-  Bar,
+ 
   LineChart,
   Line,
   XAxis,
@@ -32,17 +31,14 @@ import { useState } from 'react';
 import React from 'react';
 
 
-const CouponAnalyticsPage = () => {
+const TransactionAnalyticsPage = () => {
 
-  const stats = [
-    { label: 'Coupons', count: 8, },
-    { label: 'Coupons Usage', count: 0  }
-   
-  ];
+  
    const set = [
-    { label: 'Coupons', count: 10, },
-    { label: 'Assigned Coupons', count: 4  },
-    { label:'Available Coupons',count:6 }
+    { label: 'Total Items Sold', count: 0, },
+    { label: 'Total Services Sold', count: 0  },
+    { label:'Total Jobcard Invoices',count:0},
+    { label:'Total Unique Keys Spare',count:0 }
    
   ];
 
@@ -79,10 +75,7 @@ const CouponAnalyticsPage = () => {
     { label: 'This Year',    range: [dayjs().startOf('year'), dayjs()] },
     { label: 'All Time',     range: [dayjs('2000-01-01'), dayjs()] },
   ];
-
-
-
-    const handleDateClick = (day: Dayjs | null) => {
+ const handleDateClick = (day: Dayjs | null) => {
     if (!startDate || (startDate && endDate)) {
       setStartDate(day);
       setEndDate(null);
@@ -95,22 +88,10 @@ const CouponAnalyticsPage = () => {
       }
     }
   };
-
-
-   const isStart = (day: Dayjs) => startDate?.isSame(day, 'day');
+  const isStart = (day: Dayjs) => startDate?.isSame(day, 'day');
   const isEnd = (day: Dayjs) => endDate?.isSame(day, 'day');
  
-  
-  
-  
-
-  const barData = [
-    { name: 'Promotional Test coupon sets (Test)', count: 8 },
-    { name: 'STR', count: 4 },
-    { name: 'SPAREIT TEST', count: 3 },
-  ];
-
-  const lineData = [
+const lineData = [
     { date: '2025-04-15', count: 0 },
     { date: '2025-05-01', count: 0 },
     { date: '2025-05-20', count: 0 },
@@ -131,7 +112,7 @@ const CouponAnalyticsPage = () => {
                
                
             }} >
-          Coupons Analytics
+          Transaction Analytics
         </Typography>
         <Box display="flex" gap={2}>
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -245,9 +226,7 @@ const CouponAnalyticsPage = () => {
   
    
   }}>
-            
-          
-            Apply
+             Apply
           </Button>
         </Box>
       </Popover>
@@ -257,61 +236,14 @@ const CouponAnalyticsPage = () => {
               backgroundColor: '#fff',
               fontFamily:'Outfit',
               fontWeight: 500,
-  
-   
-  }}>Export Data
+  }}>
+    Export Data
           </Button>
         </Box>
       </Box>
-      <Typography variant="h4" color="secondary"p={1}     sx={{
-              
-              fontFamily:'Outfit',
-              fontWeight: 600,
-  
-   
-  }}>
-          Coupons Summary
-        </Typography>
-    
-      <Grid container spacing={2} mb={2}>
-        {stats.map((item, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
-              <Box display="flex">
-                <Box
-                  sx={{
-                    color: '#fff',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  fontFamily:'Outfit',
-                 fontWeight: 400,
-  
-   
-  }}>
-                 
-                  
-                </Box>
-                <Box>
-                  <Typography variant="h5" color="secondary">{item.label}</Typography>
-                  <Typography variant="h6">{item.count}</Typography>
-                </Box>
-              </Box>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-      <Typography variant="h4" color="secondary" p={1}
-          sx={{
-              
-              fontFamily:'Outfit',
-              fontWeight: 600,
-  
-   
-  }}>
-          Coupon  Set Summary
-        </Typography>
+      <Typography variant="h4" color="secondary" >
+        Transactions Stats
+      </Typography>
        <Grid container spacing={2} mb={2}>
         {set.map((item, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
@@ -327,7 +259,7 @@ const CouponAnalyticsPage = () => {
                   }}
                 ></Box>
                 <Box>
-                  <Typography variant="h5" color="secondary">{item.label}</Typography>
+                  <Typography variant="h5" color="secondary" >{item.label}</Typography>
                   <Typography variant="h6">{item.count}</Typography>
                 </Box>
               </Box>
@@ -335,44 +267,9 @@ const CouponAnalyticsPage = () => {
           </Grid>
         ))}
       </Grid>
-       <Typography variant="h4" color="secondary" mb={2}>
-              Coupon Set Most Assign
-            </Typography>
-     
-      
-      <Grid >
-        
-        <Grid item xs={12} md={6}>
-          <Box p={2} sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: '#fff' }}>
-            
-            <ResponsiveContainer width="100%" height={500}>
-              <BarChart data={barData}>
-                <XAxis dataKey="name" 
-                label={{
-                  value: 'Coupon set',   
-                                          
-                         position: 'insideBottom',    
-                          offset: -3,                
-                         style: { textAnchor: 'middle' } 
-  }}/> 
-                <YAxis domain={[0, 8]} ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8]} 
-                 label={{
-                  value: 'Assign Count',   
-                           angle: -90,               
-                         position: 'insideLeft',    
-                          offset: 0,                
-                         style: { textAnchor: 'middle' } 
-  }}/> 
-                <Tooltip />
-                <Bar dataKey="count" fill="#2196f3" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Box>
-        </Grid>
-       </Grid>
-          <Typography variant="h4" color="secondary"  mt={2}>
-              Coupon Usage
-            </Typography>
+     <Typography variant="h4" color="secondary" >
+       Top Moving Services
+     </Typography>
         <Grid pt={2}>
         <Grid item xs={12} md={6}>
           <Box p={2} sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: '#fff' }}>
@@ -391,7 +288,7 @@ const CouponAnalyticsPage = () => {
                 />
                 <YAxis domain={[0, 1.0]} ticks={[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,0.9,1.0]} 
                  label={{
-                  value: 'Usage Count',   
+                  value: 'Total Service Sold',   
                            angle: -90,               
                          position: 'insideLeft',    
                           offset: 0,                
@@ -408,4 +305,4 @@ const CouponAnalyticsPage = () => {
   );
 };
 
-export default CouponAnalyticsPage;
+export default TransactionAnalyticsPage;
