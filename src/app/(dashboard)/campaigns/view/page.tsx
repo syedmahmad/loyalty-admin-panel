@@ -353,6 +353,7 @@ const CampaignsList = () => {
         open={drawerOpen === 'create'}
         onClose={handleCloseDrawer}
         title="Create Campaign"
+        width={980}
       >
         <CampaignCreateForm
           onSuccess={() => {
@@ -368,6 +369,7 @@ const CampaignsList = () => {
           open={true}
           onClose={handleCloseDrawer}
           title="Edit Campaign"
+          width={980}
         >
           <CampaignEdit
             onSuccess={() => {

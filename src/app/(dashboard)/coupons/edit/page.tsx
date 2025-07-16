@@ -765,14 +765,24 @@ const EditCouponForm = ({
                                     (option: {
                                       id: number;
                                       coupon_type: string;
-                                    }) => (
-                                      <MenuItem
-                                        key={option.coupon_type}
-                                        value={option.id}
-                                      >
-                                        {option.coupon_type}
-                                      </MenuItem>
-                                    )
+                                    }) => {
+                                      const isAlreadySelected =
+                                        dynamicCouponTypesRows.some(
+                                          (row, index) =>
+                                            Number(row.coupon_type) ===
+                                              option.id &&
+                                            index !== couponTypesRowIndex
+                                        );
+                                      return (
+                                        <MenuItem
+                                          key={option.coupon_type}
+                                          value={option.id}
+                                          disabled={isAlreadySelected}
+                                        >
+                                          {option.coupon_type}
+                                        </MenuItem>
+                                      );
+                                    }
                                   )}
                                 </TextField>
                               </Grid>
