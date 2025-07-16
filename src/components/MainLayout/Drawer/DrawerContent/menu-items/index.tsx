@@ -184,35 +184,35 @@ const menuItems: { items: NavItemType[] } = {
       privileges: [],
       icon: GroupIcon,
     },
-    {
-  id: "analytics",
-  title: " Analytics ",
-  type: "collapse", 
-  icon: GroupIcon,
-  children: [
-    {
-      id: "coupon",
-      title: "Coupon Analytic",
-      type: "item",
-      url: "/analytic/coupon",
-      privileges: [],
-    },
-    {
-      id: "loyalty",
-      title: "Loyalty Analytic",
-      type: "item",
-      url: "/analytic/loyalty",
-      privileges: [],
-    },
-     {
-      id: "transcation",
-      title: "Transcation Analytic",
-      type: "item",
-      url: "/analytic/transcation",
-      privileges: [],
-    }
-  ]
-}
+//     {
+//   id: "analytics",
+//   title: " Analytics ",
+//   type: "collapse", 
+//   icon: GroupIcon,
+//   children: [
+//     {
+//       id: "coupon",
+//       title: "Coupon Analytic",
+//       type: "item",
+//       url: "/analytic/coupon",
+//       privileges: [],
+//     },
+//     {
+//       id: "loyalty",
+//       title: "Loyalty Analytic",
+//       type: "item",
+//       url: "/analytic/loyalty",
+//       privileges: [],
+//     },
+//      {
+//       id: "transcation",
+//       title: "Transcation Analytic",
+//       type: "item",
+//       url: "/analytic/transcation",
+//       privileges: [],
+//     }
+//   ]
+// }
 
 
   ],
