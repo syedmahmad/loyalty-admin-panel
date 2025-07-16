@@ -122,7 +122,7 @@ const Profile = () => {
 
   const pathname = usePathname();
   const userInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const clientName = `${userInfo.name}`;
+  const clientName = `${userInfo?.name}`;
   const shouldShowClientName = pathname !== "/" && pathname !== "/tenants";
 
   const downMd = useMediaQuery(theme.breakpoints.down("md"));
