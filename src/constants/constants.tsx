@@ -83,11 +83,11 @@ export const tooltipMessages: {
 };
 
 export const tooltipMessagesValidityAfterAssignment =
-  "How many days the coupon remains valid after it’s assigned to a user.";
+  "How many days the coupon remains valid after it’s assigned to a user. Leave blank for no validity period.";
 
 export const discountTypes = [
   { name: "Fixed Discount", value: "fixed_discount" },
   { name: "Percentage Discount", value: "percentage_discount" },
 ];
-  export const tooltipMessagesValidityAfterAssignmentForRule =
+export const tooltipMessagesValidityAfterAssignmentForRule =
   "How many days the rule remains valid after it’s assigned to a user. Leave blank for no validity period.";

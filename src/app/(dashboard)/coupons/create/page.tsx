@@ -17,7 +17,9 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
@@ -118,7 +120,8 @@ const CreateCouponForm = ({
       benefits: "",
       date_from: "",
       date_to: "",
-      validity_after_assignment: 0,
+      validity_after_assignment: "",
+      is_point_earning_disabled: 0,
       status: 1,
     },
     validationSchema: Yup.object({
@@ -142,8 +145,8 @@ const CreateCouponForm = ({
         .required("End date is required"),
       validity_after_assignment: Yup.number()
         .typeError("Validity after assign must be a number")
-        .min(0, "Validity after assign cannot be negative")
-        .required("Validity after assign is required"),
+        .min(0, "Validity after assign cannot be negative"),
+
       status: Yup.number().required(),
     }),
     onSubmit: async (values, { resetForm }) => {
@@ -320,7 +323,10 @@ const CreateCouponForm = ({
       usage_limit: values.usage_limit || 0,
       date_from: values.date_from,
       date_to: values.date_to,
-      validity_after_assignment: values.validity_after_assignment || 0,
+      validity_after_assignment: !values.validity_after_assignment
+        ? null
+        : values.validity_after_assignment,
+      is_point_earning_disabled: values.is_point_earning_disabled || 0,
       status: values.status,
       benefits: benefits || "",
       business_unit_id: buId,
@@ -1218,6 +1224,24 @@ const CreateCouponForm = ({
             />
           </Grid>
 
+          {/* is_point_earning_disabled */}
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={<Checkbox />}
+              label="Customers cannot earn points when using this coupon."
+              labelPlacement="end"
+              name="is_point_earning_disabled"
+              onChange={(e: any) =>
+                formik.setFieldValue(
+                  "is_point_earning_disabled",
+                  e.target.checked ? 1 : 0
+                )
+              }
+              checked={formik.values.is_point_earning_disabled === 1}
+            />
+          </Grid>
+
+          {/* Is Active */}
           <Grid item xs={12}>
             <Grid container alignItems="center" spacing={2}>
               <Grid item>

@@ -17,7 +17,9 @@ import {
   Autocomplete,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
@@ -359,7 +361,8 @@ const EditCouponForm = ({
         DateTime.fromISO(couponData?.date_from).toFormat("yyyy-MM-dd") || "",
       date_to:
         DateTime.fromISO(couponData?.date_to).toFormat("yyyy-MM-dd") || "",
-      validity_after_assignment: couponData?.validity_after_assignment || 0,
+      validity_after_assignment: couponData?.validity_after_assignment || "",
+      is_point_earning_disabled: couponData?.is_point_earning_disabled,
       status: couponData?.status,
     },
     validationSchema: Yup.object({
@@ -453,7 +456,10 @@ const EditCouponForm = ({
       business_unit_id: buId,
       date_from: values.date_from,
       date_to: values.date_to,
-      validity_after_assignment: values.validity_after_assignment || 0,
+      validity_after_assignment: !values.validity_after_assignment
+        ? null
+        : values.validity_after_assignment,
+      is_point_earning_disabled: values.is_point_earning_disabled || 0,
       status: values.status,
       benefits: benefits || "",
       updated_by: userId,
@@ -1392,6 +1398,23 @@ const EditCouponForm = ({
                   touched.exception_error_message_ar &&
                   errors.exception_error_message_ar
                 }
+              />
+            </Grid>
+
+            {/* is_point_earning_disabled */}
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={<Checkbox />}
+                label="Customers cannot earn points when using this coupon."
+                labelPlacement="end"
+                name="is_point_earning_disabled"
+                onChange={(e: any) =>
+                  formik.setFieldValue(
+                    "is_point_earning_disabled",
+                    e.target.checked ? 1 : 0
+                  )
+                }
+                checked={formik.values.is_point_earning_disabled === 1}
               />
             </Grid>
 
