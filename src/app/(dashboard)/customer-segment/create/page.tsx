@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { POST } from '@/utils/AxiosUtility';
 
-const CreateCustomerSegment = () => {
+const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);

@@ -14,12 +14,24 @@ import {
   IconButton,
   CircularProgress,
   Tooltip,
+  Select,
+  MenuItem,
+  Grid,
+  Card,
+  CardContent,
+  TextField,
+  InputAdornment,
+  Pagination,
 } from '@mui/material';
+
 import { useEffect, useState } from 'react';
 import { GET } from '@/utils/AxiosUtility';
-import { useRouter } from 'next/navigation';
-import AddIcon from '@mui/icons-material/Add';
+import { useRouter, useSearchParams } from 'next/navigation';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import CreateCustomerSegment from '../create/page';
+import CustomerSegmentEditPage from '../edit/[id]/page';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import SearchIcon from '@mui/icons-material/Search';
 
 type CustomerSegment = {
   id: number;
@@ -31,80 +43,248 @@ type CustomerSegment = {
 const CustomerSegmentList = () => {
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(6);
+  const [searchName, setSearchName] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const drawerOpen = searchParams.get('drawer');
+  const drawerId = searchParams.get('id');
 
-  const loadSegments = async () => {
+  const handleCloseDrawer = () => {
+    router.push('/customer-segment/view');
+  };
+
+  const loadSegments = async (name = '') => {
     setLoading(true);
-    const res = await GET(`/customer-segments/${1}`); // Replace `1` with actual tenant_id
-    if (res?.status === 200) {
-      setSegments(res.data);
+    try {
+      const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+      const res = await GET(`/customer-segments/${clientInfo.id}?name=${encodeURIComponent(name)}`);
+      if (res?.status === 200) {
+        setSegments(res.data);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    loadSegments();
-  }, []);
+    const debounce = setTimeout(() => {
+      loadSegments(searchName.trim());
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [searchName]);
+
+  const paginatedSegments = segments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const totalPages = Math.ceil(segments.length / rowsPerPage);
 
   return (
     <Box sx={{ mt: '-20px' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" fontWeight={600}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography sx={{ fontSize: '32px', fontWeight: 600, fontFamily: 'Outfit' }}>
           Customer Segments
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => router.push('/customer-segment/create')}
-        >
-          Create Segment
-        </Button>
+
+        <Box sx={{ gap: 1, display: 'flex' }}>
+          <Select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
+            size="small"
+            sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 600 }}
+          >
+            <MenuItem value="card">Card View</MenuItem>
+            <MenuItem value="table">Table View</MenuItem>
+          </Select>
+
+          <Button
+            variant="outlined"
+            onClick={() => router.push('/customer-segment/view?drawer=create')}
+            sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 600 }}
+          >
+            Create
+          </Button>
+        </Box>
       </Box>
 
-      <Paper elevation={3} sx={{ borderRadius: 3 }}>
+      <Box mb={2}>
+        <TextField
+          size="small"
+          placeholder="Search by name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+          sx={{ backgroundColor: '#fff', borderRadius: 2 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: '#9e9e9e' }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
+
+ <Paper
+  elevation={3}
+  sx={{
+    borderRadius: 3,
+    maxWidth: '100%',
+    overflow: 'auto',
+    border: 'none',
+    transition: 'none',
+    bgcolor: '#fafafb',
+    boxShadow: viewMode === 'card' ? 'none' : undefined,}}
+ >
+
         {loading ? (
           <Box mt={4} textAlign="center">
             <CircularProgress />
           </Box>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {segments.map((segment) => (
-                  <TableRow key={segment.id}>
-                    <TableCell>{segment.name}</TableCell>
-                    <TableCell>{segment.description}</TableCell>
-                    <TableCell>{segment.status === 1 ? 'Active' : 'Inactive'}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Manage Customers">
+        ) : viewMode === 'card' ? (
+          <Grid container spacing={3}>
+            {paginatedSegments.map((segment) => (
+              <Grid item xs={12} sm={6} md={4} key={segment.id}>
+                <Card sx={{ height: '100%', borderRadius: 2 }}>
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h6" fontWeight={600}>
+                        {segment.name}
+                      </Typography>
+                      <Tooltip title="Edit">
                         <IconButton
-                          onClick={() => router.push(`/customer-segment/edit/${segment.id}`)}
+                          onClick={() =>
+                            router.push(`/customer-segment/view?drawer=edit&id=${segment.id}`)
+                          }
                         >
                           <VisibilityIcon />
                         </IconButton>
                       </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {segments.length === 0 && (
+                    </Box>
+                    <Typography variant="body2" mt={1}>
+                      {segment.description || 'No Description'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Status: {segment.status === 1 ? 'Active' : 'Inactive'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+            {paginatedSegments.length === 0 && (
+              <Grid item xs={12}>
+                <Typography align="center">No segments found.</Typography>
+              </Grid>
+            )}
+          </Grid>
+        ) : (
+          <Box component={Paper}>
+            <TableContainer>
+              <Table size="small"  >
+               <TableHead  >
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No segments found.
-                    </TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {paginatedSegments.map((segment) => (
+                    <TableRow key={segment.id}>
+                      <TableCell>{segment.name}</TableCell>
+                      <TableCell>{segment.description}</TableCell>
+                      <TableCell>{segment.status === 1 ? 'Active' : 'Inactive'}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Edit">
+                          <IconButton
+                            onClick={() =>
+                              router.push(`/customer-segment/view?drawer=edit&id=${segment.id}`)
+                            }
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {segments.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        No segments found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* Pagination Controls */}
+            <Box component={Paper}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingY: 2,
+                paddingX: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 0}
+              >
+                ← Previous
+              </Button>
+
+              <Pagination
+                count={totalPages}
+                page={page + 1}
+                onChange={(_, newPage) => setPage(newPage - 1)}
+                shape="rounded"
+              />
+
+              <Button
+                variant="outlined"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= totalPages - 1}
+              >
+                Next →
+              </Button>
+            </Box>
+          </Box>
         )}
+
+        {/* Drawers */}
+        { <BaseDrawer
+          open={drawerOpen === 'create'}
+          onClose={handleCloseDrawer}
+          title="Create Customer Segment"
+        >
+          <CreateCustomerSegment
+            onSuccess={() => {
+              loadSegments();
+              handleCloseDrawer();
+            }}
+          />
+        </BaseDrawer> }
+
+        {/* {drawerOpen === 'edit' && drawerId && (
+          <BaseDrawer
+            open={true}
+            onClose={handleCloseDrawer}
+            title="Edit Customer Segment"
+          >
+            <CustomerSegmentEditPage
+              onSuccess={() => {
+                handleCloseDrawer();
+                loadSegments();
+              }}
+            />
+          </BaseDrawer>
+        )} */}
+
+        
+
       </Paper>
     </Box>
   );
