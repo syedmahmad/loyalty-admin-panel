@@ -4,6 +4,7 @@ import { RichTextEditor } from "@/components/TextEditor";
 import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
+  discountTypes,
   tooltipMessages,
   tooltipMessagesValidityAfterAssignment,
 } from "@/constants/constants";
@@ -70,16 +71,6 @@ const EditCouponForm = ({
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<
     { name: string }[]
   >([]);
-  const [dynamicRows, setDynamicRows] = useState([
-    {
-      id: generateId(),
-      type: "",
-      operator: "",
-      value: "",
-      models: [],
-      variants: [],
-    },
-  ]);
 
   const [dynamicCouponTypesRows, setDynamicCouponTypesRows] = useState([
     {
@@ -345,7 +336,7 @@ const EditCouponForm = ({
       coupon_title: couponData?.coupon_title || "",
       code: couponData?.code || "",
       coupon_type: couponData?.coupon_type_id || "",
-      discount_percentage: couponData?.discount_percentage || 0,
+      discount_type: couponData?.discount_type || "fixed_discount",
       discount_price: couponData?.discount_price || 0,
       usage_limit: couponData?.usage_limit || 1,
       business_unit_ids: couponData?.business_unit_id
@@ -374,11 +365,6 @@ const EditCouponForm = ({
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
       code: Yup.string().required("Code is required"),
-      // coupon_type: Yup.string().required("Coupon type is required"),
-      discount_percentage: Yup.number()
-        .typeError("Discount percentage must be a number")
-        .min(0, "Discount percentage cannot be negative"),
-
       discount_price: Yup.number()
         .typeError("Discount price must be a number")
         .min(0, "Discount price cannot be negative"),
@@ -458,7 +444,7 @@ const EditCouponForm = ({
         exception_error_message_en: values.exception_error_message_en,
         exception_error_message_ar: values.exception_error_message_ar,
       },
-      discount_percentage: values.discount_percentage || 0,
+      discount_type: values.discount_type,
       discount_price: values.discount_price || 0,
       // once_per_customer: values.once_per_customer,
       max_usage_per_user: values.max_usage_per_user || 1,
@@ -1133,40 +1119,27 @@ const EditCouponForm = ({
 
             {selectedCouponType !== COUPON_TYPE.TIER_BASED && (
               <>
+                {/* Discount Type */}
                 <Grid item xs={12}>
                   <TextField
+                    select
                     fullWidth
-                    name="discount_percentage"
-                    label="Discount (%)"
-                    type="number"
-                    inputProps={{ min: 0 }}
-                    value={values.discount_percentage}
+                    name="discount_type"
+                    label="Discount Type"
+                    value={values?.discount_type}
                     onChange={handleChange}
-                    InputProps={{
-                      endAdornment: selectedCouponType ? (
-                        <InputAdornment position="end">
-                          <Tooltip
-                            title={
-                              tooltipMessages.discountPercentage[
-                                selectedCouponType
-                              ] || ""
-                            }
-                          >
-                            <IconButton edge="end">
-                              <InfoOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </InputAdornment>
-                      ) : null,
-                    }}
-                    error={
-                      !!touched.discount_percentage &&
-                      !!errors.discount_percentage
-                    }
-                    helperText={
-                      touched.discount_percentage && errors.discount_percentage
-                    }
-                  />
+                    error={!!touched.discount_type && !!errors.discount_type}
+                    helperText={touched.discount_type && errors.discount_type}
+                  >
+                    {discountTypes?.map((eachDiscountType) => (
+                      <MenuItem
+                        key={eachDiscountType.value}
+                        value={eachDiscountType.value}
+                      >
+                        {eachDiscountType.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </Grid>
 
                 <Grid item xs={12}>

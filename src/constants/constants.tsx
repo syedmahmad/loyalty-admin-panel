@@ -84,3 +84,8 @@ export const tooltipMessages: {
 
 export const tooltipMessagesValidityAfterAssignment =
   "How many days the coupon remains valid after it’s assigned to a user.";
+
+export const discountTypes = [
+  { name: "Fixed Discount", value: "fixed_discount" },
+  { name: "Percentage Discount", value: "percentage_discount" },
+];

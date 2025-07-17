@@ -12,15 +12,15 @@ export type CouponFormValues = {
   general_error_message_ar: string;
   general_error_message_en: string;
   discount_price: number;
-  discount_percentage: number;
   code: string;
   coupon_type: string;
+  discount_type: string;
   usage_limit: number;
   max_usage_per_user: number;
   business_unit_ids: number[];
   date_from: string;
   date_to: string;
-  validity_after_assignment:number
+  validity_after_assignment: number;
   once_per_customer?: number;
   reuse_interval?: number;
   status: number;

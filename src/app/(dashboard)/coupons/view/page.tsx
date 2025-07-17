@@ -262,7 +262,7 @@ const CouponList = () => {
                       >
                         <Box>
                           <Typography variant="h6" fontWeight={600}>
-                            {coupon.code}
+                            {coupon?.coupon_title}
                           </Typography>
                         </Box>
                         <Box>
