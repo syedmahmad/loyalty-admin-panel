@@ -23,7 +23,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { useParams } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
-import { GET, POST } from '@/utils/AxiosUtility';
+import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
 
 const fetchSegment = async (id: any) => {
@@ -35,7 +35,7 @@ const fetchSegment = async (id: any) => {
 };
 
 const fetchAllCustomers = async (tenantId: number) => {
-  const response = await GET(`/customers/${tenantId}`);
+  const response = await GET(`/customers`);
   if (response?.status !== 200) {
     throw new Error('Failed to fetch customers');
   }
@@ -43,7 +43,7 @@ const fetchAllCustomers = async (tenantId: number) => {
 };
 
 const addCustomerToSegment = async (segmentId: number, customerId: number, userSecret: string) => {
-  return await POST(
+  return await PUT(
     `/customer-segments/add-customer/${segmentId}`,
     { customer_id: customerId },
     userSecret
@@ -51,7 +51,7 @@ const addCustomerToSegment = async (segmentId: number, customerId: number, userS
 };
 
 const removeCustomerFromSegment = async (segmentId: number, customerId: number, userSecret: string) => {
-  return await POST(
+  return await PUT(
     `/customer-segments/remove-customer/${segmentId}`,
     { customer_id: customerId },
     userSecret
@@ -62,12 +62,12 @@ const CustomerSegmentEditPage = () => {
   const { id: segmentId } = useParams();
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [userSecret, setUserSecret] = useState<string>('');
 
   useEffect(() => {
-    const secret = localStorage.getItem('user-secret');
+    const secret = localStorage.getItem('token');
     if (secret) setUserSecret(secret);
   }, []);
 
@@ -88,13 +88,34 @@ const CustomerSegmentEditPage = () => {
   }, [segmentId]);
 
   const handleAddCustomer = async () => {
-    if (!selectedCustomerId || !segmentId || !userSecret) return;
-    await addCustomerToSegment(+segmentId, +selectedCustomerId, userSecret);
-    const updated = await fetchSegment(segmentId);
-    setSegment(updated);
-    setSelectedCustomerId('');
-    toast.success('Customer added to segment');
+    console.log(!selectedCustomerIds.length, !segmentId, !userSecret);
+    
+    if (
+      !selectedCustomerIds.length ||
+      !segmentId ||
+      !userSecret
+    ) {
+      return;
+    }
+  
+    try {
+      // Add all selected customers to the segment
+      await Promise.all(
+        selectedCustomerIds.map((id) =>
+          addCustomerToSegment(+segmentId, +id, userSecret)
+        )
+      );
+  
+      const updated = await fetchSegment(segmentId);
+      setSegment(updated);
+      setSelectedCustomerIds([]); // Reset selection
+      toast.success('Customers added to segment');
+    } catch (error) {
+      toast.error('Failed to add customers to segment');
+      console.error(error);
+    }
   };
+  
 
   const handleRemoveCustomer = async (customerId: number) => {
     if (!segmentId || !userSecret) return;
@@ -170,28 +191,46 @@ const CustomerSegmentEditPage = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Add Customer"
-                    value={selectedCustomerId}
-                    onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  >
-                    {customers.length > 0 && customers
-                      .filter((c) => !segmentCustomers.some((sc: any) => sc.id === c.id))
-                      .map((c) => (
-                        <MenuItem key={c.id} value={c.id}>
-                          {c.name} ({c.email})
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                </Grid>
+                {customers.filter((c) => !segmentCustomers.some((sc: any) => sc.id === c.id)).length > 0 ? (
+                  <Grid item xs={12}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Add Customers"
+                      SelectProps={{
+                        multiple: true,
+                        value: selectedCustomerIds,
+                        onChange: (e: any) => setSelectedCustomerIds(e.target.value),
+                        renderValue: (selected: any) =>
+                          customers
+                            .filter((c) => selected.includes(c.id))
+                            .map((c) => c.name)
+                            .join(', '),
+                      }}
+                    >
+                      {customers.length > 0 &&
+                        customers
+                          .filter((c) => !segmentCustomers.some((sc: any) => sc.id === c.id))
+                          .map((c) => (
+                            <MenuItem key={c.id} value={c.id}>
+                              {c.name} ({c.email})
+                            </MenuItem>
+                          ))}
+                    </TextField>
+                  </Grid>
+                ) : (
+                  <Grid item xs={12}>
+                  <Typography variant="h5" textAlign="center" sx={{ mt: 2 }}>
+                    No customers available to add.
+                  </Typography>
+                  </Grid>
+                )}
+
                 <Grid item xs={12}>
                   <Button
                     variant="contained"
-                    onClick={handleAddCustomer}
-                    disabled={!selectedCustomerId}
+                    onClick={() => handleAddCustomer()}
+                    disabled={!selectedCustomerIds.length}
                   >
                     Add
                   </Button>
@@ -201,23 +240,25 @@ const CustomerSegmentEditPage = () => {
           )}
         </Formik>
 
-        <Box mt={4}>
-          <Typography variant="h6">Segment Customers</Typography>
-          <List>
-            {segmentCustomers.map((c: any) => (
-              <ListItem
-                key={c.id}
-                secondaryAction={
-                  <IconButton edge="end" onClick={() => handleRemoveCustomer(c.id)}>
-                    <DeleteOutlineIcon />
-                  </IconButton>
-                }
-              >
-                <ListItemText primary={c.name} secondary={`${c.email} | ${c.phone}`} />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
+        {segmentCustomers.length ? (
+          <Box mt={4}>
+            <Typography variant="h6">Segment Customers</Typography>
+            <List>
+              {segmentCustomers.map((c: any) => (
+                <ListItem
+                  key={c.id}
+                  secondaryAction={
+                    <IconButton edge="end" onClick={() => handleRemoveCustomer(c.id)}>
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText primary={c.name} secondary={`${c.email} | ${c.phone}`} />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        ) : null}
       </CardContent>
     </Card>
   );
