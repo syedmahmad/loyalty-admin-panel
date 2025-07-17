@@ -58,7 +58,7 @@ const removeCustomerFromSegment = async (segmentId: number, customerId: number, 
   );
 };
 
-const CustomerSegmentEditPage = () => {
+const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
   const { id: segmentId } = useParams();
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -110,6 +110,8 @@ const CustomerSegmentEditPage = () => {
       setSegment(updated);
       setSelectedCustomerIds([]); // Reset selection
       toast.success('Customers added to segment');
+      onSuccess();
+      
     } catch (error) {
       toast.error('Failed to add customers to segment');
       console.error(error);

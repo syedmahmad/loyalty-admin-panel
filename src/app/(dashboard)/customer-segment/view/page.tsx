@@ -17,9 +17,12 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { GET } from '@/utils/AxiosUtility';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import CustomerSegmentEditPage from '../edit/[id]/page';
+
 
 type CustomerSegment = {
   id: number;
@@ -28,10 +31,20 @@ type CustomerSegment = {
   status: number;
 };
 
+
 const CustomerSegmentList = () => {
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+    const drawerOpen = searchParams.get('drawer');
+     const drawerId = searchParams.get('id');
+     
+
+ const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl);
+  };
 
   const loadSegments = async () => {
     setLoading(true);
@@ -86,7 +99,7 @@ const CustomerSegmentList = () => {
                     <TableCell align="right">
                       <Tooltip title="Manage Customers">
                         <IconButton
-                          onClick={() => router.push(`/customer-segment/edit/${segment.id}`)}
+                          onClick={() => router.push(`/customer-segment/view?drawer=edit&id=${segment.id}`)}
                         >
                           <VisibilityIcon />
                         </IconButton>
@@ -104,6 +117,21 @@ const CustomerSegmentList = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        )}
+
+
+           { drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Edit Business"
+        >
+          <CustomerSegmentEditPage  onSuccess={() => {
+          handleCloseDrawer(); 
+          loadSegments(); 
+    }} />
+        </BaseDrawer>
+           
         )}
       </Paper>
     </Box>
