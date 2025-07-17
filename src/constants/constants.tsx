@@ -89,3 +89,5 @@ export const discountTypes = [
   { name: "Fixed Discount", value: "fixed_discount" },
   { name: "Percentage Discount", value: "percentage_discount" },
 ];
+  export const tooltipMessagesValidityAfterAssignmentForRule =
+  "How many days the rule remains valid after it’s assigned to a user. Leave blank for no validity period.";

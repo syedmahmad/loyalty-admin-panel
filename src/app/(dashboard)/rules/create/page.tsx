@@ -13,6 +13,7 @@ import {
   IconButton,
   InputLabel,
   useTheme,
+  InputAdornment,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useState } from 'react';
@@ -21,6 +22,7 @@ import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { RichTextEditor } from '@/components/TextEditor';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { tooltipMessagesValidityAfterAssignmentForRule } from '@/constants/constants';
 
 const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
   <Box display="flex" alignItems="center" mb={0.5}>
@@ -50,6 +52,7 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
     condition_type: '',
     condition_operator: '',
     condition_value: '',
+    validity_after_assignment: 0
   };
 
   const [form, setForm] = useState(initialForm);
@@ -104,6 +107,7 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
       condition_type: form.condition_type || null,
       condition_operator: form.condition_operator || null,
       condition_value: form.condition_value || null,
+      validity_after_assignment: form.validity_after_assignment === 0 ? undefined : form.validity_after_assignment,
       description,
       created_by,
     };
@@ -262,6 +266,31 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           </>
         )}
+
+        {/* Validity for user After Assigned */}
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Valid for (Days) After Assigned to User"
+            value={form.validity_after_assignment}
+            type="number"
+            inputProps={{ min: 0 }}
+            name="validity_after_assignment"
+            onChange={(e) => handleChange('validity_after_assignment', e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title={tooltipMessagesValidityAfterAssignmentForRule}>
+                    <IconButton edge="end">
+                      <InfoOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
 
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
