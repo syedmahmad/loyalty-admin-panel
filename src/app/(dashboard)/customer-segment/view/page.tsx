@@ -137,23 +137,23 @@ const CustomerSegmentList = () => {
  >
 
         {loading ? (
-          <Box mt={4} textAlign="center">
+          <Box mt={6} textAlign="center">
             <CircularProgress />
           </Box>
         ) : viewMode === 'card' ? (
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{boxShadow:'none'}}>
             {paginatedSegments.map((segment) => (
               <Grid item xs={12} sm={6} md={4} key={segment.id}>
-                <Card sx={{ height: '100%', borderRadius: 2 }}>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Card  sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: 'none',border : 'none',transition : 'none' }}>
+                  <CardContent sx={{boxShadow:"none"}}>
+                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' , boxShadow: 'none',transition : 'none'}}>
                       <Typography variant="h6" fontWeight={600}>
                         {segment.name}
                       </Typography>
                       <Tooltip title="Edit">
                         <IconButton
                           onClick={() =>
-                            router.push(`/customer-segment/view?drawer=edit&id=${segment.id}`)
+                             router.push(`/customer-segment/edit/${segment.id}`)
                           }
                         >
                           <VisibilityIcon />
@@ -198,7 +198,7 @@ const CustomerSegmentList = () => {
                         <Tooltip title="Edit">
                           <IconButton
                             onClick={() =>
-                              router.push(`/customer-segment/view?drawer=edit&id=${segment.id}`)
+                              router.push(`/customer-segment/edit/${segment.id}`)
                             }
                           >
                             <VisibilityIcon />
@@ -226,21 +226,30 @@ const CustomerSegmentList = () => {
                 alignItems: 'center',
                 paddingY: 2,
                 paddingX: 2,
+                
               }}
             >
-              <Button
-                variant="outlined"
-                onClick={() => setPage((p) => p - 1)}
-                disabled={page === 0}
-              >
-                ← Previous
-              </Button>
+               <Button
+                  variant="outlined"
+                  onClick={() => setPage(prev => prev - 1)}
+                disabled={page === 0} 
+                sx={{
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    px: 3,
+                    minWidth: 100
+                  }}
+                >
+                  ← Previous
+                </Button>
 
               <Pagination
                 count={totalPages}
                 page={page + 1}
                 onChange={(_, newPage) => setPage(newPage - 1)}
                 shape="rounded"
+                 hidePrevButton
+                   hideNextButton
               />
 
               <Button
