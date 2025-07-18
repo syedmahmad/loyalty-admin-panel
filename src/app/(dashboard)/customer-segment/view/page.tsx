@@ -66,7 +66,7 @@ const CustomerSegmentList = () => {
           Customer Segments
         </Typography>
         <Button
-          variant="contained"
+          variant="outlined"
           startIcon={<AddIcon />}
           onClick={() => router.push('/customer-segment/create')}
         >

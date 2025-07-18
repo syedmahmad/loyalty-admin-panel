@@ -134,10 +134,7 @@ const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
   return (
     <Card sx={{ width: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 4, boxShadow: 4 }}>
       <CardContent>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-          ✏️ Edit Customer Segment
-        </Typography>
-
+        
         <Formik
           enableReinitialize
           initialValues={{
@@ -230,7 +227,7 @@ const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
 
                 <Grid item xs={12}>
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     onClick={() => handleAddCustomer()}
                     disabled={!selectedCustomerIds.length}
                   >
