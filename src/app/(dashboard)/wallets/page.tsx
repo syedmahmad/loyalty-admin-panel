@@ -61,8 +61,8 @@ export default function WalletListPage() {
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h5" mb={2}>
+    <Box px={3}>
+      <Typography variant="h5" mb={2} sx={{ fontSize: '32px', fontWeight: 600, fontFamily: 'Outfit' }}>
         Wallets
       </Typography>
 

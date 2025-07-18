@@ -16,11 +16,13 @@ import {
   List,
   ListItem,
   ListItemText,
+  Drawer,
+  Tooltip,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import GroupIcon from '@mui/icons-material/Group';
 import DescriptionIcon from '@mui/icons-material/Description';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { GET, PUT } from '@/utils/AxiosUtility';
@@ -58,13 +60,14 @@ const removeCustomerFromSegment = async (segmentId: number, customerId: number, 
   );
 };
 
-const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
+const CustomerSegmentEditPage = () => {
   const { id: segmentId } = useParams();
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [userSecret, setUserSecret] = useState<string>('');
+  const router = useRouter();
 
   useEffect(() => {
     const secret = localStorage.getItem('token');
@@ -110,7 +113,7 @@ const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
       setSegment(updated);
       setSelectedCustomerIds([]); // Reset selection
       toast.success('Customers added to segment');
-      onSuccess();
+      router.push('/customer-segment/view'); // Redirect to segment view
       
     } catch (error) {
       toast.error('Failed to add customers to segment');
@@ -132,7 +135,16 @@ const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
   const segmentCustomers = segment.members?.map((m: any) => m.customer) || [];
 
   return (
-    <Card sx={{ width: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 4, boxShadow: 4 }}>
+    <Drawer
+      anchor="right"
+      open={true}
+      onClose={() => {
+        router.push('/customer-segment/view');
+      }}
+      PaperProps={{
+        sx: { width: 500 }
+      }}
+    >
       <CardContent>
         
         <Formik
@@ -252,14 +264,35 @@ const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
                     </IconButton>
                   }
                 >
-                  <ListItemText primary={c.name} secondary={`${c.email} | ${c.phone}`} />
+                  <ListItemText
+                    primary={c.name}
+                    secondary={
+                      <Typography noWrap sx={{ maxWidth: '300px', display: 'flex', gap: 1 }}>
+                        <Tooltip title={c.email}>
+                          <span>{c.email}</span>
+                        </Tooltip>
+                        |
+                        <Tooltip title={c.phone}>
+                          <span>{c.phone}</span>
+                        </Tooltip>
+                      </Typography>
+                    }
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      sx: { maxWidth: '200px' }, // adjust as needed
+                    }}
+                    secondaryTypographyProps={{
+                      noWrap: true,
+                      sx: { maxWidth: '300px' }, // adjust width to your layout
+                    }}
+                  />
                 </ListItem>
               ))}
             </List>
           </Box>
         ) : null}
       </CardContent>
-    </Card>
+    </Drawer>
   );
 };
 
