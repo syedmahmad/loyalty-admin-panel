@@ -26,12 +26,13 @@ import {
 
 import { useEffect, useState } from 'react';
 import { GET } from '@/utils/AxiosUtility';
-import { useRouter, useSearchParams } from 'next/navigation';
-import BaseDrawer from '@/components/drawer/basedrawer';
-import CreateCustomerSegment from '../create/page';
-import CustomerSegmentEditPage from '../edit/[id]/page';
+import { useRouter,useSearchParams } from 'next/navigation';
+import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import SearchIcon from '@mui/icons-material/Search';
+import BaseDrawer from '@/components/drawer/basedrawer';
+import CustomerSegmentEditPage from '../edit/[id]/page';
+import { SearchIcon } from 'lucide-react';
+
 
 type CustomerSegment = {
   id: number;
@@ -39,6 +40,7 @@ type CustomerSegment = {
   description: string;
   status: number;
 };
+
 
 const CustomerSegmentList = () => {
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
@@ -49,12 +51,18 @@ const CustomerSegmentList = () => {
   const [searchName, setSearchName] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const drawerOpen = searchParams.get('drawer');
-  const drawerId = searchParams.get('id');
+    const drawerOpen = searchParams.get('drawer');
+     const drawerId = searchParams.get('id');
+     
 
-  const handleCloseDrawer = () => {
-    router.push('/customer-segment/view');
-  };
+//  const handleCloseDrawer = () => {
+//     const currentUrl = window.location.pathname;
+//     router.push(currentUrl);
+//   };
+
+//   const handleCloseDrawer = () => {
+//     router.push('/customer-segment/view');
+//   };
 
   const loadSegments = async (name = '') => {
     setLoading(true);
@@ -85,26 +93,13 @@ const CustomerSegmentList = () => {
         <Typography sx={{ fontSize: '32px', fontWeight: 600, fontFamily: 'Outfit' }}>
           Customer Segments
         </Typography>
-
-        <Box sx={{ gap: 1, display: 'flex' }}>
-          <Select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as 'card' | 'table')}
-            size="small"
-            sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 600 }}
-          >
-            <MenuItem value="card">Card View</MenuItem>
-            <MenuItem value="table">Table View</MenuItem>
-          </Select>
-
-          <Button
-            variant="outlined"
-            onClick={() => router.push('/customer-segment/view?drawer=create')}
-            sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 600 }}
-          >
-            Create
-          </Button>
-        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => router.push('/customer-segment/create')}
+        >
+          Create Segment
+        </Button>
       </Box>
 
       <Box mb={2}>
@@ -117,7 +112,7 @@ const CustomerSegmentList = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: '#9e9e9e' }} />
+                {/* <SearchIcon sx={{ color: '#9e9e9e' }} /> */}
               </InputAdornment>
             ),
           }}
@@ -152,9 +147,7 @@ const CustomerSegmentList = () => {
                       </Typography>
                       <Tooltip title="Edit">
                         <IconButton
-                          onClick={() =>
-                             router.push(`/customer-segment/edit/${segment.id}`)
-                          }
+                          onClick={() => router.push(`/customer-segment/view?drawer=edit&id=${segment.id}`)}
                         >
                           <VisibilityIcon />
                         </IconButton>
@@ -263,37 +256,21 @@ const CustomerSegmentList = () => {
           </Box>
         )}
 
-        {/* Drawers */}
-        { <BaseDrawer
-          open={drawerOpen === 'create'}
-          onClose={handleCloseDrawer}
-          title="Create Customer Segment"
+
+           { drawerOpen === 'edit' && drawerId && (
+        <BaseDrawer
+          open={true}
+          // onClose={handleCloseDrawer}
+          onClose={() => {}}
+          title="Edit Business"
         >
-          <CreateCustomerSegment
-            onSuccess={() => {
-              loadSegments();
-              handleCloseDrawer();
-            }}
-          />
-        </BaseDrawer> }
-
-        {/* {drawerOpen === 'edit' && drawerId && (
-          <BaseDrawer
-            open={true}
-            onClose={handleCloseDrawer}
-            title="Edit Customer Segment"
-          >
-            <CustomerSegmentEditPage
-              onSuccess={() => {
-                handleCloseDrawer();
-                loadSegments();
-              }}
-            />
-          </BaseDrawer>
-        )} */}
-
-        
-
+          <CustomerSegmentEditPage  onSuccess={() => {
+          // handleCloseDrawer(); 
+          loadSegments(); 
+    }} />
+        </BaseDrawer>
+           
+        )}
       </Paper>
     </Box>
   );

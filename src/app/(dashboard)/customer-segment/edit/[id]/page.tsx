@@ -58,7 +58,7 @@ const removeCustomerFromSegment = async (segmentId: number, customerId: number, 
   );
 };
 
-const CustomerSegmentEditPage = () => {
+const CustomerSegmentEditPage = ({ onSuccess }: { onSuccess: () => void }) => {
   const { id: segmentId } = useParams();
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -110,6 +110,8 @@ const CustomerSegmentEditPage = () => {
       setSegment(updated);
       setSelectedCustomerIds([]); // Reset selection
       toast.success('Customers added to segment');
+      onSuccess();
+      
     } catch (error) {
       toast.error('Failed to add customers to segment');
       console.error(error);
@@ -132,10 +134,7 @@ const CustomerSegmentEditPage = () => {
   return (
     <Card sx={{ width: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 4, boxShadow: 4 }}>
       <CardContent>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-          ✏️ Edit Customer Segment
-        </Typography>
-
+        
         <Formik
           enableReinitialize
           initialValues={{
@@ -228,7 +227,7 @@ const CustomerSegmentEditPage = () => {
 
                 <Grid item xs={12}>
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     onClick={() => handleAddCustomer()}
                     disabled={!selectedCustomerIds.length}
                   >
