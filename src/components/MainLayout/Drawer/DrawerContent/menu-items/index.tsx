@@ -8,6 +8,8 @@ import LoyaltyIcon from '@mui/icons-material/Loyalty';
 import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WalletIcon from '@mui/icons-material/Wallet';
+import Groups3Icon from '@mui/icons-material/Groups3';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -180,10 +182,34 @@ const menuItems: { items: NavItemType[] } = {
       icon: GroupIcon,
     },
     {
+      id: "customer-segment",
+      title: "Customer Segment",
+      type: "item",
+      url: "/customer-segment/view",
+      privileges: [],
+      icon: Groups3Icon,
+    },
+    {
+      id: "wallets",
+      title: "Wallets",
+      type: "item",
+      url: "/wallets",
+      privileges: [],
+      icon: WalletIcon,
+    },
+    {
+      id: "wallet-settings",
+      title: "Wallet settings",
+      type: "item",
+      url: "/wallet-settings",
+      privileges: [],
+      icon: SettingsIcon,
+    },
+    {
   id: "analytics",
   title: " Analytics ",
   type: "collapse", 
-  icon: GroupIcon,
+  icon: AnalyticsIcon,
   children: [
     {
       id: "coupon",

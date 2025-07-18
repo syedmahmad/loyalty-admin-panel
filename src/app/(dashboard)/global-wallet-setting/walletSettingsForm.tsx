@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { WalletService } from '../service/wallet.service';
+import { WalletService } from '../wallets/service/wallet.service';
 
 const pendingOptions = ['none', 'fixed_days'];
 const expirationOptions = [

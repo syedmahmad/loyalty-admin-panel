@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import WalletSettingsForm from './walletSettingsForm'; // The drawer
-import { WalletService } from '../service/wallet.service';
+import { WalletService } from '../wallets/service/wallet.service';
 
 export default function WalletSettingsPage() {
   const [businessUnits, setBusinessUnits] = useState([]);
