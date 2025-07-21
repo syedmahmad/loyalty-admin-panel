@@ -124,6 +124,7 @@ const CouponList = () => {
       </Box>
     );
   }
+  const paginationcoupon= coupons.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 
   const handleDrawerWidth = (selectedCouponType: string) => {
     setDrawerWidth(
@@ -235,9 +236,8 @@ const CouponList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {coupons
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((coupon) => (
+            {
+              paginationcoupon.map((coupon) => (
                 <Grid item xs={12} sm={6} md={4} key={coupon.id}>
                   <Card
                     sx={{
