@@ -76,7 +76,7 @@ const CustomerSegmentList = () => {
     return () => clearTimeout(debounce);
   }, [searchName]);
 
-  const paginatedSegments = segments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedSegments = viewMode === 'card' ? segments: segments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const totalPages = Math.ceil(segments.length / rowsPerPage);
 
   return (

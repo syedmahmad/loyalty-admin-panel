@@ -27,6 +27,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
+import CloseIcon from '@mui/icons-material/Close';
 
 const fetchSegment = async (id: any) => {
   const response = await GET(`/customer-segments/view-customers/${id}`);
@@ -136,15 +137,37 @@ const CustomerSegmentEditPage = () => {
 
   return (
     <Drawer
+
+  
       anchor="right"
       open={true}
       onClose={() => {
         router.push('/customer-segment/view');
       }}
       PaperProps={{
-        sx: { width: 500 }
+        sx: { width: 400 }
       }}
     >
+      <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      p: 2,
+      borderBottom: '1px solid #e0e0e0'
+    }}
+  >
+    <Typography  fontSize="20px" fontWeight={600}>
+      Edit Customer Segment
+    </Typography>
+    <IconButton
+      edge="end"
+      onClick={() => router.push('/customer-segment/view')}
+      aria-label="close"
+    >
+      <CloseIcon />
+    </IconButton>
+  </Box>
       <CardContent>
         
         <Formik
