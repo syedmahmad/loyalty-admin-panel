@@ -105,6 +105,7 @@ const TierList = () => {
   const handleChangePage = (_: unknown, newPage: number) => {
   setPage(newPage - 1); 
 };
+const paginatedtier=  viewMode === 'card'?tiers: tiers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -200,7 +201,7 @@ const TierList = () => {
     </Box>
   ) : viewMode === 'card' ? (
     <Grid container spacing={3}>
-      {tiers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tier) => (
+      {paginatedtier.map((tier) => (
         <Grid item xs={12} sm={6} md={4} key={tier.id}>
           <Card
             sx={{

@@ -121,7 +121,7 @@ const RuleList = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
+const paginatedrule= viewMode === 'card'?rules: rules.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   return (
    <Box sx={{ backgroundColor: '#F9FAFB', mt:"-25px"}}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' , alignItems: 'center',mb:1 }}>
@@ -220,7 +220,7 @@ const RuleList = () => {
   </Typography>
 ) : viewMode === 'card' ? (
   <Grid container spacing={3}>
-    {rules.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((rule) => (
+    {(paginatedrule).map((rule) => (
       <Grid item xs={12} sm={6} md={4} key={rule.id}>
         <Card
           sx={{

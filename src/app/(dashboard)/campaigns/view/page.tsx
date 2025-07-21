@@ -71,7 +71,7 @@ const CampaignsList = () => {
     fetchCampaigns();
   }, []);
  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage-1);
- const campaignss = campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+ const campaignss =   viewMode === 'card'?campaigns:campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const handleDelete = async (id: number) => {
     const confirm = window.confirm('Are you sure you want to delete this campaign?');
     if (!confirm) return;

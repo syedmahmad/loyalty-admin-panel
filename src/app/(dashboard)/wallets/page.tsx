@@ -61,7 +61,7 @@ export default function WalletListPage() {
   };
 
   return (
-    <Box px={3}>
+    <Box >
       <Typography variant="h5" mb={2} sx={{ fontSize: '32px', fontWeight: 600, fontFamily: 'Outfit' }}>
         Wallets
       </Typography>
@@ -72,7 +72,7 @@ export default function WalletListPage() {
           value={selectedBU ?? ''}
           onChange={(e) => setSelectedBU(Number(e.target.value))}
           displayEmpty
-          sx={{ minWidth: 250 }}
+          sx={{ minWidth: 250,backgroundColor: '#fff' }}
         >
           <MenuItem value="">Select Business Unit</MenuItem>
           {businessUnits.map((bu) => (

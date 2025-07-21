@@ -56,25 +56,25 @@ const CustomerSegmentList = () => {
     router.push('/customer-segment/view');
   };
 
-  const loadSegments = async (name = '') => {
-    setLoading(true);
-    try {
+ const loadSegments = async (name = '') => {
+  setLoading(true);
+  try {
       const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
-      const res = await GET(`/customer-segments/${clientInfo.id}?name=${encodeURIComponent(name)}`);
-      if (res?.status === 200) {
-        setSegments(res.data);
-      }
-    } finally {
-      setLoading(false);
+    const res = await GET(`/customer-segments/${clientInfo.id}?name=${encodeURIComponent(name)}`);
+    if (res?.status === 200) {
+      setSegments(res.data);
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    const debounce = setTimeout(() => {
-      loadSegments(searchName.trim());
-    }, 300);
-    return () => clearTimeout(debounce);
-  }, [searchName]);
+ useEffect(() => {
+  const debounce = setTimeout(() => {
+    loadSegments(searchName.trim());
+  }, 300);
+  return () => clearTimeout(debounce);
+}, [searchName]);
 
   const paginatedSegments = viewMode === 'card' ? segments: segments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const totalPages = Math.ceil(segments.length / rowsPerPage);

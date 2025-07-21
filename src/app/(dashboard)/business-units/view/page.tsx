@@ -118,7 +118,7 @@ const BusinessUnitList = () => {
     setPage(0);
   };
 
-  const paginatedUnits = units.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedUnits = viewMode === 'card'?units: units.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Box sx={{ backgroundColor: '#F9FAFB',mt:"-25px" }}>

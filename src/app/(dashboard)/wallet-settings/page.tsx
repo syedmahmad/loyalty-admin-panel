@@ -49,7 +49,7 @@ export default function WalletSettingsPage() {
           value={selectedBU ?? ''}
           displayEmpty
           onChange={handleBUChange}
-          sx={{ minWidth: 250 }}
+          sx={{ minWidth: 250 ,backgroundColor: '#fff'}}
         >
           <MenuItem value="">Select Business Unit</MenuItem>
           {businessUnits.map((bu: any) => (
@@ -60,7 +60,14 @@ export default function WalletSettingsPage() {
         </Select>
 
         <Button
-          variant="contained"
+          variant="outlined"
+             sx={{
+              backgroundColor: '#fff',
+              fontFamily:'Outfit',
+              fontWeight: 600,
+  
+   
+  }}
           onClick={() => setDrawerOpen(true)}
           disabled={!selectedBU}
         >
