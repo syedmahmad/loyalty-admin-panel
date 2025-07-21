@@ -57,7 +57,7 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
         toast.success('Customer segment created successfully!');
         setSubmitted(true);
         onSuccess?.();
-        router.push('/customer-segment');
+        router.push('/customer-segment/view');
       } else {
         setError('Failed to create customer segment');
       }
