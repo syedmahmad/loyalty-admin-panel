@@ -68,7 +68,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={500} p={3}>
+      <Box width={600} p={3}>
         {/* Wallet ID + User */}
         <Grid container spacing={2} alignItems="center" mb={3}>
           <Grid item xs={6}>
@@ -127,6 +127,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
                 <TableCell>Type</TableCell>
                 <TableCell>Amount</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Reason</TableCell>
                 <TableCell>Date</TableCell>
               </TableRow>
             </TableHead>
@@ -137,6 +138,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
                   <TableCell>{tx.type}</TableCell>
                   <TableCell>{tx.amount}</TableCell>
                   <TableCell>{tx.status}</TableCell>
+                  <TableCell>{tx.description}</TableCell>
                   <TableCell>
                     {new Date(tx.created_at).toLocaleDateString()}
                   </TableCell>
