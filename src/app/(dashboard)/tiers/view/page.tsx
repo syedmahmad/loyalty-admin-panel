@@ -25,6 +25,7 @@ import {
   MenuItem,
   Grid,
   CardContent,
+  Menu,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useRouter,useSearchParams } from 'next/navigation';
@@ -38,7 +39,7 @@ import BaseDrawer from '@/components/drawer/basedrawer';
 import TierCreate from '../create/page';
 import TierEdit from '../edit/page';
 import SearchIcon from '@mui/icons-material/Search';
-
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 type Tier = {
   id: number;
   name: string;
@@ -87,6 +88,11 @@ const TierList = () => {
       fetchTiers(value);
     }, 300);
   };
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
+const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -101,6 +107,9 @@ const TierList = () => {
 
     setDeleteId(null);
   };
+  const handleClose = () => {
+  setAnchorEl(null);
+};
 
   const handleChangePage = (_: unknown, newPage: number) => {
   setPage(newPage - 1); 
@@ -227,12 +236,36 @@ const paginatedtier=  viewMode === 'card'?tiers: tiers.slice(page * rowsPerPage,
                   {tier.name}
                 </Typography>
                 <Box>
-                  <IconButton onClick={() => router.push(`/tiers/view?drawer=edit&id=${tier.id}`)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => setDeleteId(tier.id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
+                 <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                       anchorEl={anchorEl}
+                       open={open}
+                       onClose={handleClose}
+                       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                           slotProps={{
+                           paper: {
+                            sx: {
+                            boxShadow: 'none',               
+                            border: '1px solid #e0e0e0',     
+                           mt: 1,                           
+                          },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/tiers/view?drawer=edit&id=${tier.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                            setDeleteId(tier.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
                 </Box>
               </Box>
 
@@ -296,16 +329,36 @@ const paginatedtier=  viewMode === 'card'?tiers: tiers.slice(page * rowsPerPage,
                   </Tooltip>
                 </TableCell>
                 <TableCell align="right">
-                  <Tooltip title="Edit">
-                    <IconButton onClick={() => router.push(`/tiers/view?drawer=edit&id=${tier.id}`)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton onClick={() => setDeleteId(tier.id)} color="error">
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                   <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                       anchorEl={anchorEl}
+                       open={open}
+                       onClose={handleClose}
+                       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                           slotProps={{
+                           paper: {
+                            sx: {
+                            boxShadow: 'none',               
+                            border: '1px solid #e0e0e0',     
+                           mt: 1,                           
+                          },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/tiers/view?drawer=edit&id=${tier.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                            setDeleteId(tier.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
                 </TableCell>
               </TableRow>
             ))}

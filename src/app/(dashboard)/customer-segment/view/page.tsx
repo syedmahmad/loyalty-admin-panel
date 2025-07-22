@@ -32,6 +32,7 @@ import CreateCustomerSegment from '../create/page';
 import CustomerSegmentEditPage from '../edit/[id]/page';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SearchIcon from '@mui/icons-material/Search';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 type CustomerSegment = {
   id: number;
@@ -156,7 +157,7 @@ const CustomerSegmentList = () => {
                              router.push(`/customer-segment/edit/${segment.id}`)
                           }
                         >
-                          <VisibilityIcon />
+                           <MoreVertIcon />
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -201,7 +202,7 @@ const CustomerSegmentList = () => {
                               router.push(`/customer-segment/edit/${segment.id}`)
                             }
                           >
-                            <VisibilityIcon />
+                            <MoreVertIcon />
                           </IconButton>
                         </Tooltip>
                       </TableCell>

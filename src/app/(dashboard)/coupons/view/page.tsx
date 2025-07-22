@@ -16,6 +16,7 @@ import {
   Grid,
   IconButton,
   InputAdornment,
+  Menu,
   MenuItem,
   Pagination,
   Paper,
@@ -25,12 +26,13 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
+ 
   TableRow,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -73,6 +75,9 @@ const CouponList = () => {
     router.push("/coupons/view");
   };
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
+
   const fetchCoupons = async (name = "") => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -82,6 +87,14 @@ const CouponList = () => {
     setCoupons(res?.data.coupons || []);
     setLoading(false);
   };
+  const handleClose = () => {
+  setAnchorEl(null);
+};
+const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
+
+
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -266,25 +279,38 @@ const CouponList = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <Tooltip title="Edit">
-                            <IconButton
-                              onClick={() =>
-                                router.push(
-                                  `/coupons/view?drawer=edit&id=${coupon.id}`
-                                )
-                              }
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton
-                              color="error"
-                              onClick={() => setDeleteId(coupon.id)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
+                           <IconButton onClick={handleMenuClick}>
+                                               <MoreVertIcon/>
+                                                   </IconButton>
+                                                 <Menu
+                                                anchorEl={anchorEl}
+                                                open={open}
+                                                onClose={handleClose}
+                                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                                    slotProps={{
+                                                    paper: {
+                                                     sx: {
+                                                     boxShadow: 'none',               
+                                                     border: '1px solid #e0e0e0',     
+                                                    mt: 1,                           
+                                                   },
+                             },
+                           }}
+                           >
+                                                <MenuItem onClick={() =>{ handleClose(); 
+                                                   router.push(
+                                  `/coupons/view?drawer=edit&id=${coupon.id}`)}}>
+                                                   <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                                                        Edit
+                                                         </MenuItem>
+                                                    <MenuItem onClick={() =>
+                                                    { handleClose(); 
+                                                     setDeleteId(coupon.id)}}>
+                                                  <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+                                 Delete
+                               </MenuItem>
+                             </Menu>
                         </Box>
                       </Box>
 
@@ -391,23 +417,39 @@ const CouponList = () => {
                           </Tooltip>
                         </TableCell>
                         <TableCell sx={{ display: "flex" }}>
-                          <Tooltip title="Edit">
-                            <IconButton
-                              onClick={() =>
-                                router.push(
-                                  `/coupons/view?drawer=edit&id=${coupon.id}`
-                                )
-                              }
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title="Delete">
-                            <IconButton onClick={() => setDeleteId(coupon.id)}>
-                              <DeleteIcon fontSize="small" color="error" />
-                            </IconButton>
-                          </Tooltip>
+                           <IconButton onClick={handleMenuClick}>
+                                               <MoreVertIcon/>
+                                                   </IconButton>
+                                                 <Menu
+                                                anchorEl={anchorEl}
+                                                open={open}
+                                                onClose={handleClose}
+                                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                                    slotProps={{
+                                                    paper: {
+                                                     sx: {
+                                                     boxShadow: 'none',               
+                                                     border: '1px solid #e0e0e0',     
+                                                    mt: 1,                           
+                                                   },
+                             },
+                           }}
+                           >
+                                                <MenuItem onClick={() =>{ handleClose(); 
+                                                   router.push(
+                                  `/coupons/view?drawer=edit&id=${coupon.id}`)}}>
+                                                   <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                                                        Edit
+                                                         </MenuItem>
+                                                    <MenuItem onClick={() =>
+                                                    { handleClose(); 
+                                                     setDeleteId(coupon.id)}}>
+                                                  <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+                                 Delete
+                               </MenuItem>
+                             </Menu>
+                       
                         </TableCell>
                       </TableRow>
                     ))}

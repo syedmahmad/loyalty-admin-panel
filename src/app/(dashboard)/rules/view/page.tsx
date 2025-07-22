@@ -26,6 +26,9 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Menu,
+  
+  
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useRouter,useSearchParams } from 'next/navigation';
@@ -37,6 +40,7 @@ import { toast } from 'react-toastify';
 import RuleCreateForm from '../create/page';
 import RuleEdit from '../edit/page';
 import BaseDrawer from '@/components/drawer/basedrawer';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 type Rule = {
   id: number;
@@ -63,6 +67,15 @@ const RuleList = () => {
   const [page, setPage] = useState(0);
    const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
    const count = rules.length; 
+   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
+const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
+const handleClose = () => {
+  setAnchorEl(null);
+};
+
  
  const [rowsPerPage, setRowsPerPage] = useState(7);
     const totalPages = Math.ceil(count / rowsPerPage);
@@ -245,12 +258,36 @@ const paginatedrule= viewMode === 'card'?rules: rules.slice(page * rowsPerPage, 
                 {rule.name}
               </Typography>
               <Box>
-                <IconButton onClick={() => router.push(`/rules/view?drawer=edit&id=${rule.id}`)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton color="error" onClick={() => setDeleteId(rule.id)}>
-                  <DeleteIcon />
-                </IconButton>
+                <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                      anchorEl={anchorEl}
+    open={open}
+    onClose={handleClose}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+     slotProps={{
+    paper: {
+      sx: {
+        boxShadow: 'none',               
+        border: '1px solid #e0e0e0',     
+        mt: 1,                           
+      },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/rules/view?drawer=edit&id=${rule.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                            setDeleteId(rule.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
               </Box>
             </Box>
 
@@ -325,17 +362,36 @@ const paginatedrule= viewMode === 'card'?rules: rules.slice(page * rowsPerPage, 
                     <TableCell>{rule.rule_type === 'burn' ? rule.points_conversion_factor ?? '-' : '-'}</TableCell>
                     <TableCell>{rule.rule_type === 'burn' ? rule.max_burn_percent_on_invoice ?? '-' : '-'}</TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton onClick={() => router.push(`/rules/view?drawer=edit&id=${rule.id}`)
-                        }>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton onClick={() => setDeleteId(rule.id)} color="error">
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                       <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                      anchorEl={anchorEl}
+    open={open}
+    onClose={handleClose}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+     slotProps={{
+    paper: {
+      sx: {
+        boxShadow: 'none',               
+        border: '1px solid #e0e0e0',     
+        mt: 1,                           
+      },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/rules/view?drawer=edit&id=${rule.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                            setDeleteId(rule.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
                     </TableCell>
                   </TableRow>
                 ))} 

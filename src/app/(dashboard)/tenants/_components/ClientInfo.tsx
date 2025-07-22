@@ -7,15 +7,29 @@ import {
   Button,
   IconButton,
   Tooltip,
+  Menu,
+  MenuItem
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import EditClientModal from "./EditClientModal";
 import { DeleteClientModal } from "./DeleteClientModal";
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+
 
 const ClientInfo = ({ clientInfo, reFetch }: any) => {
   const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
+
+
+const handleClose = () => {
+  setAnchorEl(null);
+};
+const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
 
   const [openEditClientInfoModal, setOpenEditClientInfoModal] = useState(false);
   const [itemToBeEdited, setItemToBeEdited] = useState<any>(null);
@@ -36,22 +50,43 @@ const ClientInfo = ({ clientInfo, reFetch }: any) => {
   return (
     <Grid2 container>
       <Box sx={{ position: "relative", width: "100%" }}>
-        <Box
-          sx={{
+        <Box  sx={{
             position: "absolute",
             top: 0,
             right: 0,
             display: "flex",
             gap: 1,
-          }}
-        >
-          <IconButton onClick={() => handleDelete(clientInfo)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-
-          <IconButton onClick={() => handleOpenEditModal(clientInfo)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
+          }}>
+         <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                      anchorEl={anchorEl}
+    open={open}
+    onClose={handleClose}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+     slotProps={{
+    paper: {
+      sx: {
+        boxShadow: 'none',               
+        border: '1px solid #e0e0e0',     
+        mt: 1,                           
+      },
+    },
+  }}
+  >
+       <MenuItem onClick={() =>{ handleClose();
+       handleOpenEditModal(clientInfo)}}>
+  <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                          </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                              handleDelete(clientInfo)}}> 
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
         </Box>
       </Box>
 
@@ -117,6 +152,7 @@ const ClientInfo = ({ clientInfo, reFetch }: any) => {
 };
 
 export default ClientInfo;
+
 
 const ClientDetails = ({ clientInfo }: any) => {
   const theme = useTheme();

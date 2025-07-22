@@ -14,10 +14,9 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { WalletService } from './service/wallet.service';
 import WalletDetailDrawer from './components/WalletDetailDrawer';
-
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 interface BusinessUnit {
   id: number;
   name: string;
@@ -107,7 +106,7 @@ export default function WalletListPage() {
                 <TableCell>{wallet.locked_balance}</TableCell>
                 <TableCell>
                   <IconButton onClick={() => setSelectedWallet(wallet)}>
-                    <VisibilityIcon />
+                    <MoreVertIcon />
                   </IconButton>
                 </TableCell>
               </TableRow>

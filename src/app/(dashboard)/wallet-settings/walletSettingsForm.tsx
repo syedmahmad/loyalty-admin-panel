@@ -80,7 +80,13 @@ export default function WalletSettingsForm({
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Box width={400} p={3}>
-        <Typography variant="h6" mb={2}>
+        <Typography   sx={{
+              backgroundColor: '#fff',
+              fontFamily:'Outfit',
+              fontWeight: 600,
+  
+   
+  }} mb={2}>
           Wallet Settings
         </Typography>
 
@@ -157,8 +163,16 @@ export default function WalletSettingsForm({
           />
         )}
 
-        <Box mt={3}>
-          <Button variant="contained" fullWidth onClick={handleSubmit}>
+        <Box mt={3}
+        >
+          <Button variant="outlined" 
+             sx={{
+              backgroundColor: '#fff',
+              fontFamily:'Outfit',
+              fontWeight: 600,
+  
+   
+  }}  onClick={handleSubmit}>
             Save Settings
           </Button>
         </Box>

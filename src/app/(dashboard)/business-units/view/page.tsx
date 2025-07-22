@@ -26,10 +26,11 @@ import {
   Card,
   Select,
   MenuItem,
+  Menu,
   
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -79,7 +80,19 @@ const BusinessUnitList = () => {
  const count = units.length; 
  const totalPages = Math.ceil(count / rowsPerPage);
   const router = useRouter();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
+const handleClose = () => {
+  setAnchorEl(null);
+}
+
+
+
+
   
+const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
   const handleCloseDrawer = () => {
     const currentUrl = window.location.pathname;
     router.push(currentUrl);
@@ -110,7 +123,7 @@ const BusinessUnitList = () => {
       await loadData(searchName.trim());
     }
   };
-
+  
   const handleChangePage = (_: unknown, newPage: number) =>{setPage(newPage-1);
   };
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,13 +238,37 @@ const BusinessUnitList = () => {
                 </Typography>
                 </Box>
                 <Box>
-                  <IconButton onClick={() => router.push(`/business-units/view?drawer=edit&id=${unit.id}`)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton color="error" onClick={() => setConfirmDeleteId(unit.id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
+                <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                      anchorEl={anchorEl}
+    open={open}
+    onClose={handleClose}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+     slotProps={{
+    paper: {
+      sx: {
+        boxShadow: 'none',               
+        border: '1px solid #e0e0e0',     
+        mt: 1,                           
+      },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/business-units/view?drawer=edit&id=${unit.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                             setConfirmDeleteId(unit.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
+  </Box>
               </Box>
               <Typography variant="body2" color="text.secondary" mt={1}>
                 {unit.description || 'No Description'}
@@ -277,23 +314,36 @@ const BusinessUnitList = () => {
                     <TableCell >{unit.description || '—'}</TableCell>
                     <TableCell  >{unit.location || '—'}</TableCell>
                     <TableCell align="right" >
-                      <Tooltip title="Edit" >
-                        <IconButton
-                          color="primary"
-                          onClick={() => router.push(`/business-units/view?drawer=edit&id=${unit.id}`)
-                        }
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          color="error"
-                          onClick={() => setConfirmDeleteId(unit.id)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
+                       <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                      anchorEl={anchorEl}
+    open={open}
+    onClose={handleClose}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+     slotProps={{
+    paper: {
+      sx: {
+        boxShadow: 'none',               
+        border: '1px solid #e0e0e0',     
+        mt: 1,                           
+      },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/business-units/view?drawer=edit&id=${unit.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>{ handleClose(); 
+                             setConfirmDeleteId(unit.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -83,7 +83,7 @@ export const DeleteClientModal = ({
       {/* Confirmation Buttons */}
       <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4 }}>
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={() => handleDelete(itemToBeDeleted)}
         >
           Yes, Delete

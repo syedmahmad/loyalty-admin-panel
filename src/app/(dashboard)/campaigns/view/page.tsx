@@ -24,7 +24,9 @@ import {
   TextField,
   InputAdornment,
   Pagination,
+  Menu,
 } from '@mui/material';
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useEffect, useState } from 'react';
 import { GET, DELETE } from '@/utils/AxiosUtility';
 import { useRouter ,useSearchParams} from 'next/navigation';
@@ -55,6 +57,15 @@ const CampaignsList = () => {
     const currentUrl = window.location.pathname;
     router.push(currentUrl);
   };
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
+  const handleClose = () => {
+  setAnchorEl(null);
+};
+const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
+
 
   const fetchCampaigns = async (name = '') => {
     setLoading(true);
@@ -197,12 +208,37 @@ const CampaignsList = () => {
                         </Typography>
                       </Box>
                       <Box>
-                        <IconButton  onClick={() =>router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
-                          <DeleteIcon />
-                        </IconButton>
+                         <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                       anchorEl={anchorEl}
+                       open={open}
+                       onClose={handleClose}
+                       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                           slotProps={{
+                           paper: {
+                            sx: {
+                            boxShadow: 'none',               
+                            border: '1px solid #e0e0e0',     
+                           mt: 1,                           
+                          },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>
+                           { handleClose(); 
+                            handleDelete(campaign.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
                       </Box>
                     </Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -266,12 +302,37 @@ const CampaignsList = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell align="right">
-                     <IconButton onClick={() =>router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`)}>
-                     <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(campaign.id)}>
-                        <DeleteIcon />
-                      </IconButton>
+                        <IconButton onClick={handleMenuClick}>
+                      <MoreVertIcon/>
+                          </IconButton>
+                        <Menu
+                       anchorEl={anchorEl}
+                       open={open}
+                       onClose={handleClose}
+                       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                           slotProps={{
+                           paper: {
+                            sx: {
+                            boxShadow: 'none',               
+                            border: '1px solid #e0e0e0',     
+                           mt: 1,                           
+                          },
+    },
+  }}
+  >
+                       <MenuItem onClick={() =>{ handleClose(); 
+                          router.push(`/campaigns/view?drawer=edit&id=${campaign.id}`) }}>
+                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                               Edit
+                                </MenuItem>
+                           <MenuItem onClick={() =>
+                           { handleClose(); 
+                            handleDelete(campaign.id)}}>
+                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+        Delete
+      </MenuItem>
+    </Menu>
                     </TableCell>
                   </TableRow>
                 );
@@ -353,7 +414,7 @@ const CampaignsList = () => {
         open={drawerOpen === 'create'}
         onClose={handleCloseDrawer}
         title="Create Campaign"
-        width={980}
+        width={700}
       >
         <CampaignCreateForm
           onSuccess={() => {
@@ -369,7 +430,7 @@ const CampaignsList = () => {
           open={true}
           onClose={handleCloseDrawer}
           title="Edit Campaign"
-          width={980}
+          width={700}
         >
           <CampaignEdit
             onSuccess={() => {
