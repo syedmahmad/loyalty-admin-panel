@@ -165,14 +165,14 @@ const menuItems: { items: NavItemType[] } = {
       privileges: [],
       icon: CampaignIcon,
     },
-    {
-      id: "rewards",
-      title: "Rewards",
-      type: "item",
-      url: "/rewards",
-      privileges: [],
-      icon: EmojiEventsIcon,
-    },
+    // {
+    //   id: "rewards",
+    //   title: "Rewards",
+    //   type: "item",
+    //   url: "/rewards",
+    //   privileges: [],
+    //   icon: EmojiEventsIcon,
+    // },
     {
       id: "customers",
       title: "Customers",

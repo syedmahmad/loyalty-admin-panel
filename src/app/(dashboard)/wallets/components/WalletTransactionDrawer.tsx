@@ -64,8 +64,13 @@ export default function WalletTransactionDrawer({
       fetchWallets()
       onClose();
       onSuccess(); // reload transactions
-    } catch (err) {
-      toast.error('Failed to add transaction');
+    } catch (err: any) {
+      console.log("Error adding transaction:", err);
+      if (err?.response?.data?.message === "User does not have permission to perform this action") {
+        toast.error('You do not have permission to perform this action');
+      } else {
+        toast.error('Failed to add transaction');
+      }
     }
   };
 

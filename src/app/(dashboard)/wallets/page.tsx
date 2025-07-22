@@ -33,7 +33,7 @@ interface Wallet {
 
 export default function WalletListPage() {
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
-  const [selectedBU, setSelectedBU] = useState<number | null>(null);
+  const [selectedBU, setSelectedBU] = useState<number | null>(0);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
@@ -51,6 +51,10 @@ export default function WalletListPage() {
   const fetchWallets = async () => {
     setLoading(true);
     try {
+      if (!selectedBU) {
+        setWallets([]);
+        return;
+      }
       const res = await WalletService.getWallets(selectedBU ?? undefined);
       setWallets(res?.data || []);
     } catch (err) {
@@ -69,12 +73,12 @@ export default function WalletListPage() {
       <Box display="flex" gap={2} mb={3}>
         <Select
           size="small"
-          value={selectedBU ?? ''}
+          value={selectedBU}
           onChange={(e) => setSelectedBU(Number(e.target.value))}
           displayEmpty
           sx={{ minWidth: 250,backgroundColor: '#fff' }}
         >
-          <MenuItem value="">Select Business Unit</MenuItem>
+          <MenuItem value={0}>Select Business Unit</MenuItem>
           {businessUnits.map((bu) => (
             <MenuItem key={bu.id} value={bu.id}>
               {bu.name}
