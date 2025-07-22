@@ -61,8 +61,7 @@ const removeCustomerFromSegment = async (segmentId: number, customerId: number, 
   );
 };
 
-const CustomerSegmentEditPage = () => {
-  const { id: segmentId } = useParams();
+const CustomerSegmentEditPage = ({ segmentId, setSelectedSegmentId }: any) => {
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
@@ -114,7 +113,6 @@ const CustomerSegmentEditPage = () => {
       setSegment(updated);
       setSelectedCustomerIds([]); // Reset selection
       toast.success('Customers added to segment');
-      router.push('/customer-segment/view'); // Redirect to segment view
       
     } catch (error) {
       toast.error('Failed to add customers to segment');
@@ -137,12 +135,10 @@ const CustomerSegmentEditPage = () => {
 
   return (
     <Drawer
-
-  
       anchor="right"
       open={true}
       onClose={() => {
-        router.push('/customer-segment/view');
+        setSelectedSegmentId(null);
       }}
       PaperProps={{
         sx: { width: 400 }
@@ -247,7 +243,7 @@ const CustomerSegmentEditPage = () => {
                           .filter((c) => !segmentCustomers.some((sc: any) => sc.id === c.id))
                           .map((c) => (
                             <MenuItem key={c.id} value={c.id}>
-                              {c.name} ({c.email})
+                              {c.name} (<span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email.trim()}</span>)
                             </MenuItem>
                           ))}
                     </TextField>
