@@ -16,13 +16,14 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import EditClientModal from "./EditClientModal";
 import { DeleteClientModal } from "./DeleteClientModal";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useRouter } from 'next/navigation';
 
 
 const ClientInfo = ({ clientInfo, reFetch }: any) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 const open = Boolean(anchorEl);
-
+ const router = useRouter();
 
 const handleClose = () => {
   setAnchorEl(null);
@@ -76,11 +77,13 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     },
   }}
   >
-       <MenuItem onClick={() =>{ handleClose();
-       handleOpenEditModal(clientInfo)}}>
-  <EditIcon fontSize="small" style={{ marginRight: 8 }} />
-                               Edit
-                          </MenuItem>
+      
+                          
+                        <MenuItem onClick={() =>{ handleClose(); 
+                     router.push(`/tenants?drawer=edit&id=${clientInfo.id}`) }}>
+                       <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                          Edit
+                         </MenuItem>
                            <MenuItem onClick={() =>{ handleClose(); 
                               handleDelete(clientInfo)}}> 
                          <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />

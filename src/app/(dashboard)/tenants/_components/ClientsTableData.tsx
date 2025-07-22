@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from "react";
 import Grid2 from "@mui/material/Unstable_Grid2";
 import {
@@ -11,17 +13,18 @@ import {
 } from "@mui/material";
 import CreateClient from "./CreateClient";
 import ClientInfo from "./ClientInfo";
-import CreateClientModal from "./CreateClientModal";
+import { useRouter, useSearchParams } from "next/navigation";
+import BaseDrawer from "@/components/drawer/basedrawer";
+
+import EditClient from "./EditClient";
+import EditClientModal from "./EditClientModal";
 
 export const ClientsTableData = ({
   clientData,
   reFetchNewClientToken,
 }: any) => {
-  console.log("/clientData", clientData);
-  
-  const [openModal, setOpenModal] = useState<boolean>(false);
   const theme = useTheme();
-
+  
   // const user = JSON.parse(
   //   localStorage.getItem("user") || "{}"
   // )
@@ -32,24 +35,36 @@ export const ClientsTableData = ({
   // ];
 
   // const isAllowed = ALLOWED_EMAILS.includes(user?.email?.toLowerCase() || '');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const drawerOpen = searchParams.get('drawer');
+  const drawerId = searchParams.get('id'); 
+  const selectedClient = clientData.find(
+  (tenant: any) => String(tenant.id) === String(drawerId)
+);
+
+
+  const handleCloseDrawer = () => {
+    const currentUrl = window.location.pathname;
+    router.push(currentUrl); 
+  };
 
   if (clientData.length === 0) {
     return (
-      <>
-        <Container maxWidth="md">
-          <Grid2 xs={12} md={6} mdOffset={3} marginTop="20px">
-            <Card>
-              <CardContent>
-                <CreateClient
-                  reFetch={reFetchNewClientToken}
-                  openModal={openModal}
-                  setOpenModal={setOpenModal}
-                />
-              </CardContent>
-            </Card>
-          </Grid2>
-        </Container>
-      </>
+      <Container maxWidth="md">
+        <Grid2 xs={12} md={6} mdOffset={3} marginTop="20px">
+          <Card>
+            <CardContent>
+              <CreateClient
+                reFetch={reFetchNewClientToken}
+                openModal={true} // Always show create if no clients
+                setOpenModal={() => {}}
+              />
+            </CardContent>
+          </Card>
+        </Grid2>
+      </Container>
     );
   }
 
@@ -57,7 +72,6 @@ export const ClientsTableData = ({
     <Box>
       <Container maxWidth="lg">
         <Grid2 container spacing={3}>
-          {/* Header Section */}
           <Grid2 xs={12}>
             <Box
               sx={{
@@ -65,11 +79,10 @@ export const ClientsTableData = ({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-               }}
-              
+              }}
             >
               <Typography
-               sx={{
+                sx={{
                             color: 'rgba(0, 0, 0, 0.87)',
                             fontFamily: 'Outfit',
                             fontSize: '32px',
@@ -83,6 +96,7 @@ export const ClientsTableData = ({
               >
                 Tenants Details
               </Typography>
+
               <Button
                 variant="outlined"
                 sx={{
@@ -93,15 +107,15 @@ export const ClientsTableData = ({
                     boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
                   },
                 }}
-                onClick={() => setOpenModal(true)}
+                onClick={() => router.push("/tenants?drawer=create")}
               >
                 <b>Create Tenants</b>
               </Button>
             </Box>
           </Grid2>
 
-          {/* Create Client Section */}
-          {clientData.map((client: any, index: any) => (
+          {/* List of Tenants */}
+          {clientData.map((client: any, index: number) => (
             <Grid2 key={client?.clientId || index} xs={12} sm={6} md={4}>
               <Card
                 sx={{
@@ -121,16 +135,38 @@ export const ClientsTableData = ({
             </Grid2>
           ))}
 
-          {/* Modal Section */}
-          {openModal && (
-            <Grid2>
-              <CreateClientModal
-                openModal={openModal}
-                setOpenModal={setOpenModal}
-                reFetch={reFetchNewClientToken}
-              />
-            </Grid2>
-          )}
+          <BaseDrawer
+  open={drawerOpen === "create"}
+  onClose={handleCloseDrawer}
+  title="Create Tenant"
+>
+  <CreateClient
+    reFetch={() => {
+      reFetchNewClientToken();
+      handleCloseDrawer();
+    }}
+    setOpenModal={() => {}}
+  />
+</BaseDrawer>
+  {drawerOpen === 'edit' && drawerId && (
+  <BaseDrawer
+    open={true}
+    onClose={handleCloseDrawer}
+    title="Update Tenants info"
+  >
+    <EditClient
+      itemToBeEdited={selectedClient}
+      reFetch={() => {
+        reFetchNewClientToken();
+        handleCloseDrawer();
+      }}
+      setOpenEditClientInfoModal={handleCloseDrawer}
+    />
+  </BaseDrawer>
+)}
+
+
+          
         </Grid2>
       </Container>
     </Box>

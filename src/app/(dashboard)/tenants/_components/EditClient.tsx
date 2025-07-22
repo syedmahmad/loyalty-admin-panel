@@ -90,20 +90,13 @@ const EditClient = ({
     <Grid2 container spacing={3}>
       <Grid2 xs={12}>
         <Typography
-         sx={{
-              color: 'rgba(0, 0, 0, 0.87)',
-              fontFamily: 'Outfit',
-              fontSize: '32px',
-              fontWeight:600 ,
-               
-               
-            }}
+       
           variant="h4"
           color={theme.palette.primary.dark}
           textTransform="capitalize"
           align="center"
         >
-          Update Tenants Info
+          
         </Typography>
       </Grid2>
 
