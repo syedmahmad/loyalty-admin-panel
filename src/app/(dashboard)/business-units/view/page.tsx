@@ -238,37 +238,39 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
                 </Typography>
                 </Box>
                 <Box>
-                <IconButton onClick={handleMenuClick}>
-                      <MoreVertIcon/>
-                          </IconButton>
-                        <Menu
-                      anchorEl={anchorEl}
-    open={open}
-    onClose={handleClose}
-    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-     slotProps={{
-    paper: {
-      sx: {
-        boxShadow: 'none',               
-        border: '1px solid #e0e0e0',     
-        mt: 1,                           
-      },
-    },
-  }}
-  >
-                       <MenuItem onClick={() =>{ handleClose(); 
-                          router.push(`/business-units/view?drawer=edit&id=${unit.id}`) }}>
-                          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
-                               Edit
-                                </MenuItem>
-                           <MenuItem onClick={() =>{ handleClose(); 
-                             setConfirmDeleteId(unit.id)}}>
-                         <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
-        Delete
-      </MenuItem>
-    </Menu>
-  </Box>
+                  <IconButton onClick={handleMenuClick}>
+                        <MoreVertIcon/>
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    slotProps={{
+                    paper: {
+                      sx: {
+                        boxShadow: 'none',               
+                        border: '1px solid #e0e0e0',     
+                        mt: 1,                           
+                      },
+                    },
+                    }}
+                  >
+                    <MenuItem onClick={() =>{ handleClose(); 
+                      router.push(`/business-units/view?drawer=edit&id=${unit.id}`) }}>
+                      <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+                            Edit
+                    </MenuItem>
+                    <MenuItem onClick={() => { 
+                        handleClose(); 
+                        setConfirmDeleteId(unit.id)
+                    }}>
+                      <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+                        Delete
+                    </MenuItem>
+                  </Menu>
+                </Box>
               </Box>
               <Typography variant="body2" color="text.secondary" mt={1}>
                 {unit.description || 'No Description'}

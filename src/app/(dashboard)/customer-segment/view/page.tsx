@@ -22,15 +22,19 @@ import {
   TextField,
   InputAdornment,
   Pagination,
+  Menu,
+  Dialog,
+  DialogTitle,
+  DialogActions,
 } from '@mui/material';
-
-import { useEffect, useState } from 'react';
-import { GET } from '@/utils/AxiosUtility';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { DELETE, GET } from '@/utils/AxiosUtility';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BaseDrawer from '@/components/drawer/basedrawer';
 import CreateCustomerSegment from '../create/page';
-import CustomerSegmentEditPage from '../edit/[id]/page';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import CustomerSegmentEditPage from './components/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
@@ -43,6 +47,13 @@ type CustomerSegment = {
 
 const CustomerSegmentList = () => {
   const [segments, setSegments] = useState<CustomerSegment[]>([]);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<number | null>(null);
+  const [selectedSegmentIdForDelete, setSelectedSegmentIdForDelete] = useState<number | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClose = () => {
+    setAnchorEl(null);
+  }
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [page, setPage] = useState(0);
@@ -151,15 +162,42 @@ const CustomerSegmentList = () => {
                       <Typography variant="h6" fontWeight={600}>
                         {segment.name}
                       </Typography>
-                      <Tooltip title="Edit">
                         <IconButton
-                          onClick={() =>
-                             router.push(`/customer-segment/edit/${segment.id}`)
+                          onClick={(event: any) =>
+                             setAnchorEl(event.currentTarget)
                           }
                         >
                            <MoreVertIcon />
                         </IconButton>
-                      </Tooltip>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={open}
+                          onClose={handleClose}
+                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                          slotProps={{
+                          paper: {
+                            sx: {
+                              boxShadow: 'none',               
+                              border: '1px solid #e0e0e0',     
+                              mt: 1,                           
+                            },
+                          },
+                          }}
+                        >
+                          <MenuItem onClick={() =>{ handleClose(); 
+                            setSelectedSegmentId(segment.id);
+                            }}>
+                            <EditIcon fontSize="small" style={{ marginRight: 8 }} /> Edit
+                          </MenuItem>
+                          <MenuItem onClick={() => { 
+                              handleClose();
+                              setSelectedSegmentIdForDelete(segment.id);
+                          }}>
+                            <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+                              Delete
+                          </MenuItem>
+                        </Menu>
                     </Box>
                     <Typography variant="body2" mt={1}>
                       {segment.description || 'No Description'}
@@ -196,15 +234,42 @@ const CustomerSegmentList = () => {
                       <TableCell>{segment.description}</TableCell>
                       <TableCell>{segment.status === 1 ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell align="right">
-                        <Tooltip title="Edit">
                           <IconButton
-                            onClick={() =>
-                              router.push(`/customer-segment/edit/${segment.id}`)
+                            onClick={(event: any) =>
+                             setAnchorEl(event.currentTarget)
                             }
                           >
                             <MoreVertIcon />
                           </IconButton>
-                        </Tooltip>
+                          <Menu
+                          anchorEl={anchorEl}
+                          open={open}
+                          onClose={handleClose}
+                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                          slotProps={{
+                          paper: {
+                            sx: {
+                              boxShadow: 'none',               
+                              border: '1px solid #e0e0e0',     
+                              mt: 1,                           
+                            },
+                          },
+                          }}
+                        >
+                          <MenuItem onClick={() =>{ handleClose(); 
+                            setSelectedSegmentId(segment.id);
+                            }}>
+                            <EditIcon fontSize="small" style={{ marginRight: 8 }} /> Edit
+                          </MenuItem>
+                          <MenuItem onClick={() => { 
+                              handleClose();
+                              setSelectedSegmentIdForDelete(segment.id);
+                          }}>
+                            <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
+                              Delete
+                          </MenuItem>
+                        </Menu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -296,8 +361,57 @@ const CustomerSegmentList = () => {
         
 
       </Paper>
+
+      {selectedSegmentIdForDelete ? (
+        <DeleteSegment
+          segmentId={selectedSegmentIdForDelete}
+          setSelectedSegmentId={setSelectedSegmentIdForDelete} 
+          onSuccess={() => {
+            loadSegments();
+            setSelectedSegmentIdForDelete(null);
+          }}
+      />) : null}
+      {selectedSegmentId ?<CustomerSegmentEditPage
+        segmentId={selectedSegmentId}
+        setSelectedSegmentId={setSelectedSegmentId}
+      /> : null}
     </Box>
   );
 };
 
 export default CustomerSegmentList;
+
+
+const DeleteSegment = ({ segmentId, onSuccess, setSelectedSegmentId }: { segmentId: number; onSuccess: () => void, setSelectedSegmentId: Dispatch<SetStateAction<number | null>> }) => {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const res = await DELETE(`/customer-segments/${segmentId}/delete`);
+      if (res?.status === 200) {
+        onSuccess();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog
+        open={segmentId !== null}
+        onClose={() => setSelectedSegmentId(null)}
+      >
+        <DialogTitle>Are you sure you want to delete this business unit?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setSelectedSegmentId(null)} variant="outlined">
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} variant="contained" color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+  );
+}

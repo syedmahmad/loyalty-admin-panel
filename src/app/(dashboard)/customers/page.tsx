@@ -149,8 +149,12 @@ const CustomerList = () => {
                   {paginated.map((c) => (
                     <TableRow key={c.id}  onClick={() => handleRowClick(c.id)}>
                       <TableCell>{c.name}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.phone}</TableCell>
+                      <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.email}
+                      </TableCell>
+                      <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.phone}
+                      </TableCell>
                       <TableCell>{c.city}</TableCell>
                       <TableCell>{c.status === 1 ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell>{c.business_unit?.name || '—'}</TableCell>
