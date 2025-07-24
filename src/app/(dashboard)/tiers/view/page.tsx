@@ -259,9 +259,18 @@ const TierList = () => {
                         alignItems: "center",
                       }}
                     >
-                      <Typography variant="h6" fontWeight={600}>
-                        {tier.name}
-                      </Typography>
+                            <Typography
+                         variant="h3"
+                         fontWeight={500}
+                         sx={{
+                           fontFamily: 'Outfit',
+                           fontSize: '14px',
+                           lineHeight: '21px',
+                           letterSpacing: '0%',
+                         }}
+                       >
+                         {tier.name}
+                       </Typography>
                       <Box>
                         <IconButton
                           onClick={(event) => handleMenuClick(event, tier)}

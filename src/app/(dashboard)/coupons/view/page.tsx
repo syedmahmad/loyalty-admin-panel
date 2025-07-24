@@ -279,9 +279,18 @@ const CouponList = () => {
                       }}
                     >
                       <Box>
-                        <Typography variant="h6" fontWeight={600}>
-                          {coupon?.coupon_title}
-                        </Typography>
+                        <Typography
+                         variant="h3"
+                         fontWeight={500}
+                         sx={{
+                           fontFamily: 'Outfit',
+                           fontSize: '14px',
+                           lineHeight: '21px',
+                           letterSpacing: '0%',
+                         }}
+                       >
+                        {coupon?.coupon_title}
+                       </Typography>
                       </Box>
                       <Box>
                         <IconButton

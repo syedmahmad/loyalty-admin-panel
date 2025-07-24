@@ -271,9 +271,18 @@ const BusinessUnitList = () => {
                       }}
                     >
                       <Box>
-                        <Typography variant="h6" fontWeight={600}>
-                          {unit.name}
-                        </Typography>
+                         <Typography
+    variant="h3"
+    fontWeight={500}
+    sx={{
+      fontFamily: 'Outfit',
+      fontSize: '14px',
+      lineHeight: '21px',
+      letterSpacing: '0%',
+    }}
+  >
+    {unit.name}
+  </Typography>
                       </Box>
                       <Box>
                         <IconButton

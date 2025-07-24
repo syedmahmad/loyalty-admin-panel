@@ -212,9 +212,18 @@ const CustomerSegmentList = () => {
                         transition: "none",
                       }}
                     >
-                      <Typography variant="h6" fontWeight={600}>
-                        {segment.name}
-                      </Typography>
+                       <Typography
+                                               variant="h3"
+                                               fontWeight={500}
+                                               sx={{
+                                                 fontFamily: 'Outfit',
+                                                 fontSize: '14px',
+                                                 lineHeight: '21px',
+                                                 letterSpacing: '0%',
+                                               }}
+                                             >
+                                               {segment.name}
+                                             </Typography>
                       <IconButton
                         onClick={(event: any) =>
                           // setAnchorEl(event.currentTarget)
