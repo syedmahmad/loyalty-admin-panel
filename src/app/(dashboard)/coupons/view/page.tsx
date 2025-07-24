@@ -26,7 +26,6 @@ import {
   TableCell,
   TableContainer,
   TableHead,
- 
   TableRow,
   TextField,
   Tooltip,
@@ -75,8 +74,9 @@ const CouponList = () => {
     router.push("/coupons/view");
   };
 
+  const [selectedCoupon, setSelectedCoupon] = useState<null | Coupon>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-const open = Boolean(anchorEl);
+  const open = Boolean(anchorEl);
 
   const fetchCoupons = async (name = "") => {
     setLoading(true);
@@ -88,13 +88,16 @@ const open = Boolean(anchorEl);
     setLoading(false);
   };
   const handleClose = () => {
-  setAnchorEl(null);
-};
-const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-  setAnchorEl(event.currentTarget);
-};
-
-
+    setAnchorEl(null);
+    setSelectedCoupon(null);
+  };
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    coupon: Coupon
+  ) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedCoupon(coupon);
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -137,7 +140,10 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
       </Box>
     );
   }
-  const paginationcoupon= coupons.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  const paginationcoupon = coupons.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   const handleDrawerWidth = (selectedCouponType: string) => {
     setDrawerWidth(
@@ -249,93 +255,118 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {
-              paginationcoupon.map((coupon) => (
-                <Grid item xs={12} sm={6} md={4} key={coupon.id}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      boxShadow: "none",
-                      border: "none",
-                      transition: "none",
-                    }}
-                  >
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          boxShadow: "none",
-                          transition: "none",
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="h6" fontWeight={600}>
-                            {coupon?.coupon_title}
-                          </Typography>
-                        </Box>
-                        <Box>
-                           <IconButton onClick={handleMenuClick}>
-                                               <MoreVertIcon/>
-                                                   </IconButton>
-                                                 <Menu
-                                                anchorEl={anchorEl}
-                                                open={open}
-                                                onClose={handleClose}
-                                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                                    slotProps={{
-                                                    paper: {
-                                                     sx: {
-                                                     boxShadow: 'none',               
-                                                     border: '1px solid #e0e0e0',     
-                                                    mt: 1,                           
-                                                   },
-                             },
-                           }}
-                           >
-                                                <MenuItem onClick={() =>{ handleClose(); 
-                                                   router.push(
-                                  `/coupons/view?drawer=edit&id=${coupon.id}`)}}>
-                                                   <EditIcon fontSize="small" style={{ marginRight: 8 }} />
-                                                        Edit
-                                                         </MenuItem>
-                                                    <MenuItem onClick={() =>
-                                                    { handleClose(); 
-                                                     setDeleteId(coupon.id)}}>
-                                                  <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
-                                 Delete
-                               </MenuItem>
-                             </Menu>
-                        </Box>
+            {paginationcoupon.map((coupon) => (
+              <Grid item xs={12} sm={6} md={4} key={coupon.id}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    boxShadow: "none",
+                    border: "none",
+                    transition: "none",
+                  }}
+                >
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        boxShadow: "none",
+                        transition: "none",
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          {coupon?.coupon_title}
+                        </Typography>
                       </Box>
+                      <Box>
+                        <IconButton
+                          onClick={(event) => handleMenuClick(event, coupon)}
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={open}
+                          onClose={handleClose}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "right",
+                          }}
+                          transformOrigin={{
+                            vertical: "top",
+                            horizontal: "right",
+                          }}
+                          slotProps={{
+                            paper: {
+                              sx: {
+                                boxShadow: "none",
+                                border: "1px solid #e0e0e0",
+                                mt: 1,
+                              },
+                            },
+                          }}
+                        >
+                          <MenuItem
+                            onClick={() => {
+                              handleClose();
+                              if (selectedCoupon) {
+                                router.push(
+                                  `/coupons/view?drawer=edit&id=${selectedCoupon.id}`
+                                );
+                              }
+                            }}
+                          >
+                            <EditIcon
+                              fontSize="small"
+                              style={{ marginRight: 8 }}
+                            />
+                            Edit
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              handleClose();
+                              if (selectedCoupon) {
+                                setDeleteId(selectedCoupon.id);
+                              }
+                            }}
+                          >
+                            <DeleteIcon
+                              fontSize="small"
+                              style={{ marginRight: 8 }}
+                            />
+                            Delete
+                          </MenuItem>
+                        </Menu>
+                      </Box>
+                    </Box>
 
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        Discount: {coupon.discount_percentage ?? "-"}%
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        Discount Price: {coupon.discount_price ?? "-"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        Business Unit: {coupon.business_unit?.name ?? "-"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        Usage Limit: {coupon.usage_limit ?? "-"}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        Used: {coupon.number_of_times_used ?? "0"} times
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        Benefits: {htmlToPlainText(coupon.benefits || "-")}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Discount: {coupon.discount_percentage ?? "-"}%
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Discount Price: {coupon.discount_price ?? "-"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Business Unit: {coupon.business_unit?.name ?? "-"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Usage Limit: {coupon.usage_limit ?? "-"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Used: {coupon.number_of_times_used ?? "0"} times
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Benefits: {htmlToPlainText(coupon.benefits || "-")}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
         ) : (
           <Box component={Paper}>
@@ -351,7 +382,7 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
                     <TableCell>Usage Limit</TableCell>
                     <TableCell>Number of times used</TableCell>
                     <TableCell>Benefits</TableCell>
-                    <TableCell >Actions</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -417,39 +448,64 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
                           </Tooltip>
                         </TableCell>
                         <TableCell sx={{ display: "flex" }}>
-                           <IconButton onClick={handleMenuClick}>
-                                               <MoreVertIcon/>
-                                                   </IconButton>
-                                                 <Menu
-                                                anchorEl={anchorEl}
-                                                open={open}
-                                                onClose={handleClose}
-                                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                                    slotProps={{
-                                                    paper: {
-                                                     sx: {
-                                                     boxShadow: 'none',               
-                                                     border: '1px solid #e0e0e0',     
-                                                    mt: 1,                           
-                                                   },
-                             },
-                           }}
-                           >
-                                                <MenuItem onClick={() =>{ handleClose(); 
-                                                   router.push(
-                                  `/coupons/view?drawer=edit&id=${coupon.id}`)}}>
-                                                   <EditIcon fontSize="small" style={{ marginRight: 8 }} />
-                                                        Edit
-                                                         </MenuItem>
-                                                    <MenuItem onClick={() =>
-                                                    { handleClose(); 
-                                                     setDeleteId(coupon.id)}}>
-                                                  <DeleteIcon fontSize="small" style={{ marginRight: 8 }} />
-                                 Delete
-                               </MenuItem>
-                             </Menu>
-                       
+                          <IconButton
+                            onClick={(event) => handleMenuClick(event, coupon)}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={open}
+                            onClose={handleClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "right",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "right",
+                            }}
+                            slotProps={{
+                              paper: {
+                                sx: {
+                                  boxShadow: "none",
+                                  border: "1px solid #e0e0e0",
+                                  mt: 1,
+                                },
+                              },
+                            }}
+                          >
+                            <MenuItem
+                              onClick={() => {
+                                handleClose();
+                                if (selectedCoupon) {
+                                  router.push(
+                                    `/coupons/view?drawer=edit&id=${selectedCoupon.id}`
+                                  );
+                                }
+                              }}
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                style={{ marginRight: 8 }}
+                              />
+                              Edit
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                handleClose();
+                                if (selectedCoupon) {
+                                  setDeleteId(selectedCoupon.id);
+                                }
+                              }}
+                            >
+                              <DeleteIcon
+                                fontSize="small"
+                                style={{ marginRight: 8 }}
+                              />
+                              Delete
+                            </MenuItem>
+                          </Menu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -538,8 +594,7 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Coupon"
-          width={drawerWidth} 
-          
+          width={drawerWidth}
         >
           <CouponCreate
             onSuccess={() => {
@@ -556,8 +611,7 @@ const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
             open
             onClose={handleCloseDrawer}
             title="Edit Coupon"
-              width={drawerWidth} 
-           
+            width={drawerWidth}
           >
             <CouponEdit
               onSuccess={() => {
