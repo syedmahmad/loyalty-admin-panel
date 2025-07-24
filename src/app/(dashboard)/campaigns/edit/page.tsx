@@ -62,6 +62,8 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const [allCoupons, setAllCoupons] = useState<any[]>([]);
   const [selectedCoupons, setSelectedCoupons] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [allSegments, setAllSegments] = useState<any>([]);
+  const [selectedSegments, setSelectedSegments] = useState<any>([]);
 
   const ALL_RULE_TYPES = [
     "event based earn",
@@ -76,13 +78,14 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
   const fetchInitialData = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const [buRes, tierRes, rulesRes, couponsRes, campaignRes] =
+    const [buRes, tierRes, rulesRes, couponsRes, campaignRes, segmentsRes] =
       await Promise.all([
         GET(`business-units/${clientInfo.id}`),
         GET(`tiers/${clientInfo.id}`),
         GET(`rules/${clientInfo.id}`),
         GET(`/coupons/${clientInfo.id}?limit=5`),
         GET(`/campaigns/single/${paramId}`),
+        GET(`/customer-segments/${clientInfo.id}`)
       ]);
 
     const campaign = campaignRes?.data;
@@ -93,6 +96,8 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     setBus(campaign.business_unit_id);
     setDescription(campaign.description || "");
     setSelectedCoupons(campaign?.coupons.map((item: any) => item.coupon));
+    setAllSegments(segmentsRes?.data || []);
+    setSelectedSegments(campaign.customerSegments || []);
 
     setTiers(
       campaign.tiers.map((t: any) => ({
@@ -211,6 +216,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
       coupon_id: singleCpn.id,
     }));
+    const segmentIds = selectedSegments.map((seg: any) => seg.id);
 
     const payload = {
       name,
@@ -221,6 +227,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       tiers: tiersPayload,
       coupons: couponsPayload,
       description,
+      customer_segment_ids: segmentIds,
     };
     setLoading(true);
     try {
@@ -314,6 +321,27 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Select>
           </FormControl>
         </Grid>
+
+        <Grid item xs={12}>
+          <Autocomplete
+            multiple
+            options={allSegments}
+            getOptionLabel={(option) => option.segment.name}
+            value={selectedSegments}
+            onChange={(event, newValue) => setSelectedSegments(newValue)}
+            filterSelectedOptions
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Customer Segments"
+                placeholder="Select customer segments"
+                fullWidth
+              />
+            )}
+          />
+        </Grid>
+
 
         {ruleTypes.map((type, idx) => (
           <Grid key={idx} item xs={12}>

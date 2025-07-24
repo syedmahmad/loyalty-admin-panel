@@ -26,6 +26,7 @@ export type CouponFormValues = {
   is_point_earning_disabled?: number;
   status: number;
   benefits: string;
+  customer_segment_ids: number[];
   conditions: {
     [key: string]: any;
   };
