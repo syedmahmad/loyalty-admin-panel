@@ -42,18 +42,16 @@ export default function WalletListPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedBU !== null) {
       fetchWallets();
-    }
   }, [selectedBU]);
 
   const fetchWallets = async () => {
     setLoading(true);
     try {
-      if (!selectedBU) {
-        setWallets([]);
-        return;
-      }
+      // if (!selectedBU) {
+      //   setWallets([]);
+      //   return;
+      // }
       const res = await WalletService.getWallets(selectedBU ?? undefined);
       setWallets(res?.data || []);
     } catch (err) {
