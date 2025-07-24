@@ -13,6 +13,7 @@ import {
   IconButton,
   InputLabel,
   useTheme,
+  InputAdornment,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useEffect, useState } from 'react';
@@ -21,6 +22,7 @@ import { GET, PUT } from '@/utils/AxiosUtility';
 import { toast } from 'react-toastify';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { RichTextEditor } from '@/components/TextEditor';
+import { tooltipMessagesValidityAfterAssignmentForRule } from '@/constants/constants';
 
 const initialForm = {
   name: '',
@@ -34,6 +36,7 @@ const initialForm = {
   condition_type: '',
   condition_operator: '',
   condition_value: '',
+  validity_after_assignment: 0
 };
 
 const RuleEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
@@ -71,6 +74,7 @@ const RuleEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
         condition_type: rule.condition_type || '',
         condition_operator: rule.condition_operator || '',
         condition_value: rule.condition_value || '',
+        validity_after_assignment: rule.validity_after_assignment || 0,
       });
       setDescription(rule.description || '');
     }
@@ -133,6 +137,7 @@ const RuleEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
       condition_type: form.condition_type || null,
       condition_operator: form.condition_operator || null,
       condition_value: form.condition_value || null,
+      validity_after_assignment: form.validity_after_assignment === 0 ? undefined : form.validity_after_assignment,
       description,
       updated_by,
     };
@@ -324,6 +329,33 @@ const RuleEdit =  ({ onSuccess }: { onSuccess: () => void }) => {
                 />
               </Grid>
             </>
+          )}
+
+          {/* Validity for user After Assigned */}
+          {form.rule_type !== 'burn' && (
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Valid for (Days) After Assigned to User"
+                value={form.validity_after_assignment}
+                type="number"
+                inputProps={{ min: 0 }}
+                name="validity_after_assignment"
+                onChange={(e) => handleChange('validity_after_assignment', e.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title={tooltipMessagesValidityAfterAssignmentForRule}>
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
           )}
 
           <Grid item xs={12}>

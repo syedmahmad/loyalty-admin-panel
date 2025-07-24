@@ -268,29 +268,31 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
         )}
 
         {/* Validity for user After Assigned */}
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Valid for (Days) After Assigned to User"
-            value={form.validity_after_assignment}
-            type="number"
-            inputProps={{ min: 0 }}
-            name="validity_after_assignment"
-            onChange={(e) => handleChange('validity_after_assignment', e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title={tooltipMessagesValidityAfterAssignmentForRule}>
-                    <IconButton edge="end">
-                      <InfoOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
+        {form.rule_type !== 'burn' && (
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Valid for (Days) After Assigned to User"
+              value={form.validity_after_assignment}
+              type="number"
+              inputProps={{ min: 0 }}
+              name="validity_after_assignment"
+              onChange={(e) => handleChange('validity_after_assignment', e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title={tooltipMessagesValidityAfterAssignmentForRule}>
+                      <IconButton edge="end">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+        )}
 
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
