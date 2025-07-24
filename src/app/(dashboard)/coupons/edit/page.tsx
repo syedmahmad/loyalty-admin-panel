@@ -69,6 +69,13 @@ const EditCouponForm = ({
   const [couponTypes, setCouponTypes] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
   const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
+  const [segments, setSegments] = useState([]);
+
+  const fetchCustomerSegments = async () => {
+      const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+      const res = await GET(`/customer-segments/${clientInfo.id}`);
+      setSegments(res?.data || []);
+  };
 
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<
     { name: string }[]
@@ -119,6 +126,7 @@ const EditCouponForm = ({
         setBusinessUnits(buRes?.data || []);
         setCouponTypes(couponTypesRes?.data.couponTypes || []);
         setMakes(makeRes?.data?.data || []);
+        fetchCustomerSegments();
 
         if (paramId) {
           await fetchCouponById(paramId);
@@ -364,6 +372,7 @@ const EditCouponForm = ({
       validity_after_assignment: couponData?.validity_after_assignment || "",
       is_point_earning_disabled: couponData?.is_point_earning_disabled,
       status: couponData?.status,
+      customer_segment_ids: couponData?.customerSegments.map((ls: any) => ls.segment.id) || [],
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
@@ -465,6 +474,7 @@ const EditCouponForm = ({
       updated_by: userId,
       tenant_id: userId,
       created_by: userId,
+      customer_segment_ids: values.customer_segment_ids,
     }));
 
     const responses = await Promise.all(
@@ -1220,6 +1230,37 @@ const EditCouponForm = ({
                   </MenuItem>
                 ))}
               </TextField>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                options={segments.filter((s: any) =>
+                  !values.customer_segment_ids.includes(s.id)
+                )}
+                getOptionLabel={(option: any) => option.name}
+                value={segments.filter((s: any) =>
+                  values.customer_segment_ids.includes(s.id)
+                )}
+                onChange={(event, newValue) => {
+                  setFieldValue(
+                    "customer_segment_ids",
+                    newValue.map((item: any) => item.id)
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Customer Segments"
+                    error={Boolean(touched.customer_segment_ids && errors.customer_segment_ids)}
+                    helperText={
+                      touched.customer_segment_ids && errors.customer_segment_ids
+                        ? errors.customer_segment_ids
+                        : ""
+                    }
+                  />
+                )}
+              />
             </Grid>
 
             {/* Max Usage Per User */}

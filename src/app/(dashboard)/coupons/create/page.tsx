@@ -73,6 +73,13 @@ const CreateCouponForm = ({
   const [makes, setMakes] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
   const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
+  const [segments, setSegments] = useState([]);
+
+  const fetchCustomerSegments = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const res = await GET(`/customer-segments/${clientInfo.id}`);
+    setSegments(res?.data || []);
+  };
 
   const [couponTypes, setCouponTypes] = useState([]);
   const [dynamicCouponTypesRows, setDynamicCouponTypesRows] = useState([
@@ -123,6 +130,7 @@ const CreateCouponForm = ({
       validity_after_assignment: "",
       is_point_earning_disabled: 0,
       status: 1,
+      customer_segment_ids: [] as number[],
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
@@ -235,6 +243,7 @@ const CreateCouponForm = ({
   useEffect(() => {
     loadData();
     fetchCouponTypes();
+    fetchCustomerSegments();
   }, []);
 
   useEffect(() => {
@@ -333,6 +342,7 @@ const CreateCouponForm = ({
       tenant_id: created_by,
       created_by,
       updated_by: created_by,
+      customer_segment_ids: values.customer_segment_ids,
     }));
 
     const responses = await Promise.all(
@@ -1044,6 +1054,35 @@ const CreateCouponForm = ({
                 </MenuItem>
               ))}
             </TextField>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Autocomplete
+              multiple
+              options={segments}
+              getOptionLabel={(option: any) => option.name}
+              value={segments.filter((s: any) =>
+                values.customer_segment_ids.includes(s.id)
+              )}
+              onChange={(event, newValue) => {
+                setFieldValue(
+                  "customer_segment_ids",
+                  newValue.map((item: any) => item.id)
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Customer Segments"
+                  error={Boolean(touched.customer_segment_ids && errors.customer_segment_ids)}
+                  helperText={
+                    touched.customer_segment_ids && errors.customer_segment_ids
+                      ? errors.customer_segment_ids
+                      : ""
+                  }
+                />
+              )}
+            />
           </Grid>
 
           {/* Max Usage Per User */}
