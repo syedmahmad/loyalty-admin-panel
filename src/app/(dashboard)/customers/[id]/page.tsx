@@ -1,73 +1,81 @@
-import { Box, Typography, Grid, Paper, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+'use client';
+import { Box, Typography, Grid, Paper, Chip, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { Person, DirectionsCar, Star } from '@mui/icons-material';
-
-const data = {
-  name: 'Ashiq Hussain',
-  phone: '+966 577777770',
-  joined: 'Jul 11, 2025 10:28 AM',
-  status: 'Active',
-  city: 'Bengaluru',
-  address: '1502, West, Rajajinagar, Bengaluru, Karnataka 560010, India',
-  referralCode: 'BAB580',
-  loyaltyPoints: 1040,
-  tier: 'Bronze',
-  referralCount: 0,
-  totalBurntPoints: 0,
-  totalVehicles: 1,
-  pointsHistory: [
-    { description: 'Sign Up', points: 1000, type: 'EARN', program: 'Datamart Affiliate Program - Saudi Arabia', date: 'Jul 11, 2025 10:28 AM' },
-    { description: 'Phone Number Addition', points: 20, type: 'EARN', program: 'Datamart Affiliate Program - Saudi Arabia', date: 'Jul 11, 2025 10:28 AM' },
-    { description: 'Gender Addition', points: 20, type: 'EARN', program: 'Datamart Affiliate Program - Saudi Arabia', date: 'Jul 11, 2025 10:28 AM' },
-  ],
-  vehicles: [
-    { plate: '25ZSHG', vin: '', make: 'ACURA', model: 'CL Coupe', year: 2016, fuel: 'Petrol', status: 'ACTIVE', createdAt: 'Jul 11, 2025 10:28 AM' },
-  ]
-};
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { GET } from '@/utils/AxiosUtility';
 
 export default function CustomerDetail() {
+  const params = useParams();
+  const customerId = Number(params?.id); // assuming URL is like /customers/detail/[id]
+  const [loading, setLoading] = useState(true);
+  const [customer, setCustomer] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchCustomerDetail = async () => {
+      try {
+        const response: any = await GET(`/customers/${customerId}/details`);
+        setCustomer(response.data);
+      } catch (error) {
+        console.error('Error fetching customer details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (customerId) {
+      fetchCustomerDetail();
+    }
+  }, [customerId]);
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" mt={5}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  console.log("customer", customer);
+  
   return (
     <Box>
-      <Typography sx={{ color: 'rgba(0, 0, 0, 0.87)',fontFamily: "Outfit, sans-serif",fontSize: '20px',fontWeight:600  }}>{data.name}</Typography>
-      <Typography variant="body1" >{data.phone}</Typography>
-      <Typography sx={{fontFamily:'Outfit'}}>Joined: {data.joined}</Typography>
-     <Box display="flex" alignItems="center" mt={1}>
-  <Typography sx={{fontFamily:'Outfit'}} mr={1}>Status:</Typography>
-  <Chip label={data.status} color="primary" variant="outlined" size="small" sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 550  }} 
-  />
-</Box>
-      <Typography  sx={{fontFamily:'Outfit'}} >City: {data.city}</Typography>
-      <Typography sx={{fontFamily:'Outfit'}}>Location: {data.address}</Typography>
-      <Typography  sx={{fontFamily:'Outfit'}}>Referral Code: {data.referralCode}</Typography>
+      <Typography sx={{ color: 'rgba(0, 0, 0, 0.87)',fontFamily: "Outfit, sans-serif",fontSize: '20px',fontWeight:600  }}>{customer.name}</Typography>
+      <Typography sx={{fontFamily:'Outfit'}}>
+        <strong>Phone Number:</strong> {customer.phone?.slice(0, 10)}...
+      </Typography>
+      <Typography sx={{fontFamily:'Outfit'}}><strong>Joined:</strong> {new Date(customer.created_at).toLocaleDateString()}</Typography>
+      <Box display="flex" alignItems="center" mt={1}>
+        <Typography sx={{fontFamily:'Outfit'}} mr={1}><strong>Status:</strong></Typography>
+        <Chip label={customer.status === 1 ? "Active" : "Inactive"} color="primary" variant="outlined" size="small" sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 550  }} 
+        />
+      </Box>
+      <Typography  sx={{fontFamily:'Outfit'}} ><strong>City:</strong> {customer.city}</Typography>
+      <Typography sx={{fontFamily:'Outfit'}}><strong>Location:</strong> {customer.address}</Typography>
 
       <Grid container spacing={2} mt={1}>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Loyalty Points</Typography>
-            <Typography variant="h6">{data.loyaltyPoints}</Typography>
+            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Available Points</Typography>
+            <Typography variant="h6">{customer.wallet?.available_balance}</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
             <Typography sx={{fontFamily:'Outfit', opacity:0.5}}>Tier</Typography>
-            <Typography variant="h6">{data.tier}</Typography>
+            <Typography variant="h6">1</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography sx={{fontFamily:'Outfit', opacity:0.5}}>Referral Count</Typography>
-            <Typography variant="h6">{data.referralCount}</Typography>
+            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Total Points</Typography>
+            <Typography variant="h6">{customer.wallet?.total_balance}</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography sx={{fontFamily:'Outfit', opacity:0.5}}>Total Burnt Points</Typography>
-            <Typography variant="h6">{data.totalBurntPoints}</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Typography sx={{fontFamily:'Outfit', opacity:0.5}}>Total Vehicle</Typography>
-            <Typography variant="h6">{data.totalVehicles}</Typography>
+            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Locked Points</Typography>
+            <Typography variant="h6">{customer.wallet?.locked_balance}</Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -81,18 +89,16 @@ export default function CustomerDetail() {
                 <TableCell>Description</TableCell>
                 <TableCell>Points</TableCell>
                 <TableCell>Type</TableCell>
-                <TableCell>Program</TableCell>
                 <TableCell>Date</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.pointsHistory.map((point, idx) => (
+              {customer.transactions.map((point: any, idx: number) => (
                 <TableRow key={idx}>
                   <TableCell>{point.description}</TableCell>
-                  <TableCell>{point.points}</TableCell>
+                  <TableCell>{point.amount}</TableCell>
                   <TableCell><Chip label={point.type} color="primary" size="small" variant='outlined'sx={{ backgroundColor: '#fff', fontFamily:'Outfit',fontWeight: 550, }} /></TableCell>
-                  <TableCell>{point.program}</TableCell>
-                  <TableCell>{point.date}</TableCell>
+                  <TableCell>{new Date(point.created_at).toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -100,39 +106,55 @@ export default function CustomerDetail() {
         </TableContainer>
       </Box>
 
-      <Box mt={2}>
-        <Typography sx={{fontFamily:'Outfit',fontSize: '20px',fontWeight:500 }}>Vehicle</Typography>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Plate No</TableCell>
-                <TableCell>VIN No</TableCell>
-                <TableCell>Make</TableCell>
-                <TableCell>Model</TableCell>
-                <TableCell>Year</TableCell>
-                <TableCell>Fuel Type</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Created At</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.vehicles.map((v, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{v.plate}</TableCell>
-                  <TableCell>{v.vin}</TableCell>
-                  <TableCell>{v.make}</TableCell>
-                  <TableCell>{v.model}</TableCell>
-                  <TableCell>{v.year}</TableCell>
-                  <TableCell>{v.fuel}</TableCell>
-                  <TableCell><Chip label={v.status} color="primary" size="small" variant='outlined' sx={{ backgroundColor: '#fff', fontFamily:'Outfit',fontWeight: 550, }}/></TableCell>
-                  <TableCell>{v.createdAt}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
     </Box>
   );
 }
+
+
+
+// const CustomerDetail = () => {
+
+//   if (!customer) {
+//     return (
+//       <Box mt={5} textAlign="center">
+//         <Typography variant="h6">Customer not found</Typography>
+//       </Box>
+//     );
+//   }
+
+//   return (
+//     <Box mt={3}>
+//       <Paper elevation={3} sx={{ padding: 2, marginBottom: 3 }}>
+//         <Typography variant="h6">Customer Info</Typography>
+//         <Typography>Name: {customer.name}</Typography>
+//         <Typography>Email: {customer.email}</Typography>
+//         <Typography>Phone: {customer.phone}</Typography>
+//         <Typography>Status: {customer.status}</Typography>
+//       </Paper>
+
+//       {customer.wallet && (
+//         <Paper elevation={3} sx={{ padding: 2, marginBottom: 3 }}>
+//           <Typography variant="h6">Wallet Info</Typography>
+//           <Typography>Balance: {customer.wallet.balance}</Typography>
+//           <Typography>Status: {customer.wallet.status}</Typography>
+//         </Paper>
+//       )}
+
+//       {customer.wallet?.transactions?.length > 0 && (
+//         <Paper elevation={3} sx={{ padding: 2 }}>
+//           <Typography variant="h6">Transaction History</Typography>
+//           {customer.wallet.transactions.map((tx: any) => (
+//             <Box key={tx.id} sx={{ marginBottom: 1 }}>
+//               <Typography>
+//                 <strong>{tx.type.toUpperCase()}</strong> - {tx.points} points on {new Date(tx.created_at).toLocaleDateString()}
+//               </Typography>
+//               <Typography variant="body2">Ref: {tx.reference}</Typography>
+//             </Box>
+//           ))}
+//         </Paper>
+//       )}
+//     </Box>
+//   );
+// };
+
+// export default CustomerDetail;
