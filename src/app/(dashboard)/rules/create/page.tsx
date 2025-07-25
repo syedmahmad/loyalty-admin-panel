@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Box,
@@ -14,15 +14,15 @@ import {
   InputLabel,
   useTheme,
   InputAdornment,
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useState } from 'react';
-import { POST } from '@/utils/AxiosUtility';
-import { toast } from 'react-toastify';
-import { useRouter } from 'next/navigation';
-import { RichTextEditor } from '@/components/TextEditor';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { tooltipMessagesValidityAfterAssignmentForRule } from '@/constants/constants';
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useState } from "react";
+import { POST } from "@/utils/AxiosUtility";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+import { RichTextEditor } from "@/components/TextEditor";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { tooltipMessagesValidityAfterAssignmentForRule } from "@/constants/constants";
 
 const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
   <Box display="flex" alignItems="center" mb={0.5}>
@@ -35,28 +35,29 @@ const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
   </Box>
 );
 
-const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
+const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
-  const userInfo = JSON.parse(localStorage.getItem('client-info') || '{}');
+  const userInfo = JSON.parse(localStorage.getItem("client-info") || "{}");
   const created_by = userInfo?.id;
 
   const initialForm = {
-    name: '',
-    rule_type: 'event based earn',
-    min_amount_spent: '',
-    reward_points: '',
-    event_triggerer: '',
-    max_redeemption_points_limit: '',
-    points_conversion_factor: '',
-    max_burn_percent_on_invoice: '',
-    condition_type: '',
-    condition_operator: '',
-    condition_value: '',
-    validity_after_assignment: 0
+    name: "",
+    rule_type: "event based earn",
+    min_amount_spent: "",
+    reward_points: "",
+    event_triggerer: "",
+    max_redeemption_points_limit: "",
+    points_conversion_factor: "",
+    max_burn_percent_on_invoice: "",
+    condition_type: "",
+    condition_operator: "",
+    condition_value: "",
+    validity_after_assignment: 0,
+    frequency: "once",
   };
 
   const [form, setForm] = useState(initialForm);
-  const [description, setDescription] = useState<string>('');
+  const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const handleChange = (field: string, value: any) => {
@@ -65,34 +66,40 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
 
   const handleSubmit = async () => {
     if (!form.name || !form.rule_type) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
     if (
-      (form.rule_type === 'event based earn' && (!form.event_triggerer || !form.reward_points)) ||
-      (form.rule_type === 'spend and earn' && (!form.min_amount_spent || !form.reward_points)) ||
-      (form.rule_type === 'burn' &&
+      (form.rule_type === "event based earn" &&
+        (!form.event_triggerer || !form.reward_points)) ||
+      (form.rule_type === "spend and earn" &&
+        (!form.min_amount_spent || !form.reward_points)) ||
+      (form.rule_type === "burn" &&
         (!form.min_amount_spent ||
           !form.max_redeemption_points_limit ||
           !form.points_conversion_factor ||
           !form.max_burn_percent_on_invoice)) ||
-      (form.rule_type === 'dynamic rule' &&
-        (!form.condition_type || !form.condition_operator || !form.condition_value))
+      (form.rule_type === "dynamic rule" &&
+        (!form.condition_type ||
+          !form.condition_operator ||
+          !form.condition_value))
     ) {
-      toast.error('Please fill all required fields for this rule type');
+      toast.error("Please fill all required fields for this rule type");
       return;
     }
 
     setLoading(true);
 
-    const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
 
     const payload = {
       name: form.name,
       rule_type: form.rule_type,
-      client_id: clientInfo.id, 
-      min_amount_spent: form.min_amount_spent ? parseFloat(form.min_amount_spent) : null,
+      client_id: clientInfo.id,
+      min_amount_spent: form.min_amount_spent
+        ? parseFloat(form.min_amount_spent)
+        : null,
       reward_points: form.reward_points ? parseFloat(form.reward_points) : null,
       event_triggerer: form.event_triggerer || null,
       max_redeemption_points_limit: form.max_redeemption_points_limit
@@ -107,20 +114,24 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
       condition_type: form.condition_type || null,
       condition_operator: form.condition_operator || null,
       condition_value: form.condition_value || null,
-      validity_after_assignment: form.validity_after_assignment === 0 ? undefined : form.validity_after_assignment,
+      validity_after_assignment:
+        form.validity_after_assignment === 0
+          ? undefined
+          : form.validity_after_assignment,
+      frequency: form.frequency || "once",
       description,
       created_by,
     };
 
-    const response = await POST('/rules', payload);
+    const response = await POST("/rules", payload);
 
     if (response?.status === 201) {
-      toast.success('Rule created successfully!');
+      toast.success("Rule created successfully!");
       setForm(initialForm);
-      setDescription('');
-     onSuccess();
+      setDescription("");
+      onSuccess();
     } else {
-      toast.error('Failed to create rule');
+      toast.error("Failed to create rule");
     }
 
     setLoading(false);
@@ -141,21 +152,27 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <InfoLabel label="Rule Name" tooltip="Name of the rule to identify it easily." />
+          <InfoLabel
+            label="Rule Name"
+            tooltip="Name of the rule to identify it easily."
+          />
           <TextField
             fullWidth
             value={form.name}
-            onChange={(e) => handleChange('name', e.target.value)}
+            onChange={(e) => handleChange("name", e.target.value)}
           />
         </Grid>
 
         <Grid item xs={12}>
-          <InfoLabel label="Rule Type" tooltip="Choose the rule logic to apply." />
+          <InfoLabel
+            label="Rule Type"
+            tooltip="Choose the rule logic to apply."
+          />
           <TextField
             select
             fullWidth
             value={form.rule_type}
-            onChange={(e) => handleChange('rule_type', e.target.value)}
+            onChange={(e) => handleChange("rule_type", e.target.value)}
           >
             <MenuItem value="event based earn">Event-Based Earn</MenuItem>
             <MenuItem value="spend and earn">Spend & Earn</MenuItem>
@@ -164,45 +181,53 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
           </TextField>
         </Grid>
 
-        {form.rule_type === 'event based earn' && (
+        {form.rule_type === "event based earn" && (
           <Grid item xs={12}>
-            <InfoLabel label="Event Triggerer" tooltip="Triggering event like signup or birthday." />
+            <InfoLabel
+              label="Event Triggerer"
+              tooltip="Triggering event like signup or birthday."
+            />
             <TextField
               fullWidth
               value={form.event_triggerer}
-              onChange={(e) => handleChange('event_triggerer', e.target.value)}
+              onChange={(e) => handleChange("event_triggerer", e.target.value)}
               placeholder="e.g. signup, birthday"
             />
           </Grid>
         )}
 
-        {(form.rule_type === 'spend and earn' || form.rule_type === 'burn') && (
+        {(form.rule_type === "spend and earn" || form.rule_type === "burn") && (
           <Grid item xs={12}>
-            <InfoLabel label="Minimum Amount Spent" tooltip="Minimum spend amount to activate the rule." />
+            <InfoLabel
+              label="Minimum Amount Spent"
+              tooltip="Minimum spend amount to activate the rule."
+            />
             <TextField
               fullWidth
               type="number"
               value={form.min_amount_spent}
-              onChange={(e) => handleChange('min_amount_spent', e.target.value)}
+              onChange={(e) => handleChange("min_amount_spent", e.target.value)}
             />
           </Grid>
         )}
 
-        {form.rule_type === 'dynamic rule' && (
+        {form.rule_type === "dynamic rule" && (
           <Grid item xs={12}>
             <Box display="flex" gap={1}>
               <TextField
                 label="Condition Type"
                 fullWidth
                 value={form.condition_type}
-                onChange={(e) => handleChange('condition_type', e.target.value)}
+                onChange={(e) => handleChange("condition_type", e.target.value)}
               />
               <TextField
                 select
                 fullWidth
                 label="Condition Operator"
                 value={form.condition_operator}
-                onChange={(e) => handleChange('condition_operator', e.target.value)}
+                onChange={(e) =>
+                  handleChange("condition_operator", e.target.value)
+                }
               >
                 <MenuItem value="==">Equal To (==)</MenuItem>
                 <MenuItem value="!=">Not Equal (!=)</MenuItem>
@@ -215,53 +240,75 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
                 label="Value"
                 fullWidth
                 value={form.condition_value}
-                onChange={(e) => handleChange('condition_value', e.target.value)}
+                onChange={(e) =>
+                  handleChange("condition_value", e.target.value)
+                }
               />
             </Box>
           </Grid>
         )}
 
-        {(form.rule_type === 'event based earn' || form.rule_type === 'spend and earn' || form.rule_type === 'dynamic rule') && (
+        {(form.rule_type === "event based earn" ||
+          form.rule_type === "spend and earn" ||
+          form.rule_type === "dynamic rule") && (
           <Grid item xs={12}>
-            <InfoLabel label="Reward Points" tooltip="Number of points to be awarded." />
+            <InfoLabel
+              label="Reward Points"
+              tooltip="Number of points to be awarded."
+            />
             <TextField
               fullWidth
               type="number"
               value={form.reward_points}
-              onChange={(e) => handleChange('reward_points', e.target.value)}
+              onChange={(e) => handleChange("reward_points", e.target.value)}
             />
           </Grid>
         )}
 
-        {form.rule_type === 'burn' && (
+        {form.rule_type === "burn" && (
           <>
             <Grid item xs={12}>
-              <InfoLabel label="Max Redeemable Points" tooltip="Max points a user can burn in a transaction." />
+              <InfoLabel
+                label="Max Redeemable Points"
+                tooltip="Max points a user can burn in a transaction."
+              />
               <TextField
                 fullWidth
                 type="number"
                 value={form.max_redeemption_points_limit}
-                onChange={(e) => handleChange('max_redeemption_points_limit', e.target.value)}
+                onChange={(e) =>
+                  handleChange("max_redeemption_points_limit", e.target.value)
+                }
               />
             </Grid>
 
             <Grid item xs={12}>
-              <InfoLabel label="Points Conversion Factor" tooltip="Points to currency value ratio." />
+              <InfoLabel
+                label="Points Conversion Factor"
+                tooltip="Points to currency value ratio."
+              />
               <TextField
                 fullWidth
                 type="number"
                 value={form.points_conversion_factor}
-                onChange={(e) => handleChange('points_conversion_factor', e.target.value)}
+                onChange={(e) =>
+                  handleChange("points_conversion_factor", e.target.value)
+                }
               />
             </Grid>
 
             <Grid item xs={12}>
-              <InfoLabel label="Max Burn % on Invoice" tooltip="Maximum invoice value percentage that can be paid using points." />
+              <InfoLabel
+                label="Max Burn % on Invoice"
+                tooltip="Maximum invoice value percentage that can be paid using points."
+              />
               <TextField
                 fullWidth
                 type="number"
                 value={form.max_burn_percent_on_invoice}
-                onChange={(e) => handleChange('max_burn_percent_on_invoice', e.target.value)}
+                onChange={(e) =>
+                  handleChange("max_burn_percent_on_invoice", e.target.value)
+                }
               />
             </Grid>
           </>
@@ -293,23 +340,45 @@ const RuleCreateForm =  ({ onSuccess }: { onSuccess: () => void }) => {
             />
           </Grid>
         )}
+        <Grid item xs={12}>
+          <InfoLabel
+            label="Frequency"
+            tooltip="Defines how often this rule can be applied: 
+      • once – rewarded only one time ever, 
+      • yearly – rewarded once every year, 
+      • daily – rewarded once per day."
+          />
+          <TextField
+            fullWidth
+            value={form.frequency}
+            placeholder="e.g. once, daily, yearly"
+            onChange={(e) => handleChange("frequency", e.target.value)}
+          />
+        </Grid>
 
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
             Description (optional)
           </Typography>
-          <RichTextEditor value={description} setValue={setDescription} language="en" />
+          <RichTextEditor
+            value={description}
+            setValue={setDescription}
+            language="en"
+          />
         </Grid>
       </Grid>
 
       <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-        <Button variant="outlined" color="primary" onClick={handleSubmit} disabled={loading}
-          sx={{ fontWeight: 600, textTransform: 'none' }}>
-          {loading ? <CircularProgress size={24} /> : 'Create Rule'}
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={handleSubmit}
+          disabled={loading}
+          sx={{ fontWeight: 600, textTransform: "none" }}
+        >
+          {loading ? <CircularProgress size={24} /> : "Create Rule"}
         </Button>
-        
       </Box>
-    
     </>
   );
 };
