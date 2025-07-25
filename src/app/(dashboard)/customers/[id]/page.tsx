@@ -1,9 +1,24 @@
-'use client';
-import { Box, Typography, Grid, Paper, Chip, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import { Person, DirectionsCar, Star } from '@mui/icons-material';
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { GET } from '@/utils/AxiosUtility';
+"use client";
+import {
+  Box,
+  Typography,
+  Grid,
+  Paper,
+  Chip,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Pagination,
+} from "@mui/material";
+import { Person, DirectionsCar, Star } from "@mui/icons-material";
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { GET } from "@/utils/AxiosUtility";
 
 export default function CustomerDetail() {
   const params = useParams();
@@ -11,20 +26,32 @@ export default function CustomerDetail() {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchCustomerDetail = async () => {
-      try {
-        const response: any = await GET(`/customers/${customerId}/details`);
-        setCustomer(response.data);
-      } catch (error) {
-        console.error('Error fetching customer details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //Pagination
+  const [page, setPage] = useState(1);
+  const pageSize = 7;
+  const [totalPages, setTotalPages] = useState(1);
 
+  const fetchCustomerDetail = async (pageNumber: number) => {
+    try {
+      const response: any = await GET(
+        `/customers/${customerId}/details?page=${pageNumber}&pageSize=${pageSize}`
+      );
+
+      setCustomer(response.data);
+      setTotalPages(
+        Math.ceil((response.data?.transactions?.total || 0) / pageSize)
+      );
+      setPage(Number(response.data?.transactions?.page));
+    } catch (error) {
+      console.error("Error fetching customer details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (customerId) {
-      fetchCustomerDetail();
+      fetchCustomerDetail(page);
     }
   }, [customerId]);
 
@@ -36,52 +63,95 @@ export default function CustomerDetail() {
     );
   }
 
-  console.log("customer", customer);
-  
   return (
     <Box>
-      <Typography sx={{ color: 'rgba(0, 0, 0, 0.87)',fontFamily: "Outfit, sans-serif",fontSize: '20px',fontWeight:600  }}>{customer.name}</Typography>
-      <Typography sx={{fontFamily:'Outfit'}}>
+      <Typography
+        sx={{
+          color: "rgba(0, 0, 0, 0.87)",
+          fontFamily: "Outfit, sans-serif",
+          fontSize: "20px",
+          fontWeight: 600,
+        }}
+      >
+        {customer.name}
+      </Typography>
+      <Typography sx={{ fontFamily: "Outfit" }}>
         <strong>Phone Number:</strong> {customer.phone?.slice(0, 10)}...
       </Typography>
-      <Typography sx={{fontFamily:'Outfit'}}><strong>Joined:</strong> {new Date(customer.created_at).toLocaleDateString()}</Typography>
+      <Typography sx={{ fontFamily: "Outfit" }}>
+        <strong>Joined:</strong>{" "}
+        {new Date(customer.created_at).toLocaleDateString()}
+      </Typography>
       <Box display="flex" alignItems="center" mt={1}>
-        <Typography sx={{fontFamily:'Outfit'}} mr={1}><strong>Status:</strong></Typography>
-        <Chip label={customer.status === 1 ? "Active" : "Inactive"} color="primary" variant="outlined" size="small" sx={{ backgroundColor: '#fff', fontFamily: 'Outfit', fontWeight: 550  }} 
+        <Typography sx={{ fontFamily: "Outfit" }} mr={1}>
+          <strong>Status:</strong>
+        </Typography>
+        <Chip
+          label={customer.status === 1 ? "Active" : "Inactive"}
+          color="primary"
+          variant="outlined"
+          size="small"
+          sx={{
+            backgroundColor: "#fff",
+            fontFamily: "Outfit",
+            fontWeight: 550,
+          }}
         />
       </Box>
-      <Typography  sx={{fontFamily:'Outfit'}} ><strong>City:</strong> {customer.city}</Typography>
-      <Typography sx={{fontFamily:'Outfit'}}><strong>Location:</strong> {customer.address}</Typography>
+      <Typography sx={{ fontFamily: "Outfit" }}>
+        <strong>City:</strong> {customer.city}
+      </Typography>
+      <Typography sx={{ fontFamily: "Outfit" }}>
+        <strong>Location:</strong> {customer.address}
+      </Typography>
 
       <Grid container spacing={2} mt={1}>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Available Points</Typography>
-            <Typography variant="h6">{customer.wallet?.available_balance}</Typography>
+            <Typography sx={{ fontFamily: "Outfit", opacity: 0.5 }}>
+              Available Points
+            </Typography>
+            <Typography variant="h6">
+              {customer.wallet?.available_balance}
+            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography sx={{fontFamily:'Outfit', opacity:0.5}}>Tier</Typography>
+            <Typography sx={{ fontFamily: "Outfit", opacity: 0.5 }}>
+              Tier
+            </Typography>
             <Typography variant="h6">1</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Total Points</Typography>
-            <Typography variant="h6">{customer.wallet?.total_balance}</Typography>
+            <Typography sx={{ fontFamily: "Outfit", opacity: 0.5 }}>
+              Total Points
+            </Typography>
+            <Typography variant="h6">
+              {customer.wallet?.total_balance}
+            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Typography  sx={{fontFamily:'Outfit', opacity:0.5}}  >Locked Points</Typography>
-            <Typography variant="h6">{customer.wallet?.locked_balance}</Typography>
+            <Typography sx={{ fontFamily: "Outfit", opacity: 0.5 }}>
+              Locked Points
+            </Typography>
+            <Typography variant="h6">
+              {customer.wallet?.locked_balance}
+            </Typography>
           </Paper>
         </Grid>
       </Grid>
 
       <Box mt={2}>
-        <Typography sx={{fontFamily:'Outfit',fontSize: '20px',fontWeight:500 }}>Points History</Typography>
+        <Typography
+          sx={{ fontFamily: "Outfit", fontSize: "20px", fontWeight: 500 }}
+        >
+          Points History
+        </Typography>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -93,24 +163,96 @@ export default function CustomerDetail() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {customer.transactions.map((point: any, idx: number) => (
+              {customer?.transactions?.data?.map((point: any, idx: number) => (
                 <TableRow key={idx}>
                   <TableCell>{point.description}</TableCell>
                   <TableCell>{point.amount}</TableCell>
-                  <TableCell><Chip label={point.type} color="primary" size="small" variant='outlined'sx={{ backgroundColor: '#fff', fontFamily:'Outfit',fontWeight: 550, }} /></TableCell>
-                  <TableCell>{new Date(point.created_at).toLocaleString()}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={point.type}
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        backgroundColor: "#fff",
+                        fontFamily: "Outfit",
+                        fontWeight: 550,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {new Date(point.created_at).toLocaleString()}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
-      </Box>
 
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderTop: "1px solid #E0E0E0",
+            paddingY: 2,
+            paddingX: 2,
+          }}
+        >
+          {/* Previous Button */}
+          <Button
+            variant="outlined"
+            onClick={() => fetchCustomerDetail(page - 1)}
+            disabled={page === 1}
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              px: 3,
+              minWidth: 100,
+            }}
+          >
+            ← Previous
+          </Button>
+
+          {/* Pagination */}
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, value) => fetchCustomerDetail(value)}
+            shape="rounded"
+            siblingCount={1}
+            boundaryCount={1}
+            hidePrevButton
+            hideNextButton
+            sx={{
+              "& .MuiPaginationItem-root": {
+                borderRadius: "8px",
+                fontWeight: 500,
+                minWidth: "36px",
+                height: "36px",
+              },
+            }}
+          />
+
+          {/* Next Button */}
+          <Button
+            variant="outlined"
+            onClick={() => fetchCustomerDetail(page + 1)}
+            disabled={page === totalPages}
+            sx={{
+              textTransform: "none",
+              borderRadius: 2,
+              px: 3,
+              minWidth: 100,
+            }}
+          >
+            Next →
+          </Button>
+        </Box>
+      </Box>
     </Box>
   );
 }
-
-
 
 // const CustomerDetail = () => {
 

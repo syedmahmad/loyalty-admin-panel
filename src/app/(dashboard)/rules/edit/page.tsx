@@ -23,6 +23,8 @@ import { toast } from 'react-toastify';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { RichTextEditor } from '@/components/TextEditor';
 import { tooltipMessagesValidityAfterAssignmentForRule } from '@/constants/constants';
+import { FREQUENCY } from "@/constants/constants";
+import slugify from "slugify";
 
 const initialForm = {
   name: '',
@@ -127,6 +129,10 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
     const payload = {
       name: form.name,
+      slug: slugify(form.name, {
+        replacement: "_",
+        lower: true,
+      }),
       rule_type: form.rule_type,
       min_amount_spent: form.min_amount_spent
         ? parseFloat(form.min_amount_spent)
@@ -415,17 +421,24 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           <Grid item xs={12}>
             <InfoLabel
               label="Frequency"
-              tooltip="Defines how often this rule can be applied: 
+              tooltip="Defines how often this rule can be applied:
                 • once – rewarded only one time ever, 
                 • yearly – rewarded once every year, 
                 • daily – rewarded once per day."
             />
+
             <TextField
+              select
               fullWidth
               value={form.frequency}
-              placeholder="e.g. once, daily, yearly"
               onChange={(e) => handleChange("frequency", e.target.value)}
-            />
+            >
+              {FREQUENCY.map((singleFrequency, index) => (
+                <MenuItem value={singleFrequency.value} key={index}>
+                  {singleFrequency.label}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid item xs={12}>

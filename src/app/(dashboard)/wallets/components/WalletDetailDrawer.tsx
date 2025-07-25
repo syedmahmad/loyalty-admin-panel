@@ -12,11 +12,12 @@ import {
   Button,
   Grid,
   Paper,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import { WalletService } from '../service/wallet.service';
-import WalletTransactionDrawer from './WalletTransactionDrawer';
+  Pagination,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { WalletService } from "../service/wallet.service";
+import WalletTransactionDrawer from "./WalletTransactionDrawer";
 
 interface Wallet {
   id: number;
@@ -28,9 +29,9 @@ interface Wallet {
 
 interface WalletTransaction {
   id: number;
-  type: 'earn' | 'burn' | 'expire' | 'adjustment';
+  type: "earn" | "burn" | "expire" | "adjustment";
   amount: number;
-  status: 'pending' | 'active' | 'expired';
+  status: "pending" | "active" | "expired";
   created_at: string;
   description?: string;
 }
@@ -43,24 +44,42 @@ interface Props {
   fetchWallets: () => void;
 }
 
-export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, fetchWallets }: Props) {
+export default function WalletDetailDrawer({
+  open,
+  onClose,
+  wallet,
+  selectedBU,
+  fetchWallets,
+}: Props) {
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [txDrawerOpen, setTxDrawerOpen] = useState(false);
 
+  //Pagination
+  const [page, setPage] = useState(1);
+  const pageSize = 7;
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     if (wallet?.id) {
-      fetchTransactions(wallet.id);
+      fetchTransactions(wallet.id, page);
     }
   }, [wallet]);
 
-  const fetchTransactions = async (walletId: number) => {
+  const fetchTransactions = async (walletId: number, pageNumber: number) => {
     setLoading(true);
     try {
-      const res = await WalletService.getWalletTransactions(walletId);
-      setTransactions(res?.data || []);
+      const res: any = await WalletService.getWalletTransactions(
+        walletId,
+        pageNumber,
+        pageSize
+      );
+
+      setTransactions(res?.data?.data || []);
+      setTotalPages(Math.ceil((res?.data?.total || 0) / pageSize));
+      setPage(pageNumber);
     } catch (err) {
-      toast.error('Failed to load transactions');
+      toast.error("Failed to load transactions");
     } finally {
       setLoading(false);
     }
@@ -73,7 +92,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
         <Grid container spacing={2} alignItems="center" mb={3}>
           <Grid item xs={6}>
             <Typography variant="h4">
-              {wallet?.customer?.name || 'N/A'}
+              {wallet?.customer?.name || "N/A"}
             </Typography>
           </Grid>
           <Grid item xs={6}>
@@ -86,7 +105,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
         {/* Stat Cards */}
         <Grid container spacing={2} mb={3}>
           <Grid item xs={4}>
-            <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
+            <Paper elevation={1} sx={{ p: 2, textAlign: "center" }}>
               <Typography variant="subtitle2">Total Points</Typography>
               <Typography fontWeight={600}>
                 {wallet?.total_balance ?? 0}
@@ -94,7 +113,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
             </Paper>
           </Grid>
           <Grid item xs={4}>
-            <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
+            <Paper elevation={1} sx={{ p: 2, textAlign: "center" }}>
               <Typography variant="subtitle2">Available Points</Typography>
               <Typography fontWeight={600}>
                 {wallet?.available_balance ?? 0}
@@ -102,7 +121,7 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
             </Paper>
           </Grid>
           <Grid item xs={4}>
-            <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
+            <Paper elevation={1} sx={{ p: 2, textAlign: "center" }}>
               <Typography variant="subtitle2">Locked Points</Typography>
               <Typography fontWeight={600}>
                 {wallet?.locked_balance ?? 0}
@@ -120,35 +139,111 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
         {loading ? (
           <CircularProgress size={20} />
         ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Reason</TableCell>
-                <TableCell>Date</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {transactions.map((tx) => (
-                <TableRow key={tx.id}>
-                  <TableCell>{tx.id}</TableCell>
-                  <TableCell>{tx.type}</TableCell>
-                  <TableCell>{tx.amount}</TableCell>
-                  <TableCell>{tx.status}</TableCell>
-                  <TableCell>{tx.description}</TableCell>
-                  <TableCell>
-                    {new Date(tx.created_at).toLocaleDateString()}
-                  </TableCell>
+          <>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Reason</TableCell>
+                  <TableCell>Date</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {transactions.map((tx) => (
+                  <TableRow key={tx.id}>
+                    <TableCell>{tx.id}</TableCell>
+                    <TableCell>{tx.type}</TableCell>
+                    <TableCell>{tx.amount}</TableCell>
+                    <TableCell>{tx.status}</TableCell>
+                    <TableCell>{tx.description}</TableCell>
+                    <TableCell>
+                      {new Date(tx.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderTop: "1px solid #E0E0E0",
+                paddingY: 2,
+                paddingX: 2,
+              }}
+            >
+              {/* Previous Button */}
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  if (!wallet?.id) return;
+                  fetchTransactions(wallet?.id, page - 1);
+                }}
+                disabled={page === 1}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2,
+                  px: 3,
+                  minWidth: 100,
+                }}
+              >
+                ← Previous
+              </Button>
+
+              {/* Pagination */}
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, value) => {
+                  if (!wallet?.id) return;
+                  fetchTransactions(wallet.id, value);
+                }}
+                shape="rounded"
+                siblingCount={1}
+                boundaryCount={1}
+                hidePrevButton
+                hideNextButton
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    borderRadius: "8px",
+                    fontWeight: 500,
+                    minWidth: "36px",
+                    height: "36px",
+                  },
+                }}
+              />
+
+              {/* Next Button */}
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  if (!wallet?.id) return;
+                  fetchTransactions(wallet?.id, page + 1);
+                }}
+                disabled={page === totalPages}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2,
+                  px: 3,
+                  minWidth: 100,
+                }}
+              >
+                Next →
+              </Button>
+            </Box>
+          </>
         )}
         <br />
-        <Button variant="contained" fullWidth onClick={() => setTxDrawerOpen(true)}>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={() => setTxDrawerOpen(true)}
+        >
           Add Manual Adjustment
         </Button>
 
@@ -156,9 +251,11 @@ export default function WalletDetailDrawer({ open, onClose, wallet, selectedBU, 
           fetchWallets={fetchWallets}
           selectedBU={selectedBU}
           open={txDrawerOpen}
-          onClose={() => {setTxDrawerOpen(false), onClose()}}
+          onClose={() => {
+            setTxDrawerOpen(false), onClose();
+          }}
           walletId={wallet?.id || 0}
-          onSuccess={() => fetchTransactions(wallet?.id || 0)}
+          onSuccess={() => fetchTransactions(wallet?.id || 0, page)}
         />
       </Box>
     </Drawer>

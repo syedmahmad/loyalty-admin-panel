@@ -91,3 +91,18 @@ export const discountTypes = [
 ];
 export const tooltipMessagesValidityAfterAssignmentForRule =
   "How many days the rule remains valid after it’s assigned to a user. Leave blank for no validity period.";
+
+export const FREQUENCY = [
+  {
+    label: "Once",
+    value: "once",
+  },
+  {
+    label: "Anytime",
+    value: "anytime",
+  },
+  {
+    label: "Yearly",
+    value: "yearly",
+  },
+];
