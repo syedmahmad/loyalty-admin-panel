@@ -14,7 +14,10 @@ import {
   TableRow,
   Button,
   Pagination,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { Person, DirectionsCar, Star } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -25,16 +28,20 @@ export default function CustomerDetail() {
   const customerId = Number(params?.id); // assuming URL is like /customers/detail/[id]
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>(null);
+  const [searchValue, setSearchValue] = useState("");
 
   //Pagination
   const [page, setPage] = useState(1);
   const pageSize = 7;
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchCustomerDetail = async (pageNumber: number) => {
+  const fetchCustomerDetail = async (
+    pageNumber: number,
+    searchValue: string
+  ) => {
     try {
       const response: any = await GET(
-        `/customers/${customerId}/details?page=${pageNumber}&pageSize=${pageSize}`
+        `/customers/${customerId}/details?page=${pageNumber}&pageSize=${pageSize}&query=${searchValue}`
       );
 
       setCustomer(response.data);
@@ -51,9 +58,9 @@ export default function CustomerDetail() {
 
   useEffect(() => {
     if (customerId) {
-      fetchCustomerDetail(page);
+      fetchCustomerDetail(page, searchValue);
     }
-  }, [customerId]);
+  }, [customerId, searchValue]);
 
   if (loading) {
     return (
@@ -152,6 +159,41 @@ export default function CustomerDetail() {
         >
           Points History
         </Typography>
+
+        <Box mb={2} mt={1}>
+          <TextField
+            placeholder="Search"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            sx={{
+              backgroundColor: "#fff",
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "15px",
+              borderBottom: "1px solid #e0e0e0",
+              borderRadius: 2,
+              "& .MuiInputBase-input": {
+                fontFamily: "Outfit",
+                fontWeight: 400,
+                fontSize: "15px",
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#9e9e9e" }} />
+                </InputAdornment>
+              ),
+              sx: {
+                borderRadius: 2,
+                fontFamily: "Outfit",
+                fontWeight: 400,
+              },
+            }}
+          />
+        </Box>
+
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -202,7 +244,7 @@ export default function CustomerDetail() {
           {/* Previous Button */}
           <Button
             variant="outlined"
-            onClick={() => fetchCustomerDetail(page - 1)}
+            onClick={() => fetchCustomerDetail(page - 1, searchValue)}
             disabled={page === 1}
             sx={{
               textTransform: "none",
@@ -218,7 +260,7 @@ export default function CustomerDetail() {
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(_, value) => fetchCustomerDetail(value)}
+            onChange={(_, value) => fetchCustomerDetail(value, searchValue)}
             shape="rounded"
             siblingCount={1}
             boundaryCount={1}
@@ -237,7 +279,7 @@ export default function CustomerDetail() {
           {/* Next Button */}
           <Button
             variant="outlined"
-            onClick={() => fetchCustomerDetail(page + 1)}
+            onClick={() => fetchCustomerDetail(page + 1, searchValue)}
             disabled={page === totalPages}
             sx={{
               textTransform: "none",

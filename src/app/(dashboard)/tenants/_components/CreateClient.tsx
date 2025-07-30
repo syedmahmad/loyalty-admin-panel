@@ -83,17 +83,14 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
     <Grid2 container spacing={3}>
       <Grid2 xs={12}>
         <Typography
-        
           variant="h4"
           color={theme.palette.primary.dark}
           textTransform="capitalize"
           align="center"
-        >
-      
-        </Typography>
+        ></Typography>
       </Grid2>
 
-      <Grid2 xs={12} md={6}>
+      <Grid2 xs={12} md={12}>
         <CustomTextfield
           required
           fullWidth
@@ -109,7 +106,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         />
       </Grid2>
 
-      <Grid2 xs={12} md={6}>
+      <Grid2 xs={12} md={12}>
         <CustomTextfield
           required
           fullWidth
@@ -125,7 +122,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         />
       </Grid2>
 
-      <Grid2 xs={12} md={6}>
+      <Grid2 xs={12} md={12}>
         <TextField
           select
           fullWidth
@@ -144,23 +141,18 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         </TextField>
       </Grid2>
 
-      <Grid2 xs={12} md={12} sx={{ mt: 2 }}>
-      <Box
-       sx={{
-      display: 'flex',
-      justifyContent: 'center', 
-      alignItems: 'center',     
-      width: '100%',
-    }}
-  >
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={handleSubmit}
-        
+      <Grid2 xs={12} md={12}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+          }}
         >
-          Register Tenants
-        </Button>
+          <Button variant="outlined" color="primary" onClick={handleSubmit}>
+            Register Tenants
+          </Button>
         </Box>
       </Grid2>
     </Grid2>

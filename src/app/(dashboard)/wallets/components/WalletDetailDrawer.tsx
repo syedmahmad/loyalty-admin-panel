@@ -14,7 +14,10 @@ import {
   Paper,
   Pagination,
   IconButton,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -60,6 +63,7 @@ export default function WalletDetailDrawer({
   const [txDrawerOpen, setTxDrawerOpen] = useState(false);
   const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState({});
+  const [searchValue, setSearchValue] = useState("");
 
   //Pagination
   const [page, setPage] = useState(1);
@@ -68,17 +72,22 @@ export default function WalletDetailDrawer({
 
   useEffect(() => {
     if (wallet?.id) {
-      fetchTransactions(wallet.id, page);
+      fetchTransactions(wallet.id, page, searchValue);
     }
-  }, [wallet]);
+  }, [wallet, searchValue]);
 
-  const fetchTransactions = async (walletId: number, pageNumber: number) => {
+  const fetchTransactions = async (
+    walletId: number,
+    pageNumber: number,
+    searchValue: string
+  ) => {
     setLoading(true);
     try {
       const res: any = await WalletService.getWalletTransactions(
         walletId,
         pageNumber,
-        pageSize
+        pageSize,
+        searchValue
       );
 
       setTransactions(res?.data?.data || []);
@@ -141,6 +150,40 @@ export default function WalletDetailDrawer({
         <Typography variant="subtitle1" mb={1}>
           Transactions
         </Typography>
+
+        <Box mb={2}>
+          <TextField
+            placeholder="Search"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            sx={{
+              backgroundColor: "#fff",
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "15px",
+              borderBottom: "1px solid #e0e0e0",
+              borderRadius: 2,
+              "& .MuiInputBase-input": {
+                fontFamily: "Outfit",
+                fontWeight: 400,
+                fontSize: "15px",
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#9e9e9e" }} />
+                </InputAdornment>
+              ),
+              sx: {
+                borderRadius: 2,
+                fontFamily: "Outfit",
+                fontWeight: 400,
+              },
+            }}
+          />
+        </Box>
 
         {loading ? (
           <Box textAlign="center">
@@ -206,7 +249,7 @@ export default function WalletDetailDrawer({
                 variant="outlined"
                 onClick={() => {
                   if (!wallet?.id) return;
-                  fetchTransactions(wallet?.id, page - 1);
+                  fetchTransactions(wallet?.id, page - 1, searchValue);
                 }}
                 disabled={page === 1}
                 sx={{
@@ -225,7 +268,7 @@ export default function WalletDetailDrawer({
                 page={page}
                 onChange={(_, value) => {
                   if (!wallet?.id) return;
-                  fetchTransactions(wallet.id, value);
+                  fetchTransactions(wallet.id, value, searchValue);
                 }}
                 shape="rounded"
                 siblingCount={1}
@@ -247,7 +290,7 @@ export default function WalletDetailDrawer({
                 variant="outlined"
                 onClick={() => {
                   if (!wallet?.id) return;
-                  fetchTransactions(wallet?.id, page + 1);
+                  fetchTransactions(wallet?.id, page + 1, searchValue);
                 }}
                 disabled={page === totalPages || !transactions.length}
                 sx={{
@@ -279,7 +322,9 @@ export default function WalletDetailDrawer({
             setTxDrawerOpen(false), onClose();
           }}
           walletId={wallet?.id || 0}
-          onSuccess={() => fetchTransactions(wallet?.id || 0, page)}
+          onSuccess={() =>
+            fetchTransactions(wallet?.id || 0, page, searchValue)
+          }
         />
 
         <WalletOrderDrawer

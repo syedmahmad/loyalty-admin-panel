@@ -6,8 +6,9 @@ export const WalletService = {
       params: businessUnitId ? { business_unit: businessUnitId } : {},
     }),
 
-  getWalletTransactions: (walletId: number, page: number, pageSize: number) =>
-    GET(`/wallets/${walletId}/transactions?page=${page}&pageSize=${pageSize}`),
+  getWalletTransactions: (walletId: number, page: number, pageSize: number, searchValue: string) => 
+    GET(`/wallets/${walletId}/transactions?page=${page}&pageSize=${pageSize}&query=${encodeURIComponent(searchValue)}`),
+
 
   addTransaction: (data: any) => POST("/wallets/transactions", data),
 

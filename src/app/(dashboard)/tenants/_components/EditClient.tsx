@@ -90,17 +90,14 @@ const EditClient = ({
     <Grid2 container spacing={3}>
       <Grid2 xs={12}>
         <Typography
-       
           variant="h4"
           color={theme.palette.primary.dark}
           textTransform="capitalize"
           align="center"
-        >
-          
-        </Typography>
+        ></Typography>
       </Grid2>
 
-      <Grid2 xs={12} md={6}>
+      <Grid2 xs={12} md={12}>
         <CustomTextfield
           required
           fullWidth
@@ -113,7 +110,7 @@ const EditClient = ({
         />
       </Grid2>
 
-      <Grid2 xs={12} md={6}>
+      <Grid2 xs={12} md={12}>
         <CustomTextfield
           required
           fullWidth
@@ -126,7 +123,7 @@ const EditClient = ({
         />
       </Grid2>
 
-      <Grid2 xs={12} md={6}>
+      <Grid2 xs={12} md={12}>
         <TextField
           select
           fullWidth
@@ -146,9 +143,8 @@ const EditClient = ({
         </TextField>
       </Grid2>
 
-      <Grid2 xs={12} display="flex" justifyContent="center"  
-          >
-        <Button 
+      <Grid2 xs={12} display="flex" justifyContent="center">
+        <Button
           variant="outlined"
           color="primary"
           onClick={() => handleSubmit(itemToBeEdited)}

@@ -9,15 +9,17 @@ import ClientsLoader from "@/components/loaders/ClientsLoader";
 const ClientsTableQuery = () => {
   // The QueryClient can be used to interact with a cache. here we need it to refetch
   // again on edit and add and delete.
+  const token = localStorage.getItem("token");
   const queryClient = useQueryClient();
-
   const clientTokenQuery = useQuery({
     queryKey: ["get-tenants-data"],
-    queryFn: async () => await GET("/tenants", {
-      headers: {
-        "Content-Type": "application/json",
-      }
-    }),
+    queryFn: async () =>
+      await GET("/tenants", {
+        headers: {
+          "Content-Type": "application/json",
+          "user-secret": token,
+        },
+      }),
   });
 
   const reFetchNewClientToken = () => {
@@ -25,8 +27,7 @@ const ClientsTableQuery = () => {
     queryClient.invalidateQueries({ queryKey: ["get-tenants-data"] });
   };
 
-  if (clientTokenQuery.isPending)
-    return <ClientsLoader />;
+  if (clientTokenQuery.isPending) return <ClientsLoader />;
 
   if (clientTokenQuery.error || clientTokenQuery.data?.status === 404)
     return <NotFound />;

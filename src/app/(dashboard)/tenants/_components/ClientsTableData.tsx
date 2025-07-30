@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 import Grid2 from "@mui/material/Unstable_Grid2";
@@ -24,7 +24,7 @@ export const ClientsTableData = ({
   reFetchNewClientToken,
 }: any) => {
   const theme = useTheme();
-  
+
   // const user = JSON.parse(
   //   localStorage.getItem("user") || "{}"
   // )
@@ -38,16 +38,15 @@ export const ClientsTableData = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const drawerOpen = searchParams.get('drawer');
-  const drawerId = searchParams.get('id'); 
+  const drawerOpen = searchParams.get("drawer");
+  const drawerId = searchParams.get("id");
   const selectedClient = clientData.find(
-  (tenant: any) => String(tenant.id) === String(drawerId)
-);
-
+    (tenant: any) => String(tenant.id) === String(drawerId)
+  );
 
   const handleCloseDrawer = () => {
     const currentUrl = window.location.pathname;
-    router.push(currentUrl); 
+    router.push(currentUrl);
   };
 
   if (clientData.length === 0) {
@@ -83,13 +82,11 @@ export const ClientsTableData = ({
             >
               <Typography
                 sx={{
-                            color: 'rgba(0, 0, 0, 0.87)',
-                            fontFamily: 'Outfit',
-                            fontSize: '32px',
-                            fontWeight:600 ,
-                             
-                             
-                          }}
+                  color: "rgba(0, 0, 0, 0.87)",
+                  fontFamily: "Outfit",
+                  fontSize: "32px",
+                  fontWeight: 600,
+                }}
                 variant="h3"
                 color={theme.palette.primary.dark}
                 textTransform="capitalize"
@@ -136,37 +133,34 @@ export const ClientsTableData = ({
           ))}
 
           <BaseDrawer
-  open={drawerOpen === "create"}
-  onClose={handleCloseDrawer}
-  title="Create Tenant"
->
-  <CreateClient
-    reFetch={() => {
-      reFetchNewClientToken();
-      handleCloseDrawer();
-    }}
-    setOpenModal={() => {}}
-  />
-</BaseDrawer>
-  {drawerOpen === 'edit' && drawerId && (
-  <BaseDrawer
-    open={true}
-    onClose={handleCloseDrawer}
-    title="Update Tenants info"
-  >
-    <EditClient
-      itemToBeEdited={selectedClient}
-      reFetch={() => {
-        reFetchNewClientToken();
-        handleCloseDrawer();
-      }}
-      setOpenEditClientInfoModal={handleCloseDrawer}
-    />
-  </BaseDrawer>
-)}
-
-
-          
+            open={drawerOpen === "create"}
+            onClose={handleCloseDrawer}
+            title="Create Tenant"
+          >
+            <CreateClient
+              reFetch={() => {
+                reFetchNewClientToken();
+                handleCloseDrawer();
+              }}
+              setOpenModal={() => {}}
+            />
+          </BaseDrawer>
+          {drawerOpen === "edit" && drawerId && (
+            <BaseDrawer
+              open={true}
+              onClose={handleCloseDrawer}
+              title="Update Tenants info"
+            >
+              <EditClient
+                itemToBeEdited={selectedClient}
+                reFetch={() => {
+                  reFetchNewClientToken();
+                  handleCloseDrawer();
+                }}
+                setOpenEditClientInfoModal={handleCloseDrawer}
+              />
+            </BaseDrawer>
+          )}
         </Grid2>
       </Container>
     </Box>
