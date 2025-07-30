@@ -1,13 +1,15 @@
-"use client";
+// src/components/MicrosoftButton.tsx
+'use client';
 
-import { loginRequest } from "@/msalConfig";
+import { Button } from "@mui/material";
+import Image from "next/image";
 import { useMsal } from "@azure/msal-react";
-import React, { useState } from "react";
-import { useTheme } from "@mui/material";
+import { loginRequest } from "@/msalConfig";
+import logo4 from "@/assets/images/micro.svg"; // adjust the path if needed
 
-export default function Microsoft() {
+export default function MicrosoftButton() {
   const { instance } = useMsal();
-  const theme = useTheme();
+
   const handleLogin = () => {
     instance.loginRedirect(loginRequest);
   };
@@ -60,14 +62,35 @@ export default function Microsoft() {
   // console.log("/?////////////////////////////////",);
   // console.log("/?////////////////////////////////",accounts);
   return (
-    <>
-    <span style={{ color: theme.palette.primary.main, cursor: 'pointer', fontWeight: '700' }} onClick={handleLogin}>
-          Login with Microsoft
-        </span>
-    {/* { accounts[0]?.length ? <span style={{ color: theme.palette.primary.main, cursor: 'pointer', fontWeight: '700' }}>
-          Processing login...
-        </span> :  */}
-        
-    </>
+    <Button
+      fullWidth
+      variant="contained"
+      onClick={handleLogin}
+      startIcon={
+        <Image
+          src={logo4}
+          alt="Microsoft Logo"
+          width={20}
+          height={20}
+        />
+      }
+      sx={{
+        backgroundColor: "#000",
+        color: "#fff",
+        textTransform: "none",
+        fontSize: "17px",
+        borderRadius: "12px",
+        px: 4,
+        py: 1.5,
+        maxWidth: 320,
+        "&:hover": {
+          backgroundColor: "#000",
+          color: "#fff",
+        },
+      }}
+    >
+      Continue with Microsoft
+    </Button>
   );
 }
+
