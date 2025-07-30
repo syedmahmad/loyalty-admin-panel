@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
   Button,
   Grid,
   Card,
-  CardContent,
   Table,
   TableBody,
   TableCell,
@@ -31,7 +30,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  
 } from 'recharts';
 import {
   StaticDatePicker,
@@ -39,82 +37,81 @@ import {
 } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { PickersDay, PickersDayProps } from '@mui/x-date-pickers/PickersDay';
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
+import { GET } from '@/utils/AxiosUtility'; // Axios wrapper
 
-const LoyaltyAnalyticsPage =()=> {
+const LoyaltyAnalyticsPage = () => {
+  const [analyticsData, setAnalyticsData] = useState<any>({
+    pointSplits: [],
+    customerByPoints: [],
+    itemUsage: [],
+    summary: {
+      totalEarnedPoints: 0,
+      totalBurntPoints: 0,
+      totalLoyaltyPoints: 0,
+      totalRemainingPoints: 0,
+    },
+  });
 
-const pieData = [
-  { name: 'Transaction', value: 400, color: '#8BC34A' },
-  { name: 'Sign up', value: 900, color: '#6A0000' },
-  { name: 'Referral', value: 200, color: '#FF9800' },
-  { name: 'Reference', value: 200, color: '#441e75ff' },
-  { name: 'Transcation item bonus', value: 200, color: '#160f04ff' },
-  { name: 'Gender addition', value: 200, color: '#d8cacaff' },
-];
+  const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [hoverDate, setHoverDate] = useState<Dayjs | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const barChart= [
-    { date: '2025-04-15', count: 0 },
-    { date: '2025-05-01', count: 0 },
-    { date: '2025-05-20', count: 8 },
-    { date: '2025-06-10', count: 0 },
-    { date: '2025-07-14', count: 0 },
-  ];
-   const barchart= [
-    { date: '2025-04-15', count: 0 },
-    { date: '2025-05-01', count: 4000},
-    { date: '2025-05-20', count: 6000 },
-    { date: '2025-06-10', count: 0 },
-    { date: '2025-07-14', count: 0 },
-  ];
+  const open = Boolean(anchorEl);
+  const months = [dayjs(), dayjs().add(1, 'month')];
 
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const response = await GET('/loyalty/analytics/dashboard', {
+        params: {
+          startDate: startDate?.format('YYYY-MM-DD'),
+          endDate: endDate?.format('YYYY-MM-DD'),
+        }
+      });
+      setAnalyticsData(response?.data);
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const customerPointsData = [
-  { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-   { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-    { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-     { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-      { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-       { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-       { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-       { range: '1,001-2,000', count: 213, percentage: '91.42%' },
-       
-         
-];
-const  itemusage=[
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-  { itemName: 'abc', Invoice: 213, percentage: '91.42%' },
-];
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
 
-   const [startDate, setStartDate] = useState<Dayjs | null>(null);
-    const [endDate, setEndDate] = useState<Dayjs | null>(null);
-    const [hoverDate, setHoverDate] = useState<Dayjs | null>(null);
-    const [months, setMonths] = React.useState([
-      dayjs(),
-      dayjs().add(1, 'month'),
-     
-    ]);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl);
-   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
-      setAnchorEl(event.currentTarget);
-    };
-     const handleClose = () => {
+  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
     setAnchorEl(null);
   };
-  const points=[
-    { label: 'Total Earned Points', count: 6235338710 },
-    { label: 'Total Burnt Points', count: 0 },
-    
-  ];
+
   const inRange = (day: Dayjs) =>
     startDate && endDate && day.isAfter(startDate) && day.isBefore(endDate);
-   const presets = [
+
+  const handleDateClick = (day: Dayjs | null) => {
+    if (!startDate || (startDate && endDate)) {
+      setStartDate(day);
+      setEndDate(null);
+    } else if (startDate && !endDate) {
+      if (day && day.isBefore(startDate)) {
+        setStartDate(day);
+      } else {
+        setEndDate(day);
+        handleClose();
+      }
+    }
+  };
+
+  const isStart = (day: Dayjs) => startDate?.isSame(day, 'day');
+  const isEnd = (day: Dayjs) => endDate?.isSame(day, 'day');
+
+  const presets = [
     { label: 'Today', range: [dayjs(), dayjs()] },
     { label: 'Yesterday', range: [dayjs().subtract(1, 'day'), dayjs().subtract(1, 'day')] },
     { label: 'Last 7 Days', range: [dayjs().subtract(6, 'day'), dayjs()] },
@@ -123,23 +120,91 @@ const  itemusage=[
     { label: 'Last Month', range: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')] },
     { label: 'This Year', range: [dayjs().startOf('year'), dayjs()] },
   ];
-     const handleDateClick = (day: Dayjs | null) => {
-      if (!startDate || (startDate && endDate)) {
-        setStartDate(day);
-        setEndDate(null);
-      } else if (startDate && !endDate) {
-        if (day && day.isBefore(startDate)) {
-          setStartDate(day);
-        } else {
-          setEndDate(day);
-          handleClose(); 
-        }
-      }
-    };
-       const isStart = (day: Dayjs) => startDate?.isSame(day, 'day');
-      const isEnd = (day: Dayjs) => endDate?.isSame(day, 'day');
-     
-  
+
+  const chartColors = ['#8BC34A', '#6A0000', '#FF9800', '#441e75ff', '#160f04ff', '#d8cacaff'];
+
+  const pieData = analyticsData?.pointSplits?.map((split: any, idx: number) => ({
+    name: split.sourceType,
+    value: Number(split.totalPoints),
+    color: chartColors[idx % chartColors.length],
+  })) || [];
+
+  const customerPointsData = analyticsData.customerByPoints || [];
+
+  const itemusage = analyticsData.itemUsage.map((item: any) => ({
+    itemName: item.itemName,
+    Invoice: item.invoiceCount,
+    percentage: item.percentage,
+  }));
+
+  const points = [
+    { label: 'Total Earned Points', count: analyticsData.summary.totalEarnedPoints },
+    { label: 'Total Burnt Points', count: analyticsData.summary.totalBurntPoints },
+    { label: 'Remaining Points in Wallets', count: analyticsData.summary.totalRemainingPoints },
+    { label: 'Net Loyalty Points', count: analyticsData.summary.totalLoyaltyPoints },
+  ];
+
+  if (loading) {
+    return <Typography>Loading Loyalty Analytics...</Typography>;
+  }
+
+  const handleExport = () => {
+    const { summary, pointSplits, customerByPoints, itemUsage, barChart } = analyticsData;
+
+    const csvSections = [];
+
+    // Summary
+    csvSections.push(['Summary']);
+    csvSections.push(['Label', 'Value']);
+    csvSections.push(['Total Earned Points', summary.totalEarnedPoints]);
+    csvSections.push(['Total Burnt Points', summary.totalBurntPoints]);
+    csvSections.push(['Net Loyalty Points', summary.totalLoyaltyPoints]);
+    csvSections.push(['Remaining Points in Wallets', summary.totalRemainingPoints]);
+    csvSections.push([]); // Empty line
+
+    // Point Splits
+    csvSections.push(['Point Splits']);
+    csvSections.push(['Source Type', 'Total Points']);
+    pointSplits.forEach((ps: any) => {
+      csvSections.push([ps.sourceType, ps.totalPoints]);
+    });
+    csvSections.push([]);
+
+    // Customer by Points
+    csvSections.push(['Customer by Points']);
+    csvSections.push(['Range', 'Count', 'Percentage']);
+    customerByPoints.forEach((cp: any) => {
+      csvSections.push([cp.range, cp.count, cp.percentage]);
+    });
+    csvSections.push([]);
+
+    // Item Usage
+    csvSections.push(['Item Usage']);
+    csvSections.push(['Item Name', 'Invoice Count', 'Percentage']);
+    itemUsage.forEach((item: any) => {
+      csvSections.push([item.itemName, item.invoiceCount, item.percentage]);
+    });
+    csvSections.push([]);
+
+    // Bar Chart
+    csvSections.push(['Bar Chart (Earn & Burn Points)']);
+    csvSections.push(['Date', 'Earned', 'Burnt']);
+    barChart?.forEach((entry: any) => {
+      csvSections.push([entry.date, entry.earned, entry.burnt]);
+    });
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      csvSections.map((row) => row.join(',')).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'loyalty-analytics-export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Box mt={-2}>
@@ -148,145 +213,74 @@ const  itemusage=[
           Loyalty Analytics
         </Typography>
         <Box display="flex" gap={2}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-             {/* Button shows selected range or placeholder */}
-             <Button variant="outlined" onClick={handleOpen}
-              sx={{
-                     backgroundColor: '#fff',
-                     fontFamily:'Outfit',
-                     fontWeight: 500,
-         
-          
-         }}>
-               {startDate
-                 ? `${startDate.format('YYYY-MM-DD')} → ${
-                     endDate ? endDate.format('YYYY-MM-DD') : '…'
-                   }`
-                 : 'Select Date'}
-             </Button>
-       
-             {/* Popover with sidebar + calendars */}
-             <Popover
-               open={open}
-               anchorEl={anchorEl}
-               onClose={handleClose}
-               anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-             >
-               <Box display="flex">
-                 {/* ----- preset sidebar ----- */}
-                 <List dense sx={{ width: 160, p: 0 }}>
-                   {presets.map((p) => (
-                     <ListItemButton
-                       key={p.label}
-                       onClick={() => {
-                         setStartDate(p.range[0]);
-                         setEndDate(p.range[1]);
-                       }}
-                     >
-                       <ListItemText
-                         primary={p.label}
-                         primaryTypographyProps={{  fontSize: 14,fontWeight:'Outfit' }}
-                       />
-                     </ListItemButton>
-                   ))}
-                 </List>
-       
-                 <Divider orientation="vertical" flexItem />
-       
-                 {/* ----- calendars ----- */}
-                 <Box display="flex" gap={2} p={2}>
-                   {months.map((month, idx) => (
-                     <StaticDatePicker
-                       key={idx}
-                       displayStaticWrapperAs="desktop"
-                       value={month}
-                       onChange={handleDateClick}
-                       slots={{
-                         day: (props) => {
-                           const d = props.day as Dayjs;
-                           const selected = isStart(d) || isEnd(d);
-                           const hovered =
-                             startDate &&
-                             !endDate &&
-                             hoverDate &&
-                             d.isAfter(startDate) &&
-                             d.isBefore(hoverDate);
-       
-                           return (
-                             <PickersDay
-                               {...props}
-                               onClick={() => handleDateClick(d)}
-                               onMouseEnter={() => setHoverDate(d)}
-                               sx={{
-                                 ...(selected && {
-                                   bgcolor: '#d5008f',
-                                   color: '#fff',
-                                   borderRadius: '50%',
-                                 }),
-                                 ...(inRange(d) || hovered
-                                   ? { bgcolor: '#f8d7f0' }
-                                   : {}),
-                               }}
-                             />
-                           );
-                         },
-                       }}
-                     />
-                   ))}
-                 </Box>
-               </Box>
-       
-               {/* ----- footer buttons ----- */}
-               <Divider />
-               <Box display="flex" justifyContent="flex-end" gap={2} p={2}>
-                 <Button onClick={handleClose}
-                   sx={{
-                     backgroundColor: '#fff',
-                     fontFamily:'Outfit',
-                     fontWeight: 500,
-         
-          
-         }}>Cancel</Button>
-                 <Button
-                   variant="outlined"
-                   disableElevation
-                   onClick={handleClose}
-                   disabled={!startDate || !endDate}
-                     sx={{
-                     backgroundColor: '#fff',
-                     fontFamily:'Outfit',
-                     fontWeight: 500,
-         
-          
-         }}>
-           Apply
-                 </Button>
-               </Box>
-             </Popover>
-           </LocalizationProvider>
-
-            <Button variant='outlined'
-                        sx={{
-                         backgroundColor: '#fff',
-                         fontFamily:'Outfit',
-                         fontWeight: 500,
-             
-              
-             }}>Export Data
-                     </Button>
-                     </Box>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Button variant="outlined" onClick={handleOpen}>
+              {startDate
+                ? `${startDate.format('YYYY-MM-DD')} → ${
+                    endDate ? endDate.format('YYYY-MM-DD') : '…'
+                  }`
+                : 'Select Date'}
+            </Button>
+            <Popover open={open} anchorEl={anchorEl} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}>
+              <Box display="flex">
+                <List dense sx={{ width: 160, p: 0 }}>
+                  {presets.map((p) => (
+                    <ListItemButton key={p.label} onClick={() => { setStartDate(p.range[0]); setEndDate(p.range[1]); }}>
+                      <ListItemText primary={p.label} />
+                    </ListItemButton>
+                  ))}
+                </List>
+                <Divider orientation="vertical" flexItem />
+                <Box display="flex" gap={2} p={2}>
+                  {months.map((month, idx) => (
+                    <StaticDatePicker
+                      key={idx}
+                      displayStaticWrapperAs="desktop"
+                      value={month}
+                      onChange={handleDateClick}
+                      slots={{
+                        day: (props) => {
+                          const d = props.day as Dayjs;
+                          const selected = isStart(d) || isEnd(d);
+                          const hovered = startDate && !endDate && hoverDate && d.isAfter(startDate) && d.isBefore(hoverDate);
+                          return (
+                            <PickersDay
+                              {...props}
+                              onClick={() => handleDateClick(d)}
+                              onMouseEnter={() => setHoverDate(d)}
+                              sx={{
+                                ...(selected && { bgcolor: '#d5008f', color: '#fff', borderRadius: '50%' }),
+                                ...(inRange(d) || hovered ? { bgcolor: '#f8d7f0' } : {}),
+                              }}
+                            />
+                          );
+                        },
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+              <Divider />
+              <Box display="flex" justifyContent="flex-end" gap={2} p={2}>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button variant="outlined" onClick={() => {handleClose(), fetchAnalytics()}} disabled={!startDate || !endDate}>
+                  Apply
+                </Button>
+              </Box>
+            </Popover>
+          </LocalizationProvider>
+          <Button variant="outlined" onClick={handleExport}>Export Data</Button>
+        </Box>
       </Box>
-<Typography variant="h4" color="secondary" >
-    Total Earn Points Splits
-  </Typography>
+
+      <Typography variant="h4" color="secondary">Total Earn Points Splits</Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 3,  }}>
-           
+          <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" outerRadius={100} label>
-                  {pieData.map((entry, index) => (
+                  {pieData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -296,185 +290,109 @@ const  itemusage=[
           </Card>
         </Grid>
 
-       <Grid item xs={12} md={4}>
-  <Typography variant="h4" color="secondary" mt={-3.5}>
-    Customer by Points
-  </Typography>
-  <Card sx={{ borderRadius: 3, boxShadow: 3, height: 300}}>
-    <Box sx={{ height: '100%', overflow: 'auto' }}>
-      <Table size="small" >
-        <TableHead>
-          <TableRow>
-            <TableCell>Range</TableCell>
-            <TableCell>Count</TableCell>
-            <TableCell>Percentage</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {customerPointsData.map((row, idx) => (
-            <TableRow key={idx}>
-              <TableCell>{row.range}</TableCell>
-              <TableCell>{row.count}</TableCell>
-              <TableCell>{row.percentage}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Box>
-  </Card>
-</Grid>
-          <Grid item xs={12} md={4}>
-          <Typography variant="h4" color="secondary" mt={-3.5}>Item Usage (Data Mart)</Typography>
-          <Card sx={{ borderRadius: 3, boxShadow: 3,height: 300 }}>
-             <Box sx={{ height: '100%', overflow: 'auto' }}>
-             <Table size="small" >
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item Name </TableCell>
-                  <TableCell>Invoice </TableCell>
-                  <TableCell>Percentage</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {itemusage.map((row, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{row.itemName}</TableCell>
-                    <TableCell>{row.Invoice}</TableCell>
-                    <TableCell>{row.percentage}</TableCell>
+        <Grid item xs={12} md={4}>
+          <Typography variant="h4" color="secondary" mt={-3.5}>Customer by Points</Typography>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, height: 300 }}>
+            <Box sx={{ height: '100%', overflow: 'auto' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Range</TableCell>
+                    <TableCell>Count</TableCell>
+                    <TableCell>Percentage</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
+                </TableHead>
+                <TableBody>
+                  {customerPointsData.map((row: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell>{row.range}</TableCell>
+                      <TableCell>{row.count}</TableCell>
+                      <TableCell>{row.percentage}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
               </Table>
-              </Box>
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Typography variant="h4" color="secondary" mt={-3.5}>
+            Item Usage (Data Mart)
+          </Typography>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, height: 300 }}>
+            <Box sx={{ height: '100%', overflow: 'auto' }}>
+              {itemusage.length === 0 ? (
+                <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                  <Typography variant="body2" color="text.secondary">No Data Available</Typography>
+                </Box>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Item Name</TableCell>
+                      <TableCell>Invoice</TableCell>
+                      <TableCell>Percentage</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {itemusage.map((row: any, idx: number) => (
+                      <TableRow key={idx}>
+                        <TableCell>{row.itemName}</TableCell>
+                        <TableCell>{row.Invoice}</TableCell>
+                        <TableCell>{row.percentage}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
           </Card>
         </Grid>
       </Grid>
-       <Typography  variant="h4" color="secondary"  p={1}   
-        >
-               Loyalty Point Summary
-             </Typography>
-     <Grid container spacing={2} mb={2}>
-             {points.map((item, index) => (
-               <Grid item xs={12} sm={6} md={3} key={index}>
-                 <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
-                   <Box display="flex">
-                     <Box
-                       sx={{
-                         color: '#fff',
-                         borderRadius: '10px',
-                         display: 'flex',
-                         alignItems: 'center',
-                         justifyContent: 'center',
-                       fontFamily:'Outfit',
-                      fontWeight: 400
-                      }}>
-                    </Box>
-                     <Box>
-                       <Typography fontWeight={600}>{item.label}</Typography>
-                       <Typography variant="h6">{item.count}</Typography>
-                     </Box>
-                   </Box>
-                 </Card>
-               </Grid>
-             ))}
-           </Grid>
-           <Typography  variant="h4" color="secondary"  p={1}   
-        >
-               Total Earn & Burn Points
-             </Typography>
-       
-      <Grid item xs={12} md={6}>
-  <Box p={2} sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: '#fff' }}>
-    
-    {/* Top Center Label */}
-    <Box display="flex" justifyContent="center" mb={2}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-        <Box component="span" sx={{ color: '#2196f3', mr: 1 }}>● Earned Points</Box>
-        <Box component="span" sx={{ color: '#f44336' }}>● Burnt Points</Box>
-      </Typography>
-    </Box>
 
-     <ResponsiveContainer width="100%" height={500}>
-  <BarChart data={barChart}> {/* You can rename lineData to barData if preferred */}
-    <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+      <Typography variant="h4" color="secondary" p={1}>Loyalty Point Summary</Typography>
+      <Grid container spacing={2} mb={2}>
+        {points.map((item, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
+              <Box>
+                <Typography fontWeight={600}>{item.label}</Typography>
+                <Typography variant="h6">{item.count}</Typography>
+              </Box>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-    <XAxis
-      dataKey="date"
-      label={{
-        value: 'Date',
-        position: 'insideBottom',
-        offset: -5,
-        style: { textAnchor: 'middle' }
-      }}
-    />
-
-    <YAxis
-      domain={[0, 10]}
-      ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-      label={{
-        value: 'Points',
-        angle: -90,
-        position: 'insideLeft',
-        offset: 0,
-        style: { textAnchor: 'middle' }
-      }}
-    /><Tooltip />
-    <Bar dataKey="count" fill="#2196f3" stroke="#2196f3" strokeWidth={1} name="Points" />
-  </BarChart>
-</ResponsiveContainer>
-
-  </Box>
-</Grid>
-<Typography  variant="h4" color="secondary"  p={1}   
-        >
-               Total Transaction Frequency
-             </Typography>
-
-   <Grid item xs={12} md={6}>
-  <Box p={2} sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: '#fff' }}>
-    
-    {/* Top Center Label */}
-    <Box display="flex" justifyContent="center" mb={2}>
-      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-        <Box component="span" sx={{ color: '#be7d1bff', mr: 1 }}>● Transaction Amount</Box>
-        
-      </Typography>
-    </Box>
-
-     <ResponsiveContainer width="100%" height={500}>
-  <BarChart data={barchart}> {/* You can rename lineData to barData if preferred */}
-    <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-
-    <XAxis
-      dataKey="date"
-      label={{
-        value: 'Date',
-        position: 'insideBottom',
-        offset: -5,
-        style: { textAnchor: 'middle' }
-      }}
-    />
-
-    <YAxis
-      domain={[0, 8000]}
-      ticks={[0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000 ]}
-      label={{
-        value: 'Amount',
-        angle: -90,
-        position: 'insideLeft',
-        offset: 0,
-        style: { textAnchor: 'middle' }
-      }}
-    /><Tooltip />
-    <Bar dataKey="count" fill="#e2a41dff" stroke="#cfb230ff" strokeWidth={1} name="Points" />
-  </BarChart>
-</ResponsiveContainer>
-
-  </Box>
-</Grid>
-
+      {analyticsData.barChart?.length > 0 ? (
+        <Grid item xs={12}>
+          <Typography variant="h4" color="secondary" p={1}>Total Earn & Burn Points</Typography>
+          <Box p={2} sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: '#fff' }}>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={analyticsData.barChart}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="earned" fill="#4caf50" name="Earned Points" />
+                <Bar dataKey="burnt" fill="#f44336" name="Burnt Points" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Box>
+        </Grid>
+      ) : (
+        <Grid item xs={12}>
+          <Typography variant="h4" color="secondary" p={1}>Total Earn & Burn Points</Typography>
+          <Box p={2} sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: '#fff', textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">No chart data available</Typography>
+          </Box>
+        </Grid>
+      )}
 
     </Box>
   );
-}
+};
+
 export default LoyaltyAnalyticsPage;
