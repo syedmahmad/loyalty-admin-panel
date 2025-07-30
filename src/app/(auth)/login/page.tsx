@@ -7,21 +7,23 @@ import Image from "next/image";
 import logo3 from '../../../assets/images/gogo-motor-logo.svg';
 import MicrosoftIcon from '@mui/icons-material/Microsoft';
 import { useLayoutEffect } from 'react';
+import LoginPage from '../loginpage/newlogin/page';
 
 const Login = () => {
   const theme = useTheme();
-    return <AuthWrapper>
+    return<>
     <Grid container spacing={3}>
       <Grid item xs={12}>
           <Typography align='center' variant='h5' fontWeight={500}>
           <Grid item xs={12}>
-              <MicrosoftIcon color='primary' />
+             
           </Grid>
-              <Microsoft />
+         
+              <LoginPage/>
           </Typography>
       </Grid>
     </Grid>
-  </AuthWrapper>
+  </>
 };
 
 export default Login;
