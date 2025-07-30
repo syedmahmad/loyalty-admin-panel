@@ -1,5 +1,5 @@
 // pages/wallet/WalletSettingsPage.tsx
-'use client';
+"use client";
 
 import {
   Box,
@@ -8,10 +8,10 @@ import {
   MenuItem,
   Select,
   CircularProgress,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import WalletSettingsForm from './walletSettingsForm'; // The drawer
-import { WalletService } from '../wallets/service/wallet.service';
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import WalletSettingsForm from "./walletSettingsForm"; // The drawer
+import { WalletService } from "../wallets/service/wallet.service";
 
 export default function WalletSettingsPage() {
   const [businessUnits, setBusinessUnits] = useState([]);
@@ -39,17 +39,21 @@ export default function WalletSettingsPage() {
 
   return (
     <Box px={3}>
-      <Typography variant="h5" mb={2} sx={{ fontSize: '32px', fontWeight: 600, fontFamily: 'Outfit' }}>
+      <Typography
+        variant="h5"
+        mb={2}
+        sx={{ fontSize: "32px", fontWeight: 600, fontFamily: "Outfit" }}
+      >
         Wallet Settings
       </Typography>
 
       <Box display="flex" gap={2} alignItems="center" mb={3}>
         <Select
           size="small"
-          value={selectedBU ?? ''}
+          value={selectedBU ?? ""}
           displayEmpty
           onChange={handleBUChange}
-          sx={{ minWidth: 250 ,backgroundColor: '#fff'}}
+          sx={{ minWidth: 250, backgroundColor: "#fff" }}
         >
           <MenuItem value="">Select Business Unit</MenuItem>
           {businessUnits.map((bu: any) => (
@@ -61,21 +65,23 @@ export default function WalletSettingsPage() {
 
         <Button
           variant="outlined"
-             sx={{
-              backgroundColor: '#fff',
-              fontFamily:'Outfit',
-              fontWeight: 600,
-  
-   
-  }}
+          sx={{
+            backgroundColor: "#fff",
+            fontFamily: "Outfit",
+            fontWeight: 600,
+          }}
           onClick={() => setDrawerOpen(true)}
           disabled={!selectedBU}
         >
-          {settings ? 'Update Settings' : 'Create Settings'}
+          {settings ? "Update Settings" : "Create Settings"}
         </Button>
       </Box>
 
-      {loading && <CircularProgress size={24} />}
+      {loading && (
+        <Box textAlign="center">
+          <CircularProgress size={24} />
+        </Box>
+      )}
 
       <WalletSettingsForm
         open={drawerOpen}

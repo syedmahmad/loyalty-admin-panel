@@ -1,5 +1,5 @@
 // pages/wallet/WalletListPage.tsx
-'use client';
+"use client";
 import {
   Box,
   Typography,
@@ -12,10 +12,10 @@ import {
   TableCell,
   IconButton,
   CircularProgress,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import { WalletService } from './service/wallet.service';
-import WalletDetailDrawer from './components/WalletDetailDrawer';
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { WalletService } from "./service/wallet.service";
+import WalletDetailDrawer from "./components/WalletDetailDrawer";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 interface BusinessUnit {
   id: number;
@@ -42,7 +42,7 @@ export default function WalletListPage() {
   }, []);
 
   useEffect(() => {
-      fetchWallets();
+    fetchWallets();
   }, [selectedBU]);
 
   const fetchWallets = async () => {
@@ -62,8 +62,12 @@ export default function WalletListPage() {
   };
 
   return (
-    <Box >
-      <Typography variant="h5" mb={2} sx={{ fontSize: '32px', fontWeight: 600, fontFamily: 'Outfit' }}>
+    <Box>
+      <Typography
+        variant="h5"
+        mb={2}
+        sx={{ fontSize: "32px", fontWeight: 600, fontFamily: "Outfit" }}
+      >
         Wallets
       </Typography>
 
@@ -73,7 +77,7 @@ export default function WalletListPage() {
           value={selectedBU}
           onChange={(e) => setSelectedBU(Number(e.target.value))}
           displayEmpty
-          sx={{ minWidth: 250,backgroundColor: '#fff' }}
+          sx={{ minWidth: 250, backgroundColor: "#fff" }}
         >
           <MenuItem value={0}>Select Business Unit</MenuItem>
           {businessUnits.map((bu) => (
@@ -85,7 +89,9 @@ export default function WalletListPage() {
       </Box>
 
       {loading ? (
-        <CircularProgress />
+        <Box textAlign="center">
+          <CircularProgress />
+        </Box>
       ) : (
         <Table>
           <TableHead>

@@ -13,11 +13,14 @@ import {
   Grid,
   Paper,
   Pagination,
+  IconButton,
 } from "@mui/material";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { WalletService } from "../service/wallet.service";
 import WalletTransactionDrawer from "./WalletTransactionDrawer";
+import WalletOrderDrawer from "./WalletOrderDrawer";
 
 interface Wallet {
   id: number;
@@ -28,6 +31,7 @@ interface Wallet {
 }
 
 interface WalletTransaction {
+  orders: any;
   id: number;
   type: "earn" | "burn" | "expire" | "adjustment";
   amount: number;
@@ -54,6 +58,8 @@ export default function WalletDetailDrawer({
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [txDrawerOpen, setTxDrawerOpen] = useState(false);
+  const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
+  const [orderDetails, setOrderDetails] = useState({});
 
   //Pagination
   const [page, setPage] = useState(1);
@@ -87,7 +93,7 @@ export default function WalletDetailDrawer({
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={600} p={3}>
+      <Box width={800} p={3}>
         {/* Wallet ID + User */}
         <Grid container spacing={2} alignItems="center" mb={3}>
           <Grid item xs={6}>
@@ -137,7 +143,9 @@ export default function WalletDetailDrawer({
         </Typography>
 
         {loading ? (
-          <CircularProgress size={20} />
+          <Box textAlign="center">
+            <CircularProgress size={20} />
+          </Box>
         ) : (
           <>
             <Table size="small">
@@ -149,6 +157,7 @@ export default function WalletDetailDrawer({
                   <TableCell>Status</TableCell>
                   <TableCell>Reason</TableCell>
                   <TableCell>Date</TableCell>
+                  <TableCell>Order</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -161,6 +170,21 @@ export default function WalletDetailDrawer({
                     <TableCell>{tx.description}</TableCell>
                     <TableCell>
                       {new Date(tx.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {tx?.orders && (
+                        <IconButton
+                          onClick={() => {
+                            setOrderDetails(tx?.orders);
+                            setOrderDrawerOpen(true);
+                          }}
+                        >
+                          <AddShoppingCartIcon
+                            fontSize="small"
+                            color="primary"
+                          />
+                        </IconButton>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -225,7 +249,7 @@ export default function WalletDetailDrawer({
                   if (!wallet?.id) return;
                   fetchTransactions(wallet?.id, page + 1);
                 }}
-                disabled={page === totalPages}
+                disabled={page === totalPages || !transactions.length}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
@@ -256,6 +280,14 @@ export default function WalletDetailDrawer({
           }}
           walletId={wallet?.id || 0}
           onSuccess={() => fetchTransactions(wallet?.id || 0, page)}
+        />
+
+        <WalletOrderDrawer
+          orderDetails={orderDetails}
+          open={orderDrawerOpen}
+          onClose={() => {
+            setOrderDrawerOpen(false);
+          }}
         />
       </Box>
     </Drawer>

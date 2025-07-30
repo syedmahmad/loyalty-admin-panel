@@ -266,14 +266,16 @@ const RuleList = () => {
                         justifyContent: "space-between",
                         alignItems: "center",
                       }}
-                    >       <Typography
+                    >
+                      {" "}
+                      <Typography
                         variant="h3"
                         fontWeight={500}
                         sx={{
-                          fontFamily: 'Outfit',
-                          fontSize: '14px',
-                          lineHeight: '21px',
-                          letterSpacing: '0%',
+                          fontFamily: "Outfit",
+                          fontSize: "14px",
+                          lineHeight: "21px",
+                          letterSpacing: "0%",
                         }}
                       >
                         {rule.name}
@@ -345,14 +347,18 @@ const RuleList = () => {
                     </Typography>
 
                     {rule.rule_type === "event based earn" && (
-                      <Typography variant="body2"  color="text.secondary"  mt={1}>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
                         Event: {rule.event_triggerer || "-"}
                       </Typography>
                     )}
 
                     {rule.rule_type === "dynamic rule" && (
                       <>
-                        <Typography variant="body2"  color="text.secondary"  mt={1}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          mt={1}
+                        >
                           Condition: {rule.condition_type || "-"}{" "}
                           {rule.condition_operator || "-"}{" "}
                           {rule.condition_value || "-"}
@@ -362,13 +368,17 @@ const RuleList = () => {
 
                     {rule.rule_type === "burn" && (
                       <>
-                        <Typography variant="body2"   color="text.secondary" mt={1}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          mt={1}
+                        >
                           Max Redeem: {rule.max_redeemption_points_limit ?? "-"}
                         </Typography>
-                        <Typography variant="body2"  color="text.secondary"  >
+                        <Typography variant="body2" color="text.secondary">
                           Conversion: {rule.points_conversion_factor ?? "-"}
                         </Typography>
-                        <Typography variant="body2"  color="text.secondary" >
+                        <Typography variant="body2" color="text.secondary">
                           Max Burn %: {rule.max_burn_percent_on_invoice ?? "-"}
                         </Typography>
                       </>
@@ -600,6 +610,7 @@ const RuleList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Rule"
+          width={500}
         >
           <RuleCreateForm
             onSuccess={() => {
@@ -611,7 +622,12 @@ const RuleList = () => {
 
         {/* Drawer for Edit */}
         {drawerOpen === "edit" && drawerId && (
-          <BaseDrawer open={true} onClose={handleCloseDrawer} title="Edit Rule">
+          <BaseDrawer
+            open={true}
+            onClose={handleCloseDrawer}
+            title="Edit Rule"
+            width={500}
+          >
             <RuleEdit
               onSuccess={() => {
                 handleCloseDrawer();

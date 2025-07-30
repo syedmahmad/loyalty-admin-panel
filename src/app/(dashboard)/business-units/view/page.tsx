@@ -271,18 +271,18 @@ const BusinessUnitList = () => {
                       }}
                     >
                       <Box>
-                         <Typography
-    variant="h3"
-    fontWeight={500}
-    sx={{
-      fontFamily: 'Outfit',
-      fontSize: '14px',
-      lineHeight: '21px',
-      letterSpacing: '0%',
-    }}
-  >
-    {unit.name}
-  </Typography>
+                        <Typography
+                          variant="h3"
+                          fontWeight={500}
+                          sx={{
+                            fontFamily: "Outfit",
+                            fontSize: "14px",
+                            lineHeight: "21px",
+                            letterSpacing: "0%",
+                          }}
+                        >
+                          {unit.name}
+                        </Typography>
                       </Box>
                       <Box>
                         <IconButton
@@ -555,6 +555,7 @@ const BusinessUnitList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Business"
+          width={500}
         >
           <BusinessUnitCreateForm
             onSuccess={() => {
@@ -570,6 +571,7 @@ const BusinessUnitList = () => {
             open={true}
             onClose={handleCloseDrawer}
             title="Edit Business"
+            width={500}
           >
             <BusinessUnitEditForm
               onSuccess={() => {

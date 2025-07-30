@@ -44,6 +44,7 @@ import { COUPON_TYPE } from "@/constants/constants";
 import SearchIcon from "@mui/icons-material/Search";
 
 type Coupon = {
+  discount_type: string;
   coupon_title: string;
   id: number;
   code: string;
@@ -280,17 +281,17 @@ const CouponList = () => {
                     >
                       <Box>
                         <Typography
-                         variant="h3"
-                         fontWeight={500}
-                         sx={{
-                           fontFamily: 'Outfit',
-                           fontSize: '14px',
-                           lineHeight: '21px',
-                           letterSpacing: '0%',
-                         }}
-                       >
-                        {coupon?.coupon_title}
-                       </Typography>
+                          variant="h3"
+                          fontWeight={500}
+                          sx={{
+                            fontFamily: "Outfit",
+                            fontSize: "14px",
+                            lineHeight: "21px",
+                            letterSpacing: "0%",
+                          }}
+                        >
+                          {coupon?.coupon_title}
+                        </Typography>
                       </Box>
                       <Box>
                         <IconButton
@@ -355,11 +356,18 @@ const CouponList = () => {
                     </Box>
 
                     <Typography variant="body2" color="text.secondary" mt={1}>
-                      Discount: {coupon.discount_percentage ?? "-"}%
+                      Discount Type:{" "}
+                      {coupon?.discount_type === "fixed_discount"
+                        ? "Fixed"
+                        : "Percentage"}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" mt={1}>
-                      Discount Price: {coupon.discount_price ?? "-"}
-                    </Typography>
+
+                    {coupon?.discount_price && (
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Discount Price: {coupon.discount_price ?? "-"}
+                      </Typography>
+                    )}
+
                     <Typography variant="body2" color="text.secondary" mt={1}>
                       Business Unit: {coupon.business_unit?.name ?? "-"}
                     </Typography>
@@ -385,7 +393,7 @@ const CouponList = () => {
                   <TableRow>
                     <TableCell>Title</TableCell>
                     <TableCell>Code</TableCell>
-                    <TableCell>Discount (%)</TableCell>
+                    <TableCell>Discount Type</TableCell>
                     <TableCell>Discount Price</TableCell>
                     <TableCell>Business Unit</TableCell>
                     <TableCell>Usage Limit</TableCell>
@@ -413,7 +421,7 @@ const CouponList = () => {
                             <span>{coupon.code}</span>
                           </Tooltip>
                         </TableCell>
-                        <TableCell>{coupon.discount_percentage}</TableCell>
+                        <TableCell>{coupon.discount_type === "fixed_discount" ? "Fixed" : "Percentage"}</TableCell>
                         <TableCell>{coupon.discount_price}</TableCell>
                         <TableCell
                           sx={{

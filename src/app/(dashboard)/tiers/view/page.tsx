@@ -259,18 +259,18 @@ const TierList = () => {
                         alignItems: "center",
                       }}
                     >
-                            <Typography
-                         variant="h3"
-                         fontWeight={500}
-                         sx={{
-                           fontFamily: 'Outfit',
-                           fontSize: '14px',
-                           lineHeight: '21px',
-                           letterSpacing: '0%',
-                         }}
-                       >
-                         {tier.name}
-                       </Typography>
+                      <Typography
+                        variant="h3"
+                        fontWeight={500}
+                        sx={{
+                          fontFamily: "Outfit",
+                          fontSize: "14px",
+                          lineHeight: "21px",
+                          letterSpacing: "0%",
+                        }}
+                      >
+                        {tier.name}
+                      </Typography>
                       <Box>
                         <IconButton
                           onClick={(event) => handleMenuClick(event, tier)}
@@ -547,6 +547,7 @@ const TierList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Tier"
+          width={500}
         >
           <TierCreate
             onSuccess={() => {
@@ -558,7 +559,12 @@ const TierList = () => {
 
         {/* Drawer for Edit */}
         {drawerOpen === "edit" && drawerId && (
-          <BaseDrawer open onClose={handleCloseDrawer} title="Edit Tier">
+          <BaseDrawer
+            open
+            onClose={handleCloseDrawer}
+            title="Edit Tier"
+            width={500}
+          >
             <TierEdit
               onSuccess={() => {
                 handleCloseDrawer();

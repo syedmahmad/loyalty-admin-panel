@@ -79,7 +79,7 @@ export default function WalletSettingsForm({
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={400} p={3}>
+      <Box width={500} p={3}>
         <Typography   sx={{
               backgroundColor: '#fff',
               fontFamily:'Outfit',
