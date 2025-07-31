@@ -128,7 +128,7 @@ export default function CustomerDetail() {
             <Typography sx={{ fontFamily: "Outfit", opacity: 0.5 }}>
               Tier
             </Typography>
-            <Typography variant="h6">1</Typography>
+            <Typography variant="h6">{customer?.tier?.tier?.name || "N/A"}</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
