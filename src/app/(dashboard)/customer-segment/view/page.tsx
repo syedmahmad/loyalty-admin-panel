@@ -28,6 +28,7 @@ import {
   DialogActions,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import { toast } from "react-toastify";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { DELETE, GET } from "@/utils/AxiosUtility";
@@ -37,6 +38,7 @@ import CreateCustomerSegment from "../create/page";
 import CustomerSegmentEditPage from "./components/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 
 type CustomerSegment = {
   id: number;
@@ -212,18 +214,18 @@ const CustomerSegmentList = () => {
                         transition: "none",
                       }}
                     >
-                       <Typography
-                                               variant="h3"
-                                               fontWeight={500}
-                                               sx={{
-                                                 fontFamily: 'Outfit',
-                                                 fontSize: '14px',
-                                                 lineHeight: '21px',
-                                                 letterSpacing: '0%',
-                                               }}
-                                             >
-                                               {segment.name}
-                                             </Typography>
+                      <Typography
+                        variant="h3"
+                        fontWeight={500}
+                        sx={{
+                          fontFamily: "Outfit",
+                          fontSize: "14px",
+                          lineHeight: "21px",
+                          letterSpacing: "0%",
+                        }}
+                      >
+                        {segment.name}
+                      </Typography>
                       <IconButton
                         onClick={(event: any) =>
                           // setAnchorEl(event.currentTarget)
@@ -485,6 +487,7 @@ const CustomerSegmentList = () => {
           }}
         />
       ) : null}
+
       {selectedSegmentId ? (
         <CustomerSegmentEditPage
           segmentId={selectedSegmentId}
@@ -514,29 +517,25 @@ const DeleteSegment = ({
     try {
       const res = await DELETE(`/customer-segments/${segmentId}/delete`);
       if (res?.status === 200) {
+        toast.success("Segment deleted!");
         onSuccess();
+      } else {
+        toast.error("Failed to delete segment");
       }
+    } catch (error) {
+      toast.error("An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog
-      open={segmentId !== null}
+    <ConfirmDeleteDialog
+      open={!!segmentId}
       onClose={() => setSelectedSegmentId(null)}
-    >
-      <DialogTitle>
-        Are you sure you want to delete this business unit?
-      </DialogTitle>
-      <DialogActions>
-        <Button onClick={() => setSelectedSegmentId(null)} variant="outlined">
-          Cancel
-        </Button>
-        <Button onClick={handleDelete} variant="contained" color="error">
-          Delete
-        </Button>
-      </DialogActions>
-    </Dialog>
+      setDeleteId={setSelectedSegmentId}
+      handleDelete={handleDelete}
+      message="Are you sure you want to delete this segment?"
+    />
   );
 };

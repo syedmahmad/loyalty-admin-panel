@@ -38,6 +38,7 @@ import { toast } from "react-toastify";
 import BaseDrawer from "@/components/drawer/basedrawer";
 import CampaignCreateForm from "../create/page";
 import CampaignEdit from "../edit/page";
+import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 
 const CampaignsList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -60,6 +61,8 @@ const CampaignsList = () => {
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
   const handleClose = () => {
     setAnchorEl(null);
     setSelectedCampaign(null);
@@ -92,14 +95,10 @@ const CampaignsList = () => {
     viewMode === "card"
       ? campaigns
       : campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const handleDelete = async (id: number) => {
-    const confirm = window.confirm(
-      "Are you sure you want to delete this campaign?"
-    );
-    if (!confirm) return;
 
+  const handleDelete = async (deleteId: number) => {
     try {
-      const res = await DELETE(`/campaigns/${id}`);
+      const res = await DELETE(`/campaigns/${deleteId}`);
       if (res?.status === 200) {
         toast.success("Campaign deleted!");
         fetchCampaigns(nameFilter);
@@ -109,6 +108,8 @@ const CampaignsList = () => {
     } catch (error) {
       toast.error("An error occurred");
     }
+
+    setDeleteId(null);
   };
 
   useEffect(() => {
@@ -254,18 +255,18 @@ const CampaignsList = () => {
                         }}
                       >
                         <Box>
-                           <Typography
-                          variant="h3"
-                        fontWeight={500}
-                               sx={{
-                              fontFamily: 'Outfit',
-                              fontSize: '14px',
-                              lineHeight: '21px',
-                             letterSpacing: '0%',
-                                    }}
-                                        >
-                                  {campaign.name}
-                        </Typography>
+                          <Typography
+                            variant="h3"
+                            fontWeight={500}
+                            sx={{
+                              fontFamily: "Outfit",
+                              fontSize: "14px",
+                              lineHeight: "21px",
+                              letterSpacing: "0%",
+                            }}
+                          >
+                            {campaign.name}
+                          </Typography>
                         </Box>
                         <Box>
                           <IconButton
@@ -317,7 +318,7 @@ const CampaignsList = () => {
                               onClick={() => {
                                 handleClose();
                                 if (selectedCampaign) {
-                                  handleDelete(selectedCampaign.id);
+                                  setDeleteId(selectedCampaign.id);
                                 }
                               }}
                             >
@@ -458,7 +459,7 @@ const CampaignsList = () => {
                               onClick={() => {
                                 handleClose();
                                 if (selectedCampaign) {
-                                  handleDelete(selectedCampaign.id);
+                                  setDeleteId(selectedCampaign.id);
                                 }
                               }}
                             >
@@ -545,6 +546,18 @@ const CampaignsList = () => {
             </Box>
           </>
         )}
+
+        {/* Delete Dialog */}
+        {deleteId !== null && (
+          <ConfirmDeleteDialog
+            open={!!deleteId}
+            onClose={() => setDeleteId(null)}
+            setDeleteId={setDeleteId}
+            handleDelete={() => handleDelete(deleteId)}
+            message="Are you sure you want to delete this campaign?"
+          />
+        )}
+
         {/* Drawer for Create */}
         <BaseDrawer
           open={drawerOpen === "create"}

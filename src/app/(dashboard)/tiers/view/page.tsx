@@ -40,6 +40,7 @@ import TierCreate from "../create/page";
 import TierEdit from "../edit/page";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 type Tier = {
   id: number;
   name: string;
@@ -533,15 +534,14 @@ const TierList = () => {
           </>
         )}
 
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-          <DialogTitle>Are you sure you want to delete this tier?</DialogTitle>
-          <DialogActions>
-            <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-            <Button onClick={handleDelete} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <ConfirmDeleteDialog
+          open={!!deleteId}
+          onClose={() => setDeleteId(null)}
+          setDeleteId={setDeleteId}
+          handleDelete={handleDelete}
+          message="Are you sure you want to delete this tier?"
+        />
+
         {/* Drawer for Create */}
         <BaseDrawer
           open={drawerOpen === "create"}

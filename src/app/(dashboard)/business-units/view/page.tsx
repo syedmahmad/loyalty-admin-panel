@@ -41,6 +41,7 @@ import BaseDrawer from "@/components/drawer/basedrawer";
 import BusinessUnitEditForm from "../edit/page";
 import BusinessUnitCreateForm from "../create/page";
 import Pagination from "@mui/material/Pagination";
+import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 
 type BusinessUnit = {
   id: number;
@@ -534,22 +535,13 @@ const BusinessUnitList = () => {
           </Box>
         )}
 
-        <Dialog
-          open={confirmDeleteId !== null}
+        <ConfirmDeleteDialog
+          open={!!confirmDeleteId}
           onClose={() => setConfirmDeleteId(null)}
-        >
-          <DialogTitle>
-            Are you sure you want to delete this business unit?
-          </DialogTitle>
-          <DialogActions>
-            <Button onClick={() => setConfirmDeleteId(null)} variant="outlined">
-              Cancel
-            </Button>
-            <Button onClick={handleDelete} variant="contained" color="error">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+          setDeleteId={setConfirmDeleteId}
+          handleDelete={handleDelete}
+          message="Are you sure you want to delete this business unit?"
+        />
 
         <BaseDrawer
           open={drawerOpen === "create"}

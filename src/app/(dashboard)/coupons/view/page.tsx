@@ -42,6 +42,7 @@ import CouponEdit from "../edit/page";
 import { htmlToPlainText } from "@/utils/Index";
 import { COUPON_TYPE } from "@/constants/constants";
 import SearchIcon from "@mui/icons-material/Search";
+import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 
 type Coupon = {
   discount_type: string;
@@ -421,7 +422,11 @@ const CouponList = () => {
                             <span>{coupon.code}</span>
                           </Tooltip>
                         </TableCell>
-                        <TableCell>{coupon.discount_type === "fixed_discount" ? "Fixed" : "Percentage"}</TableCell>
+                        <TableCell>
+                          {coupon.discount_type === "fixed_discount"
+                            ? "Fixed"
+                            : "Percentage"}
+                        </TableCell>
                         <TableCell>{coupon.discount_price}</TableCell>
                         <TableCell
                           sx={{
@@ -593,18 +598,15 @@ const CouponList = () => {
             </Box>
           </Box>
         )}
+
         {/* Delete Dialog */}
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-          <DialogTitle>
-            Are you sure you want to delete this coupon?
-          </DialogTitle>
-          <DialogActions>
-            <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-            <Button onClick={handleDelete} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <ConfirmDeleteDialog
+          open={!!deleteId}
+          onClose={() => setDeleteId(null)}
+          setDeleteId={setDeleteId}
+          handleDelete={handleDelete}
+          message="Are you sure you want to delete this coupon?"
+        />
 
         {/* Drawer for Create */}
         <BaseDrawer

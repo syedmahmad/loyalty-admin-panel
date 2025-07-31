@@ -39,6 +39,7 @@ import RuleCreateForm from "../create/page";
 import RuleEdit from "../edit/page";
 import BaseDrawer from "@/components/drawer/basedrawer";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 
 type Rule = {
   id: number;
@@ -593,17 +594,13 @@ const RuleList = () => {
           </>
         )}
 
-        <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>
-          <DialogTitle>Are you sure you want to delete this rule?</DialogTitle>
-          <DialogActions>
-            <Button onClick={() => setDeleteId(null)} variant="outlined">
-              Cancel
-            </Button>
-            <Button onClick={handleDelete} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <ConfirmDeleteDialog
+          open={!!deleteId}
+          onClose={() => setDeleteId(null)}
+          setDeleteId={setDeleteId}
+          handleDelete={handleDelete}
+          message="Are you sure you want to delete this rule?"
+        />
 
         {/* Drawer for Create */}
         <BaseDrawer
