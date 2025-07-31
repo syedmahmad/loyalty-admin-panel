@@ -49,13 +49,13 @@ export default function LoginPage() {
             variant="h4"
             sx={{
               fontWeight: 500,
-              fontSize: { xs: "1.5rem", md: "3rem" },
+              fontSize: { xs: "1.3rem", md: "2.2rem" },
               color: "#BDBDBD",
               textTransform: "uppercase",
               letterSpacing: "0.5px",
             }}
           >
-            CMS
+            Loyalty
           </Typography>
         </Box>
 
@@ -65,14 +65,14 @@ export default function LoginPage() {
           sx={{
             mb: 4,
             fontWeight: 500,
-            fontSize: { xs: "1rem", sm: "1.2rem", md: "1.5rem" },
+            fontSize: { xs: "1rem", sm: "1.1rem", md: "1.2rem" },
             color: "#333",
             maxWidth: 360,
           }}
         >
-          Manage News & Blog Content
+          Your Loyalty Engine
           <br />
-          Seamlessly Across Your Website
+          All in One Loyalty Management Platform
         </Typography>
         <MicrosoftButton/>
 
