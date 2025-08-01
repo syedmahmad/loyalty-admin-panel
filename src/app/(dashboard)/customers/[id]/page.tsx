@@ -22,6 +22,7 @@ import { Person, DirectionsCar, Star } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { GET } from "@/utils/AxiosUtility";
+import GoBackButton from "@/components/buttons/GoBackButton";
 
 export default function CustomerDetail() {
   const params = useParams();
@@ -72,6 +73,7 @@ export default function CustomerDetail() {
 
   return (
     <Box>
+      <GoBackButton variant="contained" size="small" />
       <Typography
         sx={{
           color: "rgba(0, 0, 0, 0.87)",
@@ -128,7 +130,9 @@ export default function CustomerDetail() {
             <Typography sx={{ fontFamily: "Outfit", opacity: 0.5 }}>
               Tier
             </Typography>
-            <Typography variant="h6">{customer?.tier?.tier?.name || "N/A"}</Typography>
+            <Typography variant="h6">
+              {customer?.tier?.tier?.name || "N/A"}
+            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>

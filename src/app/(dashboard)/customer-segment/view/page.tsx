@@ -162,13 +162,33 @@ const CustomerSegmentList = () => {
           placeholder="Search by name"
           value={searchName}
           onChange={(e) => setSearchName(e.target.value)}
-          sx={{ backgroundColor: "#fff", borderRadius: 2 }}
+          sx={{
+            backgroundColor: "#fff",
+            fontFamily: "Outfit",
+            fontWeight: 400,
+            fontStyle: "normal",
+            fontSize: "15px",
+            lineHeight: "22px",
+            borderBottom: "1px solid #e0e0e0",
+            borderRadius: 2,
+            "& .MuiInputBase-input": {
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontSize: "15px",
+              lineHeight: "22px",
+            },
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon sx={{ color: "#9e9e9e" }} />
               </InputAdornment>
             ),
+            sx: {
+              borderRadius: 2,
+              fontFamily: "Outfit",
+              fontWeight: 400,
+            },
           }}
         />
       </Box>

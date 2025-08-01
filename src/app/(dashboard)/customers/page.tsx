@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Table,
@@ -19,11 +19,11 @@ import {
   Popover,
   MenuItem,
   Button,
-} from '@mui/material';
-import { GET, PATCH } from '@/utils/AxiosUtility';
-import SearchIcon from '@mui/icons-material/Search';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { useRouter } from 'next/navigation'
+} from "@mui/material";
+import { GET, PATCH } from "@/utils/AxiosUtility";
+import SearchIcon from "@mui/icons-material/Search";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { useRouter } from "next/navigation";
 type Customer = {
   id: number;
   external_customer_id: string;
@@ -43,27 +43,29 @@ type Customer = {
   };
 };
 
-const fetchCustomers = async (search = ''): Promise<Customer[]> => {
+const fetchCustomers = async (search = ""): Promise<Customer[]> => {
   const res = await GET(`/customers?search=${encodeURIComponent(search)}`);
-  if (res?.status !== 200) throw new Error('Failed to fetch customers');
+  if (res?.status !== 200) throw new Error("Failed to fetch customers");
   return res.data;
 };
 
 const CustomerList = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const router = useRouter()
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+  const router = useRouter();
 
   const handleRowClick = (id: number) => {
-    router.push(`/customers/${id}`)
-  }
-  const loadData = async (searchTerm = '') => {
+    router.push(`/customers/${id}`);
+  };
+  const loadData = async (searchTerm = "") => {
     setLoading(true);
     try {
       const data = await fetchCustomers(searchTerm);
@@ -79,9 +81,15 @@ const CustomerList = () => {
   }, [search]);
 
   const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
-  const paginated = customers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginated = customers.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, customer: Customer) => {
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    customer: Customer
+  ) => {
     setAnchorEl(event.currentTarget);
     setSelectedCustomer(customer);
   };
@@ -101,10 +109,14 @@ const CustomerList = () => {
     }
   };
 
+  console.log("loading:::", loading);
+
   return (
-    <Box sx={{ mt: '-25px', backgroundColor: '#F9FAFB' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-        <Typography sx={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: 32 }}>
+    <Box sx={{ mt: "-25px", backgroundColor: "#F9FAFB" }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Typography
+          sx={{ fontFamily: "Outfit", fontWeight: 600, fontSize: 32 }}
+        >
           Customers
         </Typography>
       </Box>
@@ -114,22 +126,43 @@ const CustomerList = () => {
         placeholder="Search by name"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        sx={{ backgroundColor: '#fff', borderRadius: 2, mb: 2 }}
+        sx={{
+          mb: 2,
+          backgroundColor: "#fff",
+          fontFamily: "Outfit",
+          fontWeight: 400,
+          fontStyle: "normal",
+          fontSize: "15px",
+          lineHeight: "22px",
+          borderBottom: "1px solid #e0e0e0",
+          borderRadius: 2,
+          "& .MuiInputBase-input": {
+            fontFamily: "Outfit",
+            fontWeight: 400,
+            fontSize: "15px",
+            lineHeight: "22px",
+          },
+        }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: '#9e9e9e' }} />
+              <SearchIcon sx={{ color: "#9e9e9e" }} />
             </InputAdornment>
           ),
+          sx: {
+            borderRadius: 2,
+            fontFamily: "Outfit",
+            fontWeight: 400,
+          },
         }}
       />
 
-      <Paper elevation={3} sx={{ borderRadius: 3 }}>
-        {loading ? (
-          <Box mt={4} textAlign="center">
-            <CircularProgress />
-          </Box>
-        ) : (
+      {loading ? (
+        <Box mt={4} textAlign="center">
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Paper elevation={3} sx={{ borderRadius: 3 }}>
           <>
             <TableContainer>
               <Table size="small">
@@ -147,18 +180,36 @@ const CustomerList = () => {
                 </TableHead>
                 <TableBody>
                   {paginated.map((c) => (
-                    <TableRow key={c.id}  onClick={() => handleRowClick(c.id)}>
+                    <TableRow key={c.id} onClick={() => handleRowClick(c.id)}>
                       <TableCell>{c.name}</TableCell>
-                      <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        sx={{
+                          maxWidth: 150,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {c.email}
                       </TableCell>
-                      <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <TableCell
+                        sx={{
+                          maxWidth: 150,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {c.phone}
                       </TableCell>
                       <TableCell>{c.city}</TableCell>
-                      <TableCell>{c.status === 1 ? 'Active' : 'Inactive'}</TableCell>
-                      <TableCell>{c.business_unit?.name || '—'}</TableCell>
-                      <TableCell>{c.business_unit?.tenant?.name || '—'}</TableCell>
+                      <TableCell>
+                        {c.status === 1 ? "Active" : "Inactive"}
+                      </TableCell>
+                      <TableCell>{c.business_unit?.name || "—"}</TableCell>
+                      <TableCell>
+                        {c.business_unit?.tenant?.name || "—"}
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton onClick={(e) => handleMenuClick(e, c)}>
                           <MoreVertIcon />
@@ -179,10 +230,10 @@ const CustomerList = () => {
 
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderTop: '1px solid #E0E0E0',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderTop: "1px solid #E0E0E0",
                 px: 2,
                 py: 2,
               }}
@@ -213,27 +264,27 @@ const CustomerList = () => {
               </Button>
             </Box>
           </>
-        )}
-
-        {/* Popover for Status Toggle */}
-        <Popover
-          open={Boolean(anchorEl)}
-          anchorEl={anchorEl}
-          onClose={handleCloseMenu}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-        >
-          <MenuItem onClick={handleToggleStatus}>
-            {selectedCustomer?.status === 1 ? 'Deactivate' : 'Activate'} Customer
-          </MenuItem>
-        </Popover>
-      </Paper>
+          {/* Popover for Status Toggle */}
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={handleCloseMenu}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+          >
+            <MenuItem onClick={handleToggleStatus}>
+              {selectedCustomer?.status === 1 ? "Deactivate" : "Activate"}{" "}
+              Customer
+            </MenuItem>
+          </Popover>
+        </Paper>
+      )}
     </Box>
   );
 };
