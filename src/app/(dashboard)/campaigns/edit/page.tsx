@@ -15,6 +15,8 @@ import {
   InputLabel,
   ListSubheader,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
   TextField,
   Tooltip,
@@ -85,7 +87,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
         GET(`rules/${clientInfo.id}`),
         GET(`/coupons/${clientInfo.id}?limit=5`),
         GET(`/campaigns/single/${paramId}`),
-        GET(`/customer-segments/${clientInfo.id}`)
+        GET(`/customer-segments/${clientInfo.id}`),
       ]);
 
     const campaign = campaignRes?.data;
@@ -137,6 +139,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   };
 
   const handleRuleToggle = (type: string, ruleId: number) => {
+    /* ## This would be use in future ##
     const current = selectedRules[type] || [];
     if (current.includes(ruleId)) {
       setSelectedRules({
@@ -146,6 +149,9 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     } else {
       setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
     }
+    */
+
+    setSelectedRules({ [type]: [ruleId] });
   };
 
   const handleRuleTypeAdd = () => {
@@ -342,7 +348,6 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
-
         {ruleTypes.map((type, idx) => (
           <Grid key={idx} item xs={12}>
             <Box display="flex" alignItems="center" gap={1}>
@@ -362,44 +367,51 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                   )}
                 </Select>
               </FormControl>
-              <Button
+              {/* <Button
                 variant="outlined"
                 color="error"
                 onClick={() => handleRuleTypeRemove(idx)}
               >
                 ➖
-              </Button>
+              </Button> */}
             </Box>
 
             <FormGroup sx={{ mt: 1 }}>
-              {(rulesByType[type] || []).map((rule) => (
-                <Box
-                  key={rule.id}
-                  sx={{ display: "flex", alignItems: "center" }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={
-                          selectedRules[type]?.includes(rule.id) || false
-                        }
-                        onChange={() => handleRuleToggle(type, rule.id)}
-                      />
-                    }
-                    label={rule.name}
-                  />
-                  {rule.description && (
-                    <Typography variant="body1">
-                      ({htmlToPlainText(rule.description)})
-                    </Typography>
-                  )}
-                </Box>
-              ))}
+              <RadioGroup
+                value={selectedRules[type] || ""}
+                onChange={(e) => handleRuleToggle(type, Number(e.target.value))}
+              >
+                {(rulesByType[type] || []).map((rule) => (
+                  <Box
+                    key={rule.id}
+                    sx={{ display: "flex", alignItems: "center" }}
+                  >
+                    <FormControlLabel
+                      // control={
+                      //   <Checkbox
+                      //     checked={
+                      //       selectedRules[type]?.includes(rule.id) || false
+                      //     }
+                      //     onChange={() => handleRuleToggle(type, rule.id)}
+                      //   />
+                      // }
+                      value={rule.id}
+                      control={<Radio />}
+                      label={rule.name}
+                    />
+                    {rule.description && (
+                      <Typography variant="body1">
+                        ({htmlToPlainText(rule.description)})
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </RadioGroup>
             </FormGroup>
           </Grid>
         ))}
 
-        <Grid item xs={12}>
+        {/* <Grid item xs={12}>
           <Button
             variant="outlined"
             onClick={handleRuleTypeAdd}
@@ -407,7 +419,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           >
             ➕ Add Rule Type
           </Button>
-        </Grid>
+        </Grid> */}
 
         <Grid item xs={12}>
           <Typography variant="subtitle1">Tiers</Typography>
