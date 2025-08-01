@@ -31,6 +31,7 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { RichTextEditor } from "@/components/TextEditor";
 import CouponCard from "@/components/cards/CouponCard";
+import { CAMPAIGN_TYPES } from "@/constants/constants";
 
 const htmlToPlainText = (htmlString: string): string => {
   if (!htmlString) return "";
@@ -38,6 +39,11 @@ const htmlToPlainText = (htmlString: string): string => {
   tempDiv.innerHTML = htmlString;
   return tempDiv.textContent || tempDiv.innerText || "";
 };
+
+interface CampaignTypeOption {
+  label: string;
+  value: string;
+}
 
 const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
@@ -65,6 +71,11 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
   const [allSegments, setAllSegments] = useState([]);
   const [selectedSegments, setSelectedSegments] = useState<any>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [selectedCampaignType, setSelectedCampaignType] =
+    useState<CampaignTypeOption | null>({
+      label: "DISCOUNT_POINTS",
+      value: "DISCOUNT_POINTS",
+    });
 
   const ALL_RULE_TYPES = [
     "event based earn",
@@ -202,6 +213,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
       description,
       client_id: clientInfo.id,
       customer_segment_ids: segmentIds,
+      campaign_type: selectedCampaignType?.value,
     }));
 
     setLoading(true);
@@ -316,79 +328,108 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
-        {ruleTypes.map((type, idx) => (
-          <Grid key={idx} item xs={12}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <FormControl fullWidth>
-                <InputLabel>Rule Type</InputLabel>
-                <Select
-                  value={type}
-                  onChange={(e) => handleRuleTypeChange(idx, e.target.value)}
-                  label="Rule Type"
-                >
-                  {[type, ...availableRuleTypes.filter((t) => t !== type)].map(
-                    (rt) => (
-                      <MenuItem key={rt} value={rt}>
-                        {rt}
-                      </MenuItem>
-                    )
-                  )}
-                </Select>
-              </FormControl>
-              {/* <Button
+        <Grid item xs={12}>
+          <Autocomplete
+            options={CAMPAIGN_TYPES}
+            getOptionLabel={(option) => option.label}
+            value={selectedCampaignType}
+            onChange={(event, newValue) => setSelectedCampaignType(newValue)}
+            isOptionEqualToValue={(option, value) =>
+              option.value === value?.value
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Campaign Type"
+                placeholder="Select campaign type"
+                fullWidth
+              />
+            )}
+          />
+        </Grid>
+
+        {selectedCampaignType?.value === "DISCOUNT_POINTS" && (
+          <>
+            {ruleTypes.map((type, idx) => (
+              <Grid key={idx} item xs={12}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <FormControl fullWidth>
+                    <InputLabel>Rule Type</InputLabel>
+                    <Select
+                      value={type}
+                      onChange={(e) =>
+                        handleRuleTypeChange(idx, e.target.value)
+                      }
+                      label="Rule Type"
+                    >
+                      {[
+                        type,
+                        ...availableRuleTypes.filter((t) => t !== type),
+                      ].map((rt) => (
+                        <MenuItem key={rt} value={rt}>
+                          {rt}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {/* <Button
                 variant="outlined"
                 color="error"
                 onClick={() => handleRuleTypeRemove(idx)}
               >
                 ➖
               </Button> */}
-            </Box>
+                </Box>
 
-            <FormGroup sx={{ mt: 1 }}>
-              <RadioGroup
-                value={selectedRules[type] || ""}
-                onChange={(e) => handleRuleToggle(type, Number(e.target.value))}
-              >
-                {(rulesByType[type] || []).map((rule) => (
-                  <Box
-                    key={rule.id}
-                    sx={{ display: "flex", alignItems: "center" }}
+                <FormGroup sx={{ mt: 1 }}>
+                  <RadioGroup
+                    value={selectedRules[type] || ""}
+                    onChange={(e) =>
+                      handleRuleToggle(type, Number(e.target.value))
+                    }
                   >
-                    <FormControlLabel
-                      // control={
-                      //   <Checkbox
-                      //     checked={
-                      //       selectedRules[type]?.includes(rule.id) || false
-                      //     }
-                      //     onChange={() => handleRuleToggle(type, rule.id)}
-                      //   />
-                      // }
-                      value={rule.id}
-                      control={<Radio />}
-                      label={rule.name}
-                    />
-                    {rule.description && (
-                      <Typography variant="body1">
-                        ({htmlToPlainText(rule.description)})
-                      </Typography>
-                    )}
-                  </Box>
-                ))}
-              </RadioGroup>
-            </FormGroup>
-          </Grid>
-        ))}
+                    {(rulesByType[type] || []).map((rule) => (
+                      <Box
+                        key={rule.id}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <FormControlLabel
+                          // control={
+                          //   <Checkbox
+                          //     checked={
+                          //       selectedRules[type]?.includes(rule.id) || false
+                          //     }
+                          //     onChange={() => handleRuleToggle(type, rule.id)}
+                          //   />
+                          // }
+                          value={rule.id}
+                          control={<Radio />}
+                          label={rule.name}
+                        />
+                        {rule.description && (
+                          <Typography variant="body1">
+                            ({htmlToPlainText(rule.description)})
+                          </Typography>
+                        )}
+                      </Box>
+                    ))}
+                  </RadioGroup>
+                </FormGroup>
+              </Grid>
+            ))}
 
-        {ruleTypes.length === 0 && (
-          <Grid item xs={12}>
-            <Button
-              variant="outlined"
-              onClick={handleRuleTypeAdd}
-              disabled={availableRuleTypes.length === 0}
-            >
-              ➕ Add Rule Type
-            </Button>
-          </Grid>
+            {ruleTypes.length === 0 && (
+              <Grid item xs={12}>
+                <Button
+                  variant="outlined"
+                  onClick={handleRuleTypeAdd}
+                  disabled={availableRuleTypes.length === 0}
+                >
+                  ➕ Add Rule Type
+                </Button>
+              </Grid>
+            )}
+          </>
         )}
 
         <Grid
@@ -454,46 +495,48 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
         </Grid>
 
         {/* Coupons */}
-        <Grid item xs={12}>
-          <Autocomplete
-            multiple
-            options={allCoupons}
-            getOptionLabel={(option) => option.coupon_title}
-            value={selectedCoupons}
-            onChange={(event, newValue: any) => setSelectedCoupons(newValue)}
-            filterSelectedOptions
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            loading={loading}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                {option.coupon_title}
-              </li>
-            )}
-            onInputChange={(event, newInputValue) => {
-              if (event?.type !== "change") return;
-              setSearchTerm(newInputValue);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Coupons"
-                placeholder="Search Coupons..."
-                fullWidth
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loading ? (
-                        <CircularProgress color="inherit" size={18} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-          />
-        </Grid>
+        {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
+          <Grid item xs={12}>
+            <Autocomplete
+              multiple
+              options={allCoupons}
+              getOptionLabel={(option) => option.coupon_title}
+              value={selectedCoupons}
+              onChange={(event, newValue: any) => setSelectedCoupons(newValue)}
+              filterSelectedOptions
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              loading={loading}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  {option.coupon_title}
+                </li>
+              )}
+              onInputChange={(event, newInputValue) => {
+                if (event?.type !== "change") return;
+                setSearchTerm(newInputValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Coupons"
+                  placeholder="Search Coupons..."
+                  fullWidth
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loading ? (
+                          <CircularProgress color="inherit" size={18} />
+                        ) : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+          </Grid>
+        )}
 
         {/* Show selected Coupons as a Card */}
         <Grid item xs={12}>

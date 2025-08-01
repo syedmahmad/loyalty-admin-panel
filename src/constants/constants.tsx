@@ -106,3 +106,25 @@ export const FREQUENCY = [
     value: "yearly",
   },
 ];
+
+export const CAMPAIGN_TYPES = [
+  {
+    label: "DISCOUNT_POINTS",
+    value: "DISCOUNT_POINTS",
+  },
+  {
+    label: "DISCOUNT_COUPONS",
+    value: "DISCOUNT_COUPONS",
+  },
+];
+
+export const BURN_TYPES = [
+  {
+    label: "FIXED",
+    value: "FIXED",
+  },
+  {
+    label: "PERCENTAGE",
+    value: "PERCENTAGE",
+  },
+];

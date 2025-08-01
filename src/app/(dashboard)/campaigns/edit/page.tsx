@@ -31,6 +31,7 @@ import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RichTextEditor } from "@/components/TextEditor";
 import CouponCard from "@/components/cards/CouponCard";
+import { CAMPAIGN_TYPES } from "@/constants/constants";
 
 const htmlToPlainText = (htmlString: string): string => {
   if (!htmlString) return "";
@@ -38,6 +39,11 @@ const htmlToPlainText = (htmlString: string): string => {
   tempDiv.innerHTML = htmlString;
   return tempDiv.textContent || tempDiv.innerText || "";
 };
+
+interface CampaignTypeOption {
+  label: string;
+  value: string;
+}
 
 const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
@@ -66,6 +72,8 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [allSegments, setAllSegments] = useState<any>([]);
   const [selectedSegments, setSelectedSegments] = useState<any>([]);
+  const [selectedCampaignType, setSelectedCampaignType] =
+    useState<CampaignTypeOption | null>(null);
 
   const ALL_RULE_TYPES = [
     "event based earn",
@@ -101,6 +109,12 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     setAllSegments(segmentsRes?.data || []);
     setSelectedSegments(campaign.customerSegments || []);
 
+    const campType: any = CAMPAIGN_TYPES.find(
+      (singleCampaignType) =>
+        singleCampaignType.value === campaign.campaign_type
+    );
+    setSelectedCampaignType(campType);
+
     setTiers(
       campaign.tiers.map((t: any) => ({
         tier_id: t.tier.id,
@@ -121,6 +135,8 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
     setSelectedRules(grouped);
     setRuleTypes(usedTypes);
+    // setRuleTypes((prev) => [""]);
+
     setAvailableRuleTypes(available);
     setAllCoupons(couponsRes?.data?.coupons || []);
 
@@ -234,6 +250,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       coupons: couponsPayload,
       description,
       customer_segment_ids: segmentIds,
+      campaign_type: selectedCampaignType?.value,
     };
     setLoading(true);
     try {
@@ -332,7 +349,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           <Autocomplete
             multiple
             options={allSegments}
-            getOptionLabel={(option) => option.segment.name}
+            getOptionLabel={(option) => option?.segment?.name}
             value={selectedSegments}
             onChange={(event, newValue) => setSelectedSegments(newValue)}
             filterSelectedOptions
@@ -348,78 +365,109 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
-        {ruleTypes.map((type, idx) => (
-          <Grid key={idx} item xs={12}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <FormControl fullWidth>
-                <InputLabel>Rule Type</InputLabel>
-                <Select
-                  value={type}
-                  onChange={(e) => handleRuleTypeChange(idx, e.target.value)}
-                  label="Rule Type"
-                >
-                  {[type, ...availableRuleTypes.filter((t) => t !== type)].map(
-                    (rt) => (
-                      <MenuItem key={rt} value={rt}>
-                        {rt}
-                      </MenuItem>
-                    )
-                  )}
-                </Select>
-              </FormControl>
-              {/* <Button
+        <Grid item xs={12}>
+          <Autocomplete
+            options={CAMPAIGN_TYPES}
+            getOptionLabel={(option) => option.label}
+            value={selectedCampaignType}
+            onChange={(event, newValue) => setSelectedCampaignType(newValue)}
+            isOptionEqualToValue={(option, value) =>
+              option.value === value?.value
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Campaign Type"
+                placeholder="Select campaign type"
+                fullWidth
+              />
+            )}
+          />
+        </Grid>
+
+        {selectedCampaignType?.value === "DISCOUNT_POINTS" && (
+          <>
+            {ruleTypes.map((type, idx) => (
+              <Grid key={idx} item xs={12}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <FormControl fullWidth>
+                    <InputLabel>Rule Type</InputLabel>
+                    <Select
+                      value={type}
+                      onChange={(e) =>
+                        handleRuleTypeChange(idx, e.target.value)
+                      }
+                      label="Rule Type"
+                    >
+                      {[
+                        type,
+                        ...availableRuleTypes.filter((t) => t !== type),
+                      ].map((rt) => (
+                        <MenuItem key={rt} value={rt}>
+                          {rt}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {/* <Button
                 variant="outlined"
                 color="error"
                 onClick={() => handleRuleTypeRemove(idx)}
               >
                 ➖
               </Button> */}
-            </Box>
+                </Box>
 
-            <FormGroup sx={{ mt: 1 }}>
-              <RadioGroup
-                value={selectedRules[type] || ""}
-                onChange={(e) => handleRuleToggle(type, Number(e.target.value))}
-              >
-                {(rulesByType[type] || []).map((rule) => (
-                  <Box
-                    key={rule.id}
-                    sx={{ display: "flex", alignItems: "center" }}
+                <FormGroup sx={{ mt: 1 }}>
+                  <RadioGroup
+                    value={selectedRules[type] || ""}
+                    onChange={(e) =>
+                      handleRuleToggle(type, Number(e.target.value))
+                    }
                   >
-                    <FormControlLabel
-                      // control={
-                      //   <Checkbox
-                      //     checked={
-                      //       selectedRules[type]?.includes(rule.id) || false
-                      //     }
-                      //     onChange={() => handleRuleToggle(type, rule.id)}
-                      //   />
-                      // }
-                      value={rule.id}
-                      control={<Radio />}
-                      label={rule.name}
-                    />
-                    {rule.description && (
-                      <Typography variant="body1">
-                        ({htmlToPlainText(rule.description)})
-                      </Typography>
-                    )}
-                  </Box>
-                ))}
-              </RadioGroup>
-            </FormGroup>
-          </Grid>
-        ))}
+                    {(rulesByType[type] || []).map((rule) => (
+                      <Box
+                        key={rule.id}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <FormControlLabel
+                          // control={
+                          //   <Checkbox
+                          //     checked={
+                          //       selectedRules[type]?.includes(rule.id) || false
+                          //     }
+                          //     onChange={() => handleRuleToggle(type, rule.id)}
+                          //   />
+                          // }
+                          value={rule.id}
+                          control={<Radio />}
+                          label={rule.name}
+                        />
+                        {rule.description && (
+                          <Typography variant="body1">
+                            ({htmlToPlainText(rule.description)})
+                          </Typography>
+                        )}
+                      </Box>
+                    ))}
+                  </RadioGroup>
+                </FormGroup>
+              </Grid>
+            ))}
 
-        {/* <Grid item xs={12}>
-          <Button
-            variant="outlined"
-            onClick={handleRuleTypeAdd}
-            disabled={availableRuleTypes.length === 0}
-          >
-            ➕ Add Rule Type
-          </Button>
-        </Grid> */}
+            {ruleTypes.length === 0 && (
+              <Grid item xs={12}>
+                <Button
+                  variant="outlined"
+                  onClick={handleRuleTypeAdd}
+                  disabled={availableRuleTypes.length === 0}
+                >
+                  ➕ Add Rule Type
+                </Button>
+              </Grid>
+            )}
+          </>
+        )}
 
         <Grid item xs={12}>
           <Typography variant="subtitle1">Tiers</Typography>
@@ -465,61 +513,67 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
         </Grid>
 
         {/* Coupons */}
-        <Grid item xs={12}>
-          <Autocomplete
-            multiple
-            options={allCoupons}
-            getOptionLabel={(option) => option.coupon_title}
-            value={selectedCoupons}
-            onChange={(event, newValue: any) => setSelectedCoupons(newValue)}
-            filterSelectedOptions
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            loading={loading}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                {option.coupon_title}
-              </li>
-            )}
-            onInputChange={(event, newInputValue) => {
-              if (event?.type !== "change") return;
-              setSearchTerm(newInputValue);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Coupons"
-                placeholder="Search Coupons..."
-                fullWidth
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loading ? (
-                        <CircularProgress color="inherit" size={18} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
+        {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
+          <>
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                options={allCoupons}
+                getOptionLabel={(option) => option.coupon_title}
+                value={selectedCoupons}
+                onChange={(event, newValue: any) =>
+                  setSelectedCoupons(newValue)
+                }
+                filterSelectedOptions
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                loading={loading}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    {option.coupon_title}
+                  </li>
+                )}
+                onInputChange={(event, newInputValue) => {
+                  if (event?.type !== "change") return;
+                  setSearchTerm(newInputValue);
                 }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Coupons"
+                    placeholder="Search Coupons..."
+                    fullWidth
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loading ? (
+                            <CircularProgress color="inherit" size={18} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
               />
-            )}
-          />
-        </Grid>
+            </Grid>
 
-        {/* Show selected Coupons as a Card */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            {selectedCoupons?.map((singleSelectedCoupon, index) => (
-              <Grid item xs={12} sm={3} md={4} key={index + 1}>
-                <CouponCard
-                  couponData={singleSelectedCoupon}
-                  selectedCoupons={selectedCoupons}
-                  setSelectedCoupons={setSelectedCoupons}
-                />
+            {/* Show selected Coupons as a Card */}
+            <Grid item xs={12}>
+              <Grid container spacing={2}>
+                {selectedCoupons?.map((singleSelectedCoupon, index) => (
+                  <Grid item xs={12} sm={3} md={4} key={index + 1}>
+                    <CouponCard
+                      couponData={singleSelectedCoupon}
+                      selectedCoupons={selectedCoupons}
+                      setSelectedCoupons={setSelectedCoupons}
+                    />
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
-        </Grid>
+            </Grid>
+          </>
+        )}
 
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>

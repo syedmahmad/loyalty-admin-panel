@@ -14,6 +14,7 @@ import {
   InputLabel,
   useTheme,
   InputAdornment,
+  Autocomplete,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useState } from "react";
@@ -23,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { RichTextEditor } from "@/components/TextEditor";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
+  BURN_TYPES,
   FREQUENCY,
   tooltipMessagesValidityAfterAssignmentForRule,
 } from "@/constants/constants";
@@ -38,6 +40,11 @@ const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
     </Tooltip>
   </Box>
 );
+
+interface BurnTypeOption {
+  label: string;
+  value: string;
+}
 
 const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
@@ -63,6 +70,12 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [form, setForm] = useState(initialForm);
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [selectedBurnType, setSelectedBurnType] =
+    useState<BurnTypeOption | null>({
+      label: "FIXED",
+      value: "FIXED",
+    });
+
   const theme = useTheme();
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -82,8 +95,10 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       (form.rule_type === "burn" &&
         (!form.min_amount_spent ||
           !form.max_redeemption_points_limit ||
-          !form.points_conversion_factor ||
-          !form.max_burn_percent_on_invoice)) ||
+          (selectedBurnType?.value === "FIXED" &&
+            !form.points_conversion_factor) ||
+          (selectedBurnType?.value === "PERCENTAGE" &&
+            !form.max_burn_percent_on_invoice))) ||
       (form.rule_type === "dynamic rule" &&
         (!form.condition_type ||
           !form.condition_operator ||
@@ -100,8 +115,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const payload = {
       name: form.name,
       slug: slugify(form.name, {
-        replacement: '_',
-        lower: true, 
+        replacement: "_",
+        lower: true,
       }),
       rule_type: form.rule_type,
       client_id: clientInfo.id,
@@ -129,6 +144,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       frequency: form.frequency || "once",
       description,
       created_by,
+      burn_type: selectedBurnType?.value,
     };
 
     const response = await POST("/rules", payload);
@@ -276,6 +292,26 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
         {form.rule_type === "burn" && (
           <>
             <Grid item xs={12}>
+              <Autocomplete
+                options={BURN_TYPES}
+                getOptionLabel={(option) => option.label}
+                value={selectedBurnType}
+                onChange={(event, newValue) => setSelectedBurnType(newValue)}
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value?.value
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Burn Type"
+                    placeholder="Select burn type"
+                    fullWidth
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
               <InfoLabel
                 label="Max Redeemable Points"
                 tooltip="Max points a user can burn in a transaction."
@@ -290,40 +326,44 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <InfoLabel
-                label="Points Conversion Factor"
-                tooltip="Points to currency value ratio."
-              />
-              <TextField
-                fullWidth
-                type="number"
-                value={form.points_conversion_factor}
-                onChange={(e) =>
-                  handleChange("points_conversion_factor", e.target.value)
-                }
-              />
-            </Grid>
+            {selectedBurnType?.value === "FIXED" && (
+              <Grid item xs={12}>
+                <InfoLabel
+                  label="Points Conversion Factor"
+                  tooltip="Points to currency value ratio."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.points_conversion_factor}
+                  onChange={(e) =>
+                    handleChange("points_conversion_factor", e.target.value)
+                  }
+                />
+              </Grid>
+            )}
 
-            <Grid item xs={12}>
-              <InfoLabel
-                label="Max Burn % on Invoice"
-                tooltip="Maximum invoice value percentage that can be paid using points."
-              />
-              <TextField
-                fullWidth
-                type="number"
-                value={form.max_burn_percent_on_invoice}
-                onChange={(e) =>
-                  handleChange("max_burn_percent_on_invoice", e.target.value)
-                }
-              />
-            </Grid>
+            {selectedBurnType?.value === "PERCENTAGE" && (
+              <Grid item xs={12}>
+                <InfoLabel
+                  label="Max Burn % on Invoice"
+                  tooltip="Maximum invoice value percentage that can be paid using points."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.max_burn_percent_on_invoice}
+                  onChange={(e) =>
+                    handleChange("max_burn_percent_on_invoice", e.target.value)
+                  }
+                />
+              </Grid>
+            )}
           </>
         )}
 
         {/* Validity for user After Assigned */}
-        {form.rule_type !== 'burn' && (
+        {form.rule_type !== "burn" && (
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -333,11 +373,15 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
               type="number"
               inputProps={{ min: 0 }}
               name="validity_after_assignment"
-              onChange={(e) => handleChange('validity_after_assignment', e.target.value)}
+              onChange={(e) =>
+                handleChange("validity_after_assignment", e.target.value)
+              }
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <Tooltip title={tooltipMessagesValidityAfterAssignmentForRule}>
+                    <Tooltip
+                      title={tooltipMessagesValidityAfterAssignmentForRule}
+                    >
                       <IconButton edge="end">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
