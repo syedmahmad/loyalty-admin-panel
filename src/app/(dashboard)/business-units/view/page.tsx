@@ -146,8 +146,6 @@ const BusinessUnitList = () => {
       ? units
       : units.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  console.log("selectedBusinessUnit:::", selectedBusinessUnit);
-
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
       <Box

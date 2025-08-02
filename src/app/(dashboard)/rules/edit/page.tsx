@@ -376,7 +376,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                 <Autocomplete
                   options={BURN_TYPES}
                   getOptionLabel={(option) => option.label}
-                  value={selectedBurnType}
+                  value={selectedBurnType ?? null}
                   onChange={(event, newValue) => setSelectedBurnType(newValue)}
                   isOptionEqualToValue={(option, value) =>
                     option.value === value?.value

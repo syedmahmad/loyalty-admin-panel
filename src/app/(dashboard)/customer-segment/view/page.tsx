@@ -114,7 +114,7 @@ const CustomerSegmentList = () => {
   const totalPages = Math.ceil(segments.length / rowsPerPage);
 
   return (
-    <Box sx={{ mt: "-20px" }}>
+    <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
       <Box
         display="flex"
         justifyContent="space-between"

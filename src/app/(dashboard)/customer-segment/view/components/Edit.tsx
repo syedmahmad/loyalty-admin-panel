@@ -18,6 +18,8 @@ import {
   ListItemText,
   Drawer,
   Tooltip,
+  Stack,
+  Paper,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import GroupIcon from "@mui/icons-material/Group";
@@ -28,6 +30,7 @@ import * as Yup from "yup";
 import { GET, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import CloseIcon from "@mui/icons-material/Close";
+import SegmentCustomers from "./SegmentCustomers";
 
 const fetchSegment = async (id: any) => {
   const response = await GET(`/customer-segments/view-customers/${id}`);
@@ -311,49 +314,51 @@ const CustomerSegmentEditPage = ({ segmentId, setSelectedSegmentId }: any) => {
             </Formik>
 
             {segmentCustomers.length ? (
-              <Box mt={4}>
-                <Typography variant="h6">Segment Customers</Typography>
-                <List>
+              <Box sx={{ maxWidth: 500, mx: "auto", mt: 2 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Segment Customers
+                </Typography>
+                <Stack spacing={2}>
                   {segmentCustomers.map((c: any) => (
-                    <ListItem
+                    <Paper
                       key={c.id}
-                      secondaryAction={
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveCustomer(c.id)}
-                        >
-                          <DeleteOutlineIcon />
-                        </IconButton>
-                      }
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
                     >
-                      <ListItemText
-                        primary={c.name}
-                        secondary={
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {c.name}
+                        </Typography>
+                        {c.email && (
                           <Typography
-                            noWrap
-                            sx={{ maxWidth: "300px", display: "flex", gap: 1 }}
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              wordBreak: "break-word",
+                              fontFamily: "monospace",
+                              color: "text.secondary",
+                            }}
                           >
-                            <Tooltip title={c.email}>
-                              <span>{c.email}</span>
-                            </Tooltip>
-                            |
-                            <Tooltip title={c.phone}>
-                              <span>{c.phone}</span>
-                            </Tooltip>
+                            {c.email}
                           </Typography>
-                        }
-                        primaryTypographyProps={{
-                          noWrap: true,
-                          sx: { maxWidth: "200px" }, // adjust as needed
-                        }}
-                        secondaryTypographyProps={{
-                          noWrap: true,
-                          sx: { maxWidth: "300px" }, // adjust width to your layout
-                        }}
-                      />
-                    </ListItem>
+                        )}
+                      </Box>
+                      <IconButton
+                        edge="end"
+                        color="error"
+                        size="small"
+                        onClick={() => handleRemoveCustomer(c.id)}
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </Paper>
                   ))}
-                </List>
+                </Stack>
               </Box>
             ) : null}
           </CardContent>
