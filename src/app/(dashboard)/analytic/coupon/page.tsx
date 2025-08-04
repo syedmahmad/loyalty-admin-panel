@@ -56,9 +56,10 @@ const CouponAnalyticsPage = () => {
   const [couponAnalyticsData, setCouponAnalyticsData] = useState<any>({
     stats: [],
     set: [],
-    lineData:[]
+    lineData: [],
+    barData: [],
   });
-
+  const [maxCount, setMaxCount] = useState<number[]>([]);
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -132,19 +133,19 @@ const CouponAnalyticsPage = () => {
     fetchCouponAnalytics();
   }, []);
 
-  const barData = [
-    { name: "Promotional Test coupon sets (Test)", count: 8 },
-    { name: "STR", count: 4 },
-    { name: "SPAREIT TEST", count: 3 },
-  ];
+  useEffect(() => {
+    if (couponAnalyticsData?.barData) {
+      const maxCount = Math.max(
+        ...couponAnalyticsData?.barData.map(
+          (item: { count: number }) => item.count
+        )
+      );
 
-  const lineData = [
-    { date: "2025-04-15", count: 0 },
-    { date: "2025-05-01", count: 0 },
-    { date: "2025-05-20", count: 0 },
-    { date: "2025-06-10", count: 0 },
-    { date: "2025-07-14", count: 0 },
-  ];
+      const range = Array.from({ length: maxCount + 10 }, (_, i) => i);
+      setMaxCount(range);
+    }
+  }, [couponAnalyticsData]);
+
 
   return (
     <Box>
@@ -392,7 +393,7 @@ const CouponAnalyticsPage = () => {
             sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff" }}
           >
             <ResponsiveContainer width="100%" height={500}>
-              <BarChart data={barData}>
+              <BarChart data={couponAnalyticsData?.barData}>
                 <XAxis
                   dataKey="name"
                   label={{
@@ -405,7 +406,7 @@ const CouponAnalyticsPage = () => {
                 />
                 <YAxis
                   domain={[0, 8]}
-                  ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8]}
+                  ticks={maxCount}
                   label={{
                     value: "Assign Count",
                     angle: -90,

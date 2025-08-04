@@ -57,11 +57,7 @@ export default function WalletSettingsPage() {
   }, []);
 
   useEffect(() => {
-    if (settings) {
-      setAllWalletSettings([settings]);
-    } else {
-      setAllWalletSettings([]);
-    }
+    setAllWalletSettings(settings ? [settings] : []);
   }, [settings]);
 
   const fetchSettings = async (buId: any) => {
@@ -79,8 +75,8 @@ export default function WalletSettingsPage() {
   };
 
   const handleBUChange = (e: any) => {
+    setAllWalletSettings([]);
     const id = Number(e.target.value);
-
     if (id === 0) {
       setSelectedBU(null);
       fetchAllWalltetSettings();
@@ -109,6 +105,8 @@ export default function WalletSettingsPage() {
     setSettings(selectedSetting);
     setDrawerOpen(true);
   };
+
+  useEffect(() => {}, [allWalletSettings]);
 
   const paginatedSetting =
     viewMode === "card"
