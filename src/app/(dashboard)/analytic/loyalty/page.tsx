@@ -141,7 +141,6 @@ const LoyaltyAnalyticsPage = () => {
     { label: 'Total Earned Points', count: analyticsData.summary.totalEarnedPoints },
     { label: 'Total Burnt Points', count: analyticsData.summary.totalBurntPoints },
     { label: 'Remaining Points in Wallets', count: analyticsData.summary.totalRemainingPoints },
-    { label: 'Net Loyalty Points', count: analyticsData.summary.totalLoyaltyPoints },
   ];
 
   if (loading) {
