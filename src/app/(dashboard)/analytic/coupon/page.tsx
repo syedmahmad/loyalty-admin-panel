@@ -28,8 +28,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
+import { GET } from "@/utils/AxiosUtility";
 
 const CouponAnalyticsPage = () => {
   const stats = [
@@ -50,8 +51,14 @@ const CouponAnalyticsPage = () => {
     dayjs().add(1, "month"),
   ]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
   const open = Boolean(anchorEl);
+  const [loading, setLoading] = useState(true);
+  const [couponAnalyticsData, setCouponAnalyticsData] = useState<any>({
+    stats: [],
+    set: [],
+    lineData:[]
+  });
+
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -103,6 +110,27 @@ const CouponAnalyticsPage = () => {
 
   const isStart = (day: Dayjs) => startDate?.isSame(day, "day");
   const isEnd = (day: Dayjs) => endDate?.isSame(day, "day");
+
+  const fetchCouponAnalytics = async () => {
+    try {
+      setLoading(true);
+      const response = await GET("/loyalty/analytics/coupon", {
+        params: {
+          startDate: startDate?.format("YYYY-MM-DD"),
+          endDate: endDate?.format("YYYY-MM-DD"),
+        },
+      });
+      setCouponAnalyticsData(response?.data);
+    } catch (error) {
+      console.error("Error loading analytics data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCouponAnalytics();
+  }, []);
 
   const barData = [
     { name: "Promotional Test coupon sets (Test)", count: 8 },
@@ -284,31 +312,33 @@ const CouponAnalyticsPage = () => {
         Coupons Summary
       </Typography>
       <Grid container spacing={2} mb={2}>
-        {stats.map((item, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
-              <Box display="flex">
-                <Box
-                  sx={{
-                    color: "#fff",
-                    borderRadius: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "Outfit",
-                    fontWeight: 400,
-                  }}
-                ></Box>
-                <Box>
-                  <Typography variant="h5" color="secondary">
-                    {item.label}
-                  </Typography>
-                  <Typography variant="h6">{item.count}</Typography>
+        {couponAnalyticsData?.stats.map(
+          (item: { label: string; count: number }, index: number) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
+                <Box display="flex">
+                  <Box
+                    sx={{
+                      color: "#fff",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "Outfit",
+                      fontWeight: 400,
+                    }}
+                  ></Box>
+                  <Box>
+                    <Typography variant="h5" color="secondary">
+                      {item.label}
+                    </Typography>
+                    <Typography variant="h6">{item.count}</Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
-          </Grid>
-        ))}
+              </Card>
+            </Grid>
+          )
+        )}
       </Grid>
 
       {/* Coupon Set Summary */}
@@ -324,29 +354,31 @@ const CouponAnalyticsPage = () => {
         Coupon Set Summary
       </Typography>
       <Grid container spacing={2} mb={2}>
-        {set.map((item, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
-              <Box display="flex">
-                <Box
-                  sx={{
-                    color: "#fff",
-                    borderRadius: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                ></Box>
-                <Box>
-                  <Typography variant="h5" color="secondary">
-                    {item.label}
-                  </Typography>
-                  <Typography variant="h6">{item.count}</Typography>
+        {couponAnalyticsData?.set.map(
+          (item: { label: string; count: number }, index: number) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
+                <Box display="flex">
+                  <Box
+                    sx={{
+                      color: "#fff",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  ></Box>
+                  <Box>
+                    <Typography variant="h5" color="secondary">
+                      {item.label}
+                    </Typography>
+                    <Typography variant="h6">{item.count}</Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
-          </Grid>
-        ))}
+              </Card>
+            </Grid>
+          )
+        )}
       </Grid>
 
       {/* Coupon Set Most Assign */}
@@ -401,7 +433,7 @@ const CouponAnalyticsPage = () => {
             sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff" }}
           >
             <ResponsiveContainer width="100%" height={500}>
-              <LineChart data={lineData}>
+              <LineChart data={couponAnalyticsData?.lineData}>
                 <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
                 <XAxis
                   dataKey="date"

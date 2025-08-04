@@ -66,7 +66,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState<string>("");
   const [allCoupons, setAllCoupons] = useState<any[]>([]);
-  const [selectedCoupons, setSelectedCoupons] = useState([]);
+  const [selectedCoupons, setSelectedCoupons] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [allSegments, setAllSegments] = useState([]);
   const [selectedSegments, setSelectedSegments] = useState<any>([]);
@@ -196,9 +196,11 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
       tier_id: t.tier_id,
       point_conversion_rate: Number(t.point_conversion_rate),
     }));
-    const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
-      coupon_id: singleCpn.id,
-    }));
+
+    // const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
+    //   coupon_id: singleCpn.id,
+    // }));
+    const couponsPayload = [{ coupon_id: selectedCoupons?.id }];
     const segmentIds = selectedSegments.map((seg: any) => seg.id);
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -246,6 +248,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     setAllCoupons(couponsRes?.data?.coupons || []);
   };
 
+  console.log("selectedCoupons:::", selectedCoupons);
   return (
     <>
       {/* <Tooltip title="Go Back">
@@ -498,7 +501,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
         {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
           <Grid item xs={12}>
             <Autocomplete
-              multiple
+              multiple={false}
               options={allCoupons}
               getOptionLabel={(option) => option.coupon_title}
               value={selectedCoupons}
@@ -541,7 +544,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
         {/* Show selected Coupons as a Card */}
         <Grid item xs={12}>
           <Grid container spacing={2}>
-            {selectedCoupons?.map((singleSelectedCoupon, index) => (
+            {/* {selectedCoupons?.map((singleSelectedCoupon, index) => (
               <Grid item xs={12} sm={3} md={4} key={index + 1}>
                 <CouponCard
                   couponData={singleSelectedCoupon}
@@ -549,7 +552,17 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                   setSelectedCoupons={setSelectedCoupons}
                 />
               </Grid>
-            ))}
+            ))} */}
+
+            {selectedCoupons && (
+              <Grid item xs={12} sm={3} md={4}>
+                <CouponCard
+                  couponData={selectedCoupons}
+                  selectedCoupons={[selectedCoupons]}
+                  setSelectedCoupons={setSelectedCoupons}
+                />
+              </Grid>
+            )}
           </Grid>
         </Grid>
 
