@@ -200,7 +200,9 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     // const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
     //   coupon_id: singleCpn.id,
     // }));
-    const couponsPayload = [{ coupon_id: selectedCoupons?.id }];
+    const couponsPayload = selectedCoupons?.id
+      ? [{ coupon_id: selectedCoupons?.id }]
+      : [];
     const segmentIds = selectedSegments.map((seg: any) => seg.id);
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -248,7 +250,6 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     setAllCoupons(couponsRes?.data?.coupons || []);
   };
 
-  console.log("selectedCoupons:::", selectedCoupons);
   return (
     <>
       {/* <Tooltip title="Go Back">
