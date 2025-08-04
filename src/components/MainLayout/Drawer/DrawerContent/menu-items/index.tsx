@@ -211,13 +211,13 @@ const menuItems: { items: NavItemType[] } = {
       type: "collapse", 
       icon: AnalyticsIcon,
       children: [
-        // {
-        //   id: "coupon",
-        //   title: "Coupon Analytic",
-        //   type: "item",
-        //   url: "/analytic/coupon",
-        //   privileges: [],
-        // },
+        {
+          id: "coupon",
+          title: "Coupon Analytic",
+          type: "item",
+          url: "/analytic/coupon",
+          privileges: [],
+        },
         {
           id: "loyalty",
           title: "Loyalty Analytic",

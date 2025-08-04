@@ -369,7 +369,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           <Autocomplete
             options={CAMPAIGN_TYPES}
             getOptionLabel={(option) => option.label}
-            value={selectedCampaignType}
+            value={selectedCampaignType ?? null}
             onChange={(event, newValue) => setSelectedCampaignType(newValue)}
             isOptionEqualToValue={(option, value) =>
               option.value === value?.value
