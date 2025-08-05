@@ -50,8 +50,7 @@ const CouponCard = ({
     const updatedCouponData = selectedCoupons.filter(
       (item: { id: number }) => item.id !== couponId
     );
-    // setSelectedCoupons(updatedCouponData);
-    setSelectedCoupons(null);
+    setSelectedCoupons(updatedCouponData);
   };
 
   return (
