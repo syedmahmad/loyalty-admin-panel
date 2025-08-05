@@ -427,6 +427,65 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
           </>
         )}
 
+        {/* Coupons */}
+        {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
+          <Grid item xs={12}>
+            <Autocomplete
+              multiple
+              options={allCoupons}
+              getOptionLabel={(option) => option.coupon_title}
+              value={selectedCoupons}
+              onChange={(event, newValue: any) => setSelectedCoupons(newValue)}
+              filterSelectedOptions
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              loading={loading}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  {option.coupon_title}
+                </li>
+              )}
+              onInputChange={(event, newInputValue) => {
+                if (event?.type !== "change") return;
+                setSearchTerm(newInputValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Coupons"
+                  placeholder="Search Coupons..."
+                  fullWidth
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loading ? (
+                          <CircularProgress color="inherit" size={18} />
+                        ) : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+          </Grid>
+        )}
+
+        {/* Show selected Coupons as a Card */}
+        <Grid item xs={12}>
+          <Grid container spacing={2}>
+            {selectedCoupons?.map((singleSelectedCoupon, index) => (
+              <Grid item xs={12} sm={3} md={4} key={index + 1}>
+                <CouponCard
+                  couponData={singleSelectedCoupon}
+                  selectedCoupons={selectedCoupons}
+                  setSelectedCoupons={setSelectedCoupons}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Grid>
+
         <Grid
           item
           xs={12}
@@ -487,65 +546,6 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
               );
             })}
           </FormGroup>
-        </Grid>
-
-        {/* Coupons */}
-        {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
-          <Grid item xs={12}>
-            <Autocomplete
-              multiple
-              options={allCoupons}
-              getOptionLabel={(option) => option.coupon_title}
-              value={selectedCoupons}
-              onChange={(event, newValue: any) => setSelectedCoupons(newValue)}
-              filterSelectedOptions
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              loading={loading}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  {option.coupon_title}
-                </li>
-              )}
-              onInputChange={(event, newInputValue) => {
-                if (event?.type !== "change") return;
-                setSearchTerm(newInputValue);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Coupons"
-                  placeholder="Search Coupons..."
-                  fullWidth
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {loading ? (
-                          <CircularProgress color="inherit" size={18} />
-                        ) : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Grid>
-        )}
-
-        {/* Show selected Coupons as a Card */}
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            {selectedCoupons?.map((singleSelectedCoupon, index) => (
-              <Grid item xs={12} sm={3} md={4} key={index + 1}>
-                <CouponCard
-                  couponData={singleSelectedCoupon}
-                  selectedCoupons={selectedCoupons}
-                  setSelectedCoupons={setSelectedCoupons}
-                />
-              </Grid>
-            ))}
-          </Grid>
         </Grid>
 
         <Grid item xs={12}>

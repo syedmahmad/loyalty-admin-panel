@@ -466,49 +466,6 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           </>
         )}
 
-        <Grid item xs={12}>
-          <Typography variant="subtitle1">Tiers</Typography>
-          <FormGroup>
-            {allTiers.map((tier) => {
-              const selected = isTierSelected(tier.id);
-              const current = tiers.find((t) => t.tier_id === tier.id);
-
-              return (
-                <Box
-                  key={tier.id}
-                  sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={selected}
-                        onChange={() => handleTierToggle(tier.id)}
-                      />
-                    }
-                    label={tier.name}
-                  />
-                  {selected && (
-                    <TextField
-                      type="number"
-                      label="Point Conversion Rate"
-                      value={current?.point_conversion_rate ?? 1}
-                      onChange={(e) =>
-                        handleConversionRateChange(
-                          tier.id,
-                          Number(e.target.value)
-                        )
-                      }
-                      size="small"
-                      sx={{ ml: 2, width: 180 }}
-                      inputProps={{ step: 0.01, min: 0 }}
-                    />
-                  )}
-                </Box>
-              );
-            })}
-          </FormGroup>
-        </Grid>
-
         {/* Coupons */}
         {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
           <>
@@ -571,6 +528,49 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           </>
         )}
+
+        <Grid item xs={12}>
+          <Typography variant="subtitle1">Tiers</Typography>
+          <FormGroup>
+            {allTiers.map((tier) => {
+              const selected = isTierSelected(tier.id);
+              const current = tiers.find((t) => t.tier_id === tier.id);
+
+              return (
+                <Box
+                  key={tier.id}
+                  sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selected}
+                        onChange={() => handleTierToggle(tier.id)}
+                      />
+                    }
+                    label={tier.name}
+                  />
+                  {selected && (
+                    <TextField
+                      type="number"
+                      label="Point Conversion Rate"
+                      value={current?.point_conversion_rate ?? 1}
+                      onChange={(e) =>
+                        handleConversionRateChange(
+                          tier.id,
+                          Number(e.target.value)
+                        )
+                      }
+                      size="small"
+                      sx={{ ml: 2, width: 180 }}
+                      inputProps={{ step: 0.01, min: 0 }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
+          </FormGroup>
+        </Grid>
 
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>

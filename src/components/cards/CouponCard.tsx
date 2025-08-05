@@ -68,8 +68,10 @@ const CouponCard = ({
         size="small"
         sx={{
           position: "absolute",
-          top: -7,
-          right: -7,
+          top: 2,
+          right: 3,
+          width:"15px",
+          height:"15px"
         }}
         onClick={() => handleRemoveSelectedCoupon(couponData.id)}
       >
@@ -83,13 +85,14 @@ const CouponCard = ({
         alignItems="center"
         width="100%"
         gap={1}
+        flexWrap="wrap"
       >
         <Box display="flex" alignItems="center">
           <ConfirmationNumberIcon fontSize="small" color="disabled" />
           <Typography
             fontSize={12}
             color="text.secondary"
-            whiteSpace="nowrap"
+            whiteSpace="wrap"
             paddingLeft={1}
           >
             {couponData?.code}
@@ -101,7 +104,7 @@ const CouponCard = ({
           <Typography
             fontSize={12}
             color="text.secondary"
-            whiteSpace="nowrap"
+            whiteSpace="wrap"
             paddingLeft={1}
           >
             {moment(couponData?.date_to).format("MMMM D, YYYY")}
