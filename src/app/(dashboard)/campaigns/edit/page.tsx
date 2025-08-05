@@ -68,7 +68,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [allCoupons, setAllCoupons] = useState<any[]>([]);
-  const [selectedCoupons, setSelectedCoupons] = useState<any>(null);
+  const [selectedCoupons, setSelectedCoupons] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [allSegments, setAllSegments] = useState<any>([]);
   const [selectedSegments, setSelectedSegments] = useState<any>([]);
@@ -110,8 +110,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     setSelectedSegments(campaign.customerSegments || []);
 
     const coupon = campaign?.coupons.map((item: any) => item.coupon)[0];
-    //  setSelectedCoupons(campaign?.coupons.map((item: any) => item.coupon));
-    setSelectedCoupons(coupon);
+    setSelectedCoupons(campaign?.coupons.map((item: any) => item.coupon));
 
     const campType: any = CAMPAIGN_TYPES.find(
       (singleCampaignType) =>
@@ -159,7 +158,6 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   };
 
   const handleRuleToggle = (type: string, ruleId: number) => {
-    /* ## This would be use in future ##
     const current = selectedRules[type] || [];
     if (current.includes(ruleId)) {
       setSelectedRules({
@@ -169,9 +167,6 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     } else {
       setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
     }
-    */
-
-    setSelectedRules({ [type]: [ruleId] });
   };
 
   const handleRuleTypeAdd = () => {
@@ -239,12 +234,10 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       tier_id: t.tier_id,
       point_conversion_rate: Number(t.point_conversion_rate),
     }));
-    // const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
-    //   coupon_id: singleCpn.id,
-    // }));
-    const couponsPayload = selectedCoupons?.id
-      ? [{ coupon_id: selectedCoupons?.id }]
-      : [];
+    const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
+      coupon_id: singleCpn.id,
+    }));
+
     const segmentIds = selectedSegments.map((seg: any) => seg.id);
 
     const payload = {
@@ -356,7 +349,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           <Autocomplete
             multiple
             options={allSegments}
-            getOptionLabel={(option) => option?.segment?.name}
+            getOptionLabel={(option) => option?.name || ""}
             value={selectedSegments}
             onChange={(event, newValue) => setSelectedSegments(newValue)}
             filterSelectedOptions
@@ -416,13 +409,13 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                       ))}
                     </Select>
                   </FormControl>
-                  {/* <Button
-                variant="outlined"
-                color="error"
-                onClick={() => handleRuleTypeRemove(idx)}
-              >
-                ➖
-              </Button> */}
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleRuleTypeRemove(idx)}
+                  >
+                    ➖
+                  </Button>
                 </Box>
 
                 <FormGroup sx={{ mt: 1 }}>
@@ -438,16 +431,15 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                         sx={{ display: "flex", alignItems: "center" }}
                       >
                         <FormControlLabel
-                          // control={
-                          //   <Checkbox
-                          //     checked={
-                          //       selectedRules[type]?.includes(rule.id) || false
-                          //     }
-                          //     onChange={() => handleRuleToggle(type, rule.id)}
-                          //   />
-                          // }
+                          control={
+                            <Checkbox
+                              checked={
+                                selectedRules[type]?.includes(rule.id) || false
+                              }
+                              onChange={() => handleRuleToggle(type, rule.id)}
+                            />
+                          }
                           value={rule.id}
-                          control={<Radio />}
                           label={rule.name}
                         />
                         {rule.description && (
@@ -462,17 +454,15 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
               </Grid>
             ))}
 
-            {ruleTypes.length === 0 && (
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  onClick={handleRuleTypeAdd}
-                  disabled={availableRuleTypes.length === 0}
-                >
-                  ➕ Add Rule Type
-                </Button>
-              </Grid>
-            )}
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                onClick={handleRuleTypeAdd}
+                disabled={availableRuleTypes.length === 0}
+              >
+                ➕ Add Rule Type
+              </Button>
+            </Grid>
           </>
         )}
 
@@ -524,7 +514,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           <>
             <Grid item xs={12}>
               <Autocomplete
-                multiple={false}
+                multiple
                 options={allCoupons}
                 getOptionLabel={(option) => option.coupon_title}
                 value={selectedCoupons}
@@ -568,7 +558,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             {/* Show selected Coupons as a Card */}
             <Grid item xs={12}>
               <Grid container spacing={2}>
-                {/* {selectedCoupons?.map((singleSelectedCoupon, index) => (
+                {selectedCoupons?.map((singleSelectedCoupon, index) => (
                   <Grid item xs={12} sm={3} md={4} key={index + 1}>
                     <CouponCard
                       couponData={singleSelectedCoupon}
@@ -576,17 +566,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                       setSelectedCoupons={setSelectedCoupons}
                     />
                   </Grid>
-                ))} */}
-
-                {selectedCoupons && (
-                  <Grid item xs={12} sm={3} md={4}>
-                    <CouponCard
-                      couponData={selectedCoupons}
-                      selectedCoupons={[selectedCoupons]}
-                      setSelectedCoupons={setSelectedCoupons}
-                    />
-                  </Grid>
-                )}
+                ))}
               </Grid>
             </Grid>
           </>

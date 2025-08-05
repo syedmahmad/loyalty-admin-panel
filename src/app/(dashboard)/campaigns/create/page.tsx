@@ -66,7 +66,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState<string>("");
   const [allCoupons, setAllCoupons] = useState<any[]>([]);
-  const [selectedCoupons, setSelectedCoupons] = useState<any>(null);
+  const [selectedCoupons, setSelectedCoupons] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [allSegments, setAllSegments] = useState([]);
   const [selectedSegments, setSelectedSegments] = useState<any>([]);
@@ -170,7 +170,6 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
   };
 
   const handleRuleToggle = (type: string, ruleId: number) => {
-    /* ## This would be use in future ##
     const current = selectedRules[type] || [];
     if (current.includes(ruleId)) {
       setSelectedRules({
@@ -180,8 +179,6 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     } else {
       setSelectedRules({ ...selectedRules, [type]: [...current, ruleId] });
     }
-    */
-    setSelectedRules({ [type]: [ruleId] });
   };
 
   const handleSubmit = async () => {
@@ -197,12 +194,9 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
       point_conversion_rate: Number(t.point_conversion_rate),
     }));
 
-    // const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
-    //   coupon_id: singleCpn.id,
-    // }));
-    const couponsPayload = selectedCoupons?.id
-      ? [{ coupon_id: selectedCoupons?.id }]
-      : [];
+    const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
+      coupon_id: singleCpn.id,
+    }));
     const segmentIds = selectedSegments.map((seg: any) => seg.id);
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -376,13 +370,13 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                       ))}
                     </Select>
                   </FormControl>
-                  {/* <Button
-                variant="outlined"
-                color="error"
-                onClick={() => handleRuleTypeRemove(idx)}
-              >
-                ➖
-              </Button> */}
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleRuleTypeRemove(idx)}
+                  >
+                    ➖
+                  </Button>
                 </Box>
 
                 <FormGroup sx={{ mt: 1 }}>
@@ -398,16 +392,15 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                         sx={{ display: "flex", alignItems: "center" }}
                       >
                         <FormControlLabel
-                          // control={
-                          //   <Checkbox
-                          //     checked={
-                          //       selectedRules[type]?.includes(rule.id) || false
-                          //     }
-                          //     onChange={() => handleRuleToggle(type, rule.id)}
-                          //   />
-                          // }
+                          control={
+                            <Checkbox
+                              checked={
+                                selectedRules[type]?.includes(rule.id) || false
+                              }
+                              onChange={() => handleRuleToggle(type, rule.id)}
+                            />
+                          }
                           value={rule.id}
-                          control={<Radio />}
                           label={rule.name}
                         />
                         {rule.description && (
@@ -422,17 +415,15 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
               </Grid>
             ))}
 
-            {ruleTypes.length === 0 && (
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  onClick={handleRuleTypeAdd}
-                  disabled={availableRuleTypes.length === 0}
-                >
-                  ➕ Add Rule Type
-                </Button>
-              </Grid>
-            )}
+            <Grid item xs={12}>
+              <Button
+                variant="outlined"
+                onClick={handleRuleTypeAdd}
+                disabled={availableRuleTypes.length === 0}
+              >
+                ➕ Add Rule Type
+              </Button>
+            </Grid>
           </>
         )}
 
@@ -502,7 +493,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
         {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
           <Grid item xs={12}>
             <Autocomplete
-              multiple={false}
+              multiple
               options={allCoupons}
               getOptionLabel={(option) => option.coupon_title}
               value={selectedCoupons}
@@ -545,7 +536,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
         {/* Show selected Coupons as a Card */}
         <Grid item xs={12}>
           <Grid container spacing={2}>
-            {/* {selectedCoupons?.map((singleSelectedCoupon, index) => (
+            {selectedCoupons?.map((singleSelectedCoupon, index) => (
               <Grid item xs={12} sm={3} md={4} key={index + 1}>
                 <CouponCard
                   couponData={singleSelectedCoupon}
@@ -553,17 +544,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                   setSelectedCoupons={setSelectedCoupons}
                 />
               </Grid>
-            ))} */}
-
-            {selectedCoupons && (
-              <Grid item xs={12} sm={3} md={4}>
-                <CouponCard
-                  couponData={selectedCoupons}
-                  selectedCoupons={[selectedCoupons]}
-                  setSelectedCoupons={setSelectedCoupons}
-                />
-              </Grid>
-            )}
+            ))}
           </Grid>
         </Grid>
 
