@@ -247,8 +247,8 @@ const RuleList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginatedrule.map((rule) => (
-              <Grid item xs={12} sm={6} md={4} key={rule.id}>
+            {paginatedrule.map((rule, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
                 <Card
                   sx={{
                     height: "100%",
