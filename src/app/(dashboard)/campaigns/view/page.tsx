@@ -318,7 +318,7 @@ const CampaignsList = () => {
                               onClick={() => {
                                 handleClose();
                                 if (selectedCampaign) {
-                                  setDeleteId(selectedCampaign?.uuid);
+                                  setDeleteId(selectedCampaign?.id);
                                 }
                               }}
                             >
