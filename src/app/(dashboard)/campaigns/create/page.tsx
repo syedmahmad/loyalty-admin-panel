@@ -395,12 +395,12 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                           control={
                             <Checkbox
                               checked={
-                                selectedRules[type]?.includes(rule.uuid) || false
+                                selectedRules[type]?.includes(rule.id) || false
                               }
-                              onChange={() => handleRuleToggle(type, rule.uuid)}
+                              onChange={() => handleRuleToggle(type, rule.id)}
                             />
                           }
-                          value={rule.uuid}
+                          value={rule.id}
                           label={rule.name}
                         />
                         {rule.description && (
