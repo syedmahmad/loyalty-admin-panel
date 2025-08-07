@@ -48,7 +48,7 @@ interface CampaignTypeOption {
 const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const params = useSearchParams();
-  const paramId = params.get("uuid") || null;
+  const paramId = params.get("id") || null;
   const theme = useTheme();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -133,9 +133,9 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       grouped[type].push(id);
     });
 
+    
     const usedTypes = Object.keys(grouped);
     const available = ALL_RULE_TYPES.filter((t) => !usedTypes.includes(t));
-
     setSelectedRules(grouped);
     setRuleTypes(usedTypes);
     // setRuleTypes((prev) => [""]);
@@ -425,31 +425,33 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                       handleRuleToggle(type, Number(e.target.value))
                     }
                   >
-                    {(rulesByType[type] || []).map((rule, index) => (
-                      <Box
-                        key={index}
-                        sx={{ display: "flex", alignItems: "center" }}
-                      >
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={
-                                selectedRules[type]?.includes(rule.uuid) ||
-                                false
-                              }
-                              onChange={() => handleRuleToggle(type, rule.uuid)}
-                            />
-                          }
-                          value={rule.uuid}
-                          label={rule.name}
-                        />
-                        {rule.description && (
-                          <Typography variant="body1">
-                            ({htmlToPlainText(rule.description)})
-                          </Typography>
-                        )}
-                      </Box>
-                    ))}
+                    {(rulesByType[type] || []).map((rule, index) => {
+                      return (
+                        <Box
+                          key={index}
+                          sx={{ display: "flex", alignItems: "center" }}
+                        >
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={
+                                  selectedRules[type]?.includes(rule.id) ||
+                                  false
+                                }
+                                onChange={() => handleRuleToggle(type, rule.id)}
+                              />
+                            }
+                            value={rule.id}
+                            label={rule.name}
+                          />
+                          {rule.description && (
+                            <Typography variant="body1">
+                              ({htmlToPlainText(rule.description)})
+                            </Typography>
+                          )}
+                        </Box>
+                      )
+                    })}
                   </RadioGroup>
                 </FormGroup>
               </Grid>
