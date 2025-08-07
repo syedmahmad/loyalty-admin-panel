@@ -146,7 +146,6 @@ const CouponAnalyticsPage = () => {
     }
   }, [couponAnalyticsData]);
 
-
   return (
     <Box>
       <Box
@@ -274,7 +273,9 @@ const CouponAnalyticsPage = () => {
                 <Button
                   variant="outlined"
                   disableElevation
-                  onClick={handleClose}
+                  onClick={() => {
+                    handleClose(), fetchCouponAnalytics();
+                  }}
                   disabled={!startDate || !endDate}
                   sx={{
                     backgroundColor: "#fff",
@@ -301,7 +302,7 @@ const CouponAnalyticsPage = () => {
       </Box>
 
       {/* Coupons Summary */}
-      <Typography
+      {/* <Typography
         variant="h4"
         color="secondary"
         p={1}
@@ -340,7 +341,7 @@ const CouponAnalyticsPage = () => {
             </Grid>
           )
         )}
-      </Grid>
+      </Grid> */}
 
       {/* Coupon Set Summary */}
       <Typography

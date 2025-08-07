@@ -42,6 +42,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 
 type Rule = {
+  uuid: string;
   id: number;
   name: string;
   rule_type: "event based earn" | "spend and earn" | "burn" | "dynamic rule";
@@ -60,7 +61,7 @@ type Rule = {
 const RuleList = () => {
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [nameFilter, setNameFilter] = useState("");
   const [searchName, setSearchName] = useState("");
   const [page, setPage] = useState(0);
@@ -82,7 +83,7 @@ const RuleList = () => {
   const totalPages = Math.ceil(count / rowsPerPage);
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get("drawer");
-  const drawerId = searchParams.get("id");
+  const drawerId = searchParams.get("uuid");
   const router = useRouter();
   const fetchRules = async (name = "") => {
     setLoading(true);
@@ -314,7 +315,7 @@ const RuleList = () => {
                               handleClose();
                               if (selectedRule) {
                                 router.push(
-                                  `/rules/view?drawer=edit&id=${selectedRule.id}`
+                                  `/rules/view?drawer=edit&uuid=${selectedRule.uuid}`
                                 );
                               }
                             }}
@@ -329,7 +330,7 @@ const RuleList = () => {
                             onClick={() => {
                               handleClose();
                               if (selectedRule) {
-                                setDeleteId(selectedRule.id);
+                                setDeleteId(selectedRule.uuid);
                               }
                             }}
                           >
@@ -412,8 +413,8 @@ const RuleList = () => {
                 <TableBody>
                   {rules
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((rule) => (
-                      <TableRow key={rule.id}>
+                    .map((rule, index) => (
+                      <TableRow key={index}>
                         <TableCell>
                           {rule.name}={rule.id}
                         </TableCell>
@@ -490,7 +491,7 @@ const RuleList = () => {
                                 handleClose();
                                 if (selectedRule) {
                                   router.push(
-                                    `/rules/view?drawer=edit&aid=${selectedRule.id}`
+                                    `/rules/view?drawer=edit&uuid=${selectedRule.uuid}`
                                   );
                                 }
                               }}
@@ -505,7 +506,7 @@ const RuleList = () => {
                               onClick={() => {
                                 handleClose();
                                 if (selectedRule) {
-                                  setDeleteId(selectedRule.id);
+                                  setDeleteId(selectedRule.uuid);
                                 }
                               }}
                             >

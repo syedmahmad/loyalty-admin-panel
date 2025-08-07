@@ -386,21 +386,21 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                       handleRuleToggle(type, Number(e.target.value))
                     }
                   >
-                    {(rulesByType[type] || []).map((rule) => (
+                    {(rulesByType[type] || []).map((rule, index) => (
                       <Box
-                        key={rule.id}
+                        key={index}
                         sx={{ display: "flex", alignItems: "center" }}
                       >
                         <FormControlLabel
                           control={
                             <Checkbox
                               checked={
-                                selectedRules[type]?.includes(rule.id) || false
+                                selectedRules[type]?.includes(rule.uuid) || false
                               }
-                              onChange={() => handleRuleToggle(type, rule.id)}
+                              onChange={() => handleRuleToggle(type, rule.uuid)}
                             />
                           }
-                          value={rule.id}
+                          value={rule.uuid}
                           label={rule.name}
                         />
                         {rule.description && (

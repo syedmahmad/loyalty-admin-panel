@@ -53,7 +53,7 @@ interface BurnTypeOption {
 
 const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const searchParams = useSearchParams();
-  const paramId = searchParams.get("id");
+  const paramId = searchParams.get("uuid");
   const router = useRouter();
   const clientInfo = JSON.parse(localStorage.getItem("client-info") || "{}");
   const updated_by = clientInfo?.id;
@@ -226,7 +226,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
               margin="normal"
             >
               {rules.map((rule) => (
-                <MenuItem key={rule.id} value={rule.id}>
+                <MenuItem key={rule?.uuid} value={rule?.uuid}>
                   {rule.name}
                 </MenuItem>
               ))}

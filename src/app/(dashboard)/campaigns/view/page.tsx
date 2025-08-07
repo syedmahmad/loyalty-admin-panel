@@ -53,7 +53,7 @@ const CampaignsList = () => {
   const totalPages = Math.ceil(count / rowsPerPage);
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get("drawer");
-  const drawerId = searchParams.get("id");
+  const drawerId = searchParams.get("uuid");
   const handleCloseDrawer = () => {
     const currentUrl = window.location.pathname;
     router.push(currentUrl);
@@ -303,7 +303,7 @@ const CampaignsList = () => {
                                 handleClose();
                                 if (selectedCampaign) {
                                   router.push(
-                                    `/campaigns/view?drawer=edit&id=${selectedCampaign.id}`
+                                    `/campaigns/view?drawer=edit&uuid=${selectedCampaign?.uuid}`
                                   );
                                 }
                               }}
@@ -318,7 +318,7 @@ const CampaignsList = () => {
                               onClick={() => {
                                 handleClose();
                                 if (selectedCampaign) {
-                                  setDeleteId(selectedCampaign.id);
+                                  setDeleteId(selectedCampaign?.uuid);
                                 }
                               }}
                             >
