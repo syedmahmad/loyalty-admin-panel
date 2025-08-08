@@ -354,7 +354,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             value={selectedSegments}
             onChange={(event, newValue) => setSelectedSegments(newValue)}
             filterSelectedOptions
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            isOptionEqualToValue={(option, value) => option.id === value?.id}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -483,7 +483,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                   setSelectedCoupons(newValue)
                 }
                 filterSelectedOptions
-                isOptionEqualToValue={(option, value) => option.id === value.id}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
                 loading={loading}
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>
