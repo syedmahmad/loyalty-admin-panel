@@ -106,8 +106,9 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     setBus(campaign.business_unit_id);
     setDescription(campaign.description || "");
 
+    const newSelectedSegments = campaign.customerSegments.map((item: any) => item.segment);
     setAllSegments(segmentsRes?.data || []);
-    setSelectedSegments(campaign.customerSegments || []);
+    setSelectedSegments(newSelectedSegments || []);
 
     const coupon = campaign?.coupons.map((item: any) => item.coupon)[0];
     setSelectedCoupons(campaign?.coupons.map((item: any) => item.coupon));
@@ -353,7 +354,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             value={selectedSegments}
             onChange={(event, newValue) => setSelectedSegments(newValue)}
             filterSelectedOptions
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            isOptionEqualToValue={(option, value) => option.id === value?.id}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -482,7 +483,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                   setSelectedCoupons(newValue)
                 }
                 filterSelectedOptions
-                isOptionEqualToValue={(option, value) => option.id === value.id}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
                 loading={loading}
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>

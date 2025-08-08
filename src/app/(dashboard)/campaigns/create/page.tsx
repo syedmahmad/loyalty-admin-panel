@@ -191,7 +191,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     const rulesPayload = ruleIds.map((id) => ({ rule_id: id }));
     const tiersPayload = tiers.map((t) => ({
       tier_id: t.tier_id,
-      point_conversion_rate: Number(t.point_conversion_rate),
+      point_conversion_rate: Number(t.point_conversion_rate) || 1,
     }));
 
     const couponsPayload = selectedCoupons.map((singleCpn: { id: number }) => ({
@@ -526,7 +526,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                     }
                     label={tier.name}
                   />
-                  {selected && (
+                  {selected && selectedCampaignType?.value === "DISCOUNT_POINTS" && (
                     <TextField
                       type="number"
                       label="Point Conversion Rate"
