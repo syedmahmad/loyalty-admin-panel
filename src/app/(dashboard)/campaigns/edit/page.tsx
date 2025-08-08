@@ -106,8 +106,9 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     setBus(campaign.business_unit_id);
     setDescription(campaign.description || "");
 
+    const newSelectedSegments = campaign.customerSegments.map((item: any) => item.segment);
     setAllSegments(segmentsRes?.data || []);
-    setSelectedSegments(campaign.customerSegments || []);
+    setSelectedSegments(newSelectedSegments || []);
 
     const coupon = campaign?.coupons.map((item: any) => item.coupon)[0];
     setSelectedCoupons(campaign?.coupons.map((item: any) => item.coupon));
