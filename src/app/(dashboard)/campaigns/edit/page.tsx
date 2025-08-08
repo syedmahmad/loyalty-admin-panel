@@ -554,7 +554,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                     }
                     label={tier.name}
                   />
-                  {selected && (
+                  {selected && selectedCampaignType?.value === "DISCOUNT_POINTS" && (
                     <TextField
                       type="number"
                       label="Point Conversion Rate"
