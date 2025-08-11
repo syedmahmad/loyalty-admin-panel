@@ -128,3 +128,14 @@ export const BURN_TYPES = [
     value: "PERCENTAGE",
   },
 ];
+
+export const REWARD_CONDITIONS = [
+  {
+    label: "Per Amount",
+    value: "perAmount",
+  },
+  {
+    label: "Minimum Spend",
+    value: "minimum",
+  },
+];

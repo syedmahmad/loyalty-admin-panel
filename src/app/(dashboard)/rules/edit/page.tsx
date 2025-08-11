@@ -25,6 +25,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { RichTextEditor } from "@/components/TextEditor";
 import {
   BURN_TYPES,
+  REWARD_CONDITIONS,
   tooltipMessagesValidityAfterAssignmentForRule,
 } from "@/constants/constants";
 import { FREQUENCY } from "@/constants/constants";
@@ -33,6 +34,7 @@ import slugify from "slugify";
 const initialForm = {
   name: "",
   rule_type: "event based earn",
+  reward_condition: "minimum",
   min_amount_spent: "",
   reward_points: "",
   event_triggerer: "",
@@ -96,6 +98,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
         condition_value: rule.condition_value || "",
         validity_after_assignment: rule.validity_after_assignment || 0,
         frequency: rule.frequency || "once",
+        reward_condition: rule.reward_condition || "minimum",
       });
       setDescription(rule.description || "");
 
@@ -183,6 +186,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       description,
       updated_by,
       burn_type: selectedBurnType?.value,
+      reward_condition: form.reward_condition,
     };
 
     const res = await PUT(`/rules/${selectedId}`, payload);
@@ -335,12 +339,43 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           )}
 
+          {/* REWARD_CONDITIONS */}
+          {form.rule_type === "spend and earn" && (
+            <Grid item xs={12}>
+              <InfoLabel
+                label="Reward Condition"
+                tooltip={
+                  "Per Amount Spent: Points are given for every set amount spent (e.g., 5 points for every ₹10).\n" +
+                  "Minimum Spend: Points are given only once when the customer spends at least the minimum amount."
+                }
+              />
+              <TextField
+                select
+                fullWidth
+                value={form.reward_condition}
+                onChange={(e) =>
+                  handleChange("reward_condition", e.target.value)
+                }
+              >
+                {REWARD_CONDITIONS.map((condition) => (
+                  <MenuItem key={condition.value} value={condition.value}>
+                    {condition.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          )}
+
           {(form.rule_type === "spend and earn" ||
             form.rule_type === "burn") && (
             <Grid item xs={12}>
               <InfoLabel
-                label="Minimum Amount Spent"
-                tooltip="Minimum spend amount to activate the rule."
+                label={`${
+                  form.reward_condition === "minimum" ? "Minimum" : "Per"
+                }  Amount Spent`}
+                tooltip={`${
+                  form.reward_condition === "minimum" ? "Minimum" : "Per"
+                } spend amount to activate the rule.`}
               />
               <TextField
                 fullWidth
