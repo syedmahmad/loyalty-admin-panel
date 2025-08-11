@@ -72,9 +72,9 @@ const EditCouponForm = ({
   const [segments, setSegments] = useState([]);
 
   const fetchCustomerSegments = async () => {
-      const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-      const res = await GET(`/customer-segments/${clientInfo.id}`);
-      setSegments(res?.data || []);
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const res = await GET(`/customer-segments/${clientInfo.id}`);
+    setSegments(res?.data || []);
   };
 
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<
@@ -163,6 +163,7 @@ const EditCouponForm = ({
               setSelectedCouponTypeId(coupon?.coupon_type);
               prefillDynamicRows = await prefillRows(coupon?.dynamicRows);
             }
+
             const selectedCouponTypeInfo: any = couponTypes.find(
               (type: any) => type.id === coupon.coupon_type
             );
@@ -197,7 +198,13 @@ const EditCouponForm = ({
       );
 
       const fetchPrefilledRows = async () => {
-        const prefillDynamicRows = await prefillRows(couponData?.conditions);
+        /** For Birthday check */
+        // const prefillDynamicRows = await prefillRows(couponData?.conditions);
+
+        const dbCouponConditions = couponData?.conditions
+          ? couponData?.conditions
+          : [];
+        const prefillDynamicRows = await prefillRows(dbCouponConditions);
 
         setDynamicCouponTypesRows((prev) =>
           prev.map((row) => {
@@ -372,7 +379,8 @@ const EditCouponForm = ({
       validity_after_assignment: couponData?.validity_after_assignment || "",
       is_point_earning_disabled: couponData?.is_point_earning_disabled,
       status: couponData?.status,
-      customer_segment_ids: couponData?.customerSegments.map((ls: any) => ls.segment.id) || [],
+      customer_segment_ids:
+        couponData?.customerSegments.map((ls: any) => ls.segment.id) || [],
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
@@ -420,21 +428,90 @@ const EditCouponForm = ({
   }, [values.coupon_type]);
 
   const handleSubmit = async (values: CouponFormValues) => {
-    const condtionsArr =
+    /** Simple Coupon Old */
+    /*const condtionsArr =
       dynamicCouponTypesRows.length > 1
         ? null
         : dynamicCouponTypesRows[0].dynamicRows.map(
             ({ models, variants, ...rest }) => rest
           );
+    */
 
+    /** Simple Coupon New */
+    let condtionsArr = null;
+    switch (dynamicCouponTypesRows[0]?.selectedCouponType) {
+      case "BIRTHDAY":
+        condtionsArr = null;
+        break;
+
+      case "PRODUCT_SPECIFIC":
+      case "GEO_TARGETED":
+        condtionsArr =
+          dynamicCouponTypesRows.length > 1
+            ? null
+            : dynamicCouponTypesRows[0]?.dynamicRows.map(({ id, type }) => ({
+                id,
+                type,
+              }));
+        break;
+
+      default:
+        condtionsArr =
+          dynamicCouponTypesRows.length > 1
+            ? null
+            : dynamicCouponTypesRows[0]?.dynamicRows.map(
+                ({ models, variants, ...rest }) => rest
+              );
+        break;
+    }
+
+    /** Complex Coupon Old*/
+    // const complexCouponArr =
+    //   dynamicCouponTypesRows.length > 1
+    //     ? dynamicCouponTypesRows.map(({ dynamicRows, ...rest }) => ({
+    //         ...rest,
+    //         dynamicRows: dynamicRows.map(
+    //           ({ models, variants, ...cleanedRow }) => cleanedRow
+    //         ),
+    //       }))
+    //     : null;
+
+    /** Complex Coupon New */
+    // console.log("complexCouponArr:::", complexCouponArr);
     const complexCouponArr =
       dynamicCouponTypesRows.length > 1
-        ? dynamicCouponTypesRows.map(({ dynamicRows, ...rest }) => ({
-            ...rest,
-            dynamicRows: dynamicRows.map(
-              ({ models, variants, ...cleanedRow }) => cleanedRow
-            ),
-          }))
+        ? dynamicCouponTypesRows.map((row) => {
+            switch (row.selectedCouponType) {
+              case "BIRTHDAY":
+                return {
+                  ...row,
+                  dynamicRows: [],
+                };
+
+              case "PRODUCT_SPECIFIC":
+              case "GEO_TARGETED":
+                return {
+                  ...row,
+                  dynamicRows: row.dynamicRows.map(({ id, type }) => ({
+                    id,
+                    type,
+                  })),
+                };
+
+              case "VEHICLE_SPECIFIC":
+                return {
+                  ...row,
+                };
+
+              default:
+                return {
+                  ...row,
+                  dynamicRows: row.dynamicRows.map(
+                    ({ models, variants, ...rest }) => rest
+                  ),
+                };
+            }
+          })
         : null;
 
     const coupon_type_id =
@@ -677,6 +754,7 @@ const EditCouponForm = ({
                 placeholder="Generate code"
                 value={values.code}
                 name="code"
+                disabled
                 onChange={handleChange}
                 InputProps={{
                   endAdornment: (
@@ -687,6 +765,7 @@ const EditCouponForm = ({
                           setFieldValue("code", generatedCode);
                         }}
                         variant="contained"
+                        disabled
                         sx={{
                           height: "100%",
                           borderRadius: 0,
@@ -1235,8 +1314,8 @@ const EditCouponForm = ({
             <Grid item xs={12}>
               <Autocomplete
                 multiple
-                options={segments.filter((s: any) =>
-                  !values.customer_segment_ids.includes(s.id)
+                options={segments.filter(
+                  (s: any) => !values.customer_segment_ids.includes(s.id)
                 )}
                 getOptionLabel={(option: any) => option.name}
                 value={segments.filter((s: any) =>
@@ -1252,9 +1331,13 @@ const EditCouponForm = ({
                   <TextField
                     {...params}
                     label="Customer Segments"
-                    error={Boolean(touched.customer_segment_ids && errors.customer_segment_ids)}
+                    error={Boolean(
+                      touched.customer_segment_ids &&
+                        errors.customer_segment_ids
+                    )}
                     helperText={
-                      touched.customer_segment_ids && errors.customer_segment_ids
+                      touched.customer_segment_ids &&
+                      errors.customer_segment_ids
                         ? errors.customer_segment_ids
                         : ""
                     }

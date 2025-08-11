@@ -30,7 +30,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import {
@@ -41,6 +41,7 @@ import {
   Model,
   Tier,
 } from "../types";
+import { debounce } from "lodash";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
@@ -170,6 +171,8 @@ const CreateCouponForm = ({
     handleSubmit: onFormSubmit,
     setFieldValue,
     setFieldTouched,
+    setFieldError,
+    setErrors,
   } = formik;
 
   const loadData = async () => {
@@ -294,15 +297,83 @@ const CreateCouponForm = ({
     values: CouponFormValues,
     resetForm: () => void
   ) => {
+    /** Simple Coupon Old */
+    /*
     const condtionsArr =
       dynamicCouponTypesRows.length > 1
         ? null
         : dynamicCouponTypesRows[0].dynamicRows.map(
             ({ models, variants, ...rest }) => rest
           );
+    */
 
+    /** Simple Coupon New */
+    let condtionsArr = null;
+    switch (dynamicCouponTypesRows[0]?.selectedCouponType) {
+      case "BIRTHDAY":
+        condtionsArr = null;
+        break;
+
+      case "PRODUCT_SPECIFIC":
+      case "GEO_TARGETED":
+        condtionsArr =
+          dynamicCouponTypesRows.length > 1
+            ? null
+            : dynamicCouponTypesRows[0]?.dynamicRows.map(({ id, type }) => ({
+                id,
+                type,
+              }));
+        break;
+
+      default:
+        condtionsArr =
+          dynamicCouponTypesRows.length > 1
+            ? null
+            : dynamicCouponTypesRows[0]?.dynamicRows.map(
+                ({ models, variants, ...rest }) => rest
+              );
+        break;
+    }
+
+    /** Complex Coupon Old*/
+    // const complexCouponArr = dynamicCouponTypesRows.length > 1 ? dynamicCouponTypesRows : null;
+
+    /** Complex Coupon New */
     const complexCouponArr =
-      dynamicCouponTypesRows.length > 1 ? dynamicCouponTypesRows : null;
+      dynamicCouponTypesRows.length > 1
+        ? dynamicCouponTypesRows.map((row) => {
+            switch (row.selectedCouponType) {
+              case "BIRTHDAY":
+                return {
+                  ...row,
+                  dynamicRows: [],
+                };
+
+              case "PRODUCT_SPECIFIC":
+              case "GEO_TARGETED":
+                return {
+                  ...row,
+                  dynamicRows: row.dynamicRows.map(({ id, type }) => ({
+                    id,
+                    type,
+                  })),
+                };
+
+              case "VEHICLE_SPECIFIC":
+                return {
+                  ...row,
+                };
+
+              default:
+                return {
+                  ...row,
+                  dynamicRows: row.dynamicRows.map(
+                    ({ models, variants, ...rest }) => rest
+                  ),
+                };
+            }
+          })
+        : null;
 
     const coupon_type_id =
       dynamicCouponTypesRows.length > 1
@@ -536,6 +607,7 @@ const CreateCouponForm = ({
               value={values.code}
               name="code"
               onChange={handleChange}
+              disabled
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -1074,7 +1146,9 @@ const CreateCouponForm = ({
                 <TextField
                   {...params}
                   label="Customer Segments"
-                  error={Boolean(touched.customer_segment_ids && errors.customer_segment_ids)}
+                  error={Boolean(
+                    touched.customer_segment_ids && errors.customer_segment_ids
+                  )}
                   helperText={
                     touched.customer_segment_ids && errors.customer_segment_ids
                       ? errors.customer_segment_ids

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Box,
@@ -13,16 +13,17 @@ import {
   Tooltip,
   Typography,
   useTheme,
-} from '@mui/material';
-import { Formik, Form } from 'formik';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import * as Yup from 'yup';
-import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import { GET, PUT } from '@/utils/AxiosUtility';
-import { RichTextEditor } from '@/components/TextEditor';
-
+} from "@mui/material";
+import { Formik, Form } from "formik";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import * as Yup from "yup";
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import { GET, PUT } from "@/utils/AxiosUtility";
+import { RichTextEditor } from "@/components/TextEditor";
 
 type Tier = {
   id: number;
@@ -34,20 +35,21 @@ type BusinessUnit = {
   name: string;
 };
 
-const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
+const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const paramId = searchParams.get('id');
+  const paramId = searchParams.get("id");
   const theme = useTheme();
   // const [rules, setRules] = useState<any[]>([]);
   // const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
-  const [selectedId, setSelectedId] = useState<string>(paramId || '');
+  const [selectedId, setSelectedId] = useState<string>(paramId || "");
   const [tierData, setTierData] = useState<any>(null);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
-  const [benefits, setBenefits] = useState<string>('');
+  // const [benefits, setBenefits] = useState<string>("");
+  const [benefitsInputs, setBenefitsInputs] = useState<string[]>(["A"]);
 
   // const fetchRules = async () => {
   //   const res = await GET('/rules');
@@ -57,9 +59,13 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
   // };
 
   const userId =
-    typeof window !== 'undefined'
-      ? JSON.parse(localStorage.getItem('client-info') || '{}')?.id ?? 0
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0
       : 0;
+
+  const addBenefitInput = () => {
+    setBenefitsInputs([...benefitsInputs, ""]);
+  };
 
   useEffect(() => {
     const resolveAllPromises = async () => {
@@ -79,7 +85,7 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
       };
 
       await Promise.all([fetchTiersAndBUs()]);
-    }
+    };
 
     resolveAllPromises();
   }, [paramId]);
@@ -88,7 +94,7 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
     setLoading(true);
     const res = await GET(`/tiers/single/${id}`);
     if (!res?.data) {
-      toast.error('Tier not found');
+      toast.error("Tier not found");
       return;
     }
 
@@ -97,28 +103,30 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
       name: res.data.name,
       min_points: res.data.min_points,
       // points_conversion_rate: res.data.points_conversion_rate,
-      benefits: res.data.benefits || '',
+      benefits: res.data.benefits || "",
       business_unit_id: res.data.business_unit_id.toString(),
     });
-    setBenefits(res.data.benefits || '');
+    // setBenefits(res.data.benefits || "");
+    setBenefitsInputs(res.data.benefits.length ? res.data.benefits : [""]);
     // setSelectedRules((res.data.rule_targets || []).map((t: any) => t.rule_id));
     setLoading(false);
   };
 
   const validationSchema = Yup.object({
-    name: Yup.string().required('Tier name is required'),
-    min_points: Yup.number().required('Minimum points required'),
+    name: Yup.string().required("Tier name is required"),
+    min_points: Yup.number().required("Minimum points required"),
     //  conversion_rate: Yup.number()
     //       .required('Conversion rate is required')
     //       .min(0, 'Conversion rate must be a positive number'),
-    business_unit_id: Yup.string().required('Business unit is required'),
+    business_unit_id: Yup.string().required("Business unit is required"),
   });
 
   const handleSubmit = async (values: any) => {
     setLoading(true);
     const payload = {
       ...values,
-      benefits: benefits || '',
+      // benefits: benefits || "",
+      benefits: benefitsInputs || [],
       business_unit_id: values.business_unit_id,
       min_points: +values.min_points,
       // points_conversion_rate: +values.conversion_rate,
@@ -126,11 +134,11 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
       // rule_targets: selectedRules.map((rule_id) => ({ rule_id })),
     };
 
-     const res = await PUT(`/tiers/${selectedId}`, payload);
+    const res = await PUT(`/tiers/${selectedId}`, payload);
     if (res?.status !== 200) {
-      toast.error('Failed to update tier');
+      toast.error("Failed to update tier");
     } else {
-      toast.success('Tier updated!');
+      toast.success("Tier updated!");
       onSuccess();
     }
     setLoading(false);
@@ -156,9 +164,9 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
           ✏ Edit Tier
         </Typography> */}
 
-        {!selectedId && (
-          <Grid container spacing={2} sx={{ mb: 1, width: '100%' }}>
-            <Grid item xs={12}>
+      {!selectedId && (
+        <Grid container spacing={2} sx={{ mb: 1, width: "100%" }}>
+          <Grid item xs={12}>
             <TextField
               select
               fullWidth
@@ -173,33 +181,37 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
                 </MenuItem>
               ))}
             </TextField>
-            </Grid>
           </Grid>
-        )}
+        </Grid>
+      )}
 
-        {tierData && (
-          <Formik
-            enableReinitialize
-            initialValues={tierData}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ values, errors, touched, handleChange }) => (
-              <Form noValidate>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="name"
-                      label="Tier Name"
-                      value={values.name}
-                      onChange={handleChange}
-                      error={!!touched.name && !!errors.name}
-                      helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
-                    />
-                  </Grid>
+      {tierData && (
+        <Formik
+          enableReinitialize
+          initialValues={tierData}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ values, errors, touched, handleChange }) => (
+            <Form noValidate>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="name"
+                    label="Tier Name"
+                    value={values.name}
+                    onChange={handleChange}
+                    error={!!touched.name && !!errors.name}
+                    helperText={
+                      touched.name && typeof errors.name === "string"
+                        ? errors.name
+                        : undefined
+                    }
+                  />
+                </Grid>
 
-                  {/* <Grid item xs={6}>
+                {/* <Grid item xs={6}>
                     <TextField
                       fullWidth
                       name="points_conversion_rate"
@@ -211,39 +223,49 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
                     />
                   </Grid> */}
 
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="min_points"
-                      label="Min Points"
-                      type="number"
-                      value={values.min_points}
-                      onChange={handleChange}
-                      error={!!touched.min_points && !!errors.min_points}
-                      helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
-                    />
-                  </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="min_points"
+                    label="Min Points"
+                    type="number"
+                    value={values.min_points}
+                    onChange={handleChange}
+                    error={!!touched.min_points && !!errors.min_points}
+                    helperText={
+                      touched.name && typeof errors.name === "string"
+                        ? errors.name
+                        : undefined
+                    }
+                  />
+                </Grid>
 
-                  <Grid item xs={12}>
-                    <TextField
-                      select
-                      fullWidth
-                      name="business_unit_id"
-                      label="Business Unit"
-                      value={values.business_unit_id}
-                      onChange={handleChange}
-                      error={!!touched.business_unit_id && !!errors.business_unit_id}
-                      helperText={touched.name && typeof errors.name === 'string' ? errors.name : undefined}
-                    >
-                      {businessUnits.map((bu) => (
-                        <MenuItem key={bu.id} value={bu.id}>
-                          {bu.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    select
+                    fullWidth
+                    name="business_unit_id"
+                    label="Business Unit"
+                    value={values.business_unit_id}
+                    onChange={handleChange}
+                    error={
+                      !!touched.business_unit_id && !!errors.business_unit_id
+                    }
+                    helperText={
+                      touched.name && typeof errors.name === "string"
+                        ? errors.name
+                        : undefined
+                    }
+                  >
+                    {businessUnits.map((bu) => (
+                      <MenuItem key={bu.id} value={bu.id}>
+                        {bu.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
 
-                  {/* <Grid item xs={12}>
+                {/* <Grid item xs={12}>
                     <TextField
                       select
                       fullWidth
@@ -263,44 +285,73 @@ const EditTierForm =  ({ onSuccess }: { onSuccess: () => void }) => {
                     </TextField>
                   </Grid> */}
 
-                  <Grid item xs={12}>
-                    {/* <TextField
-                      fullWidth
-                      name="benefits"
-                      label="Benefits"
-                      multiline
-                      minRows={3}
-                      value={values.benefits}
-                      onChange={handleChange}
-                    /> */}
-                    <Typography variant="subtitle1" gutterBottom>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Benefits (optional)
+                  </Typography>
+
+                  {benefitsInputs.map((input, index) => (
+                    <Box display="flex" gap={1} key={index + 1} mb={2}>
+                      <TextField
+                        fullWidth
+                        name="benefits"
+                        label={`Benefit ${index + 1}`}
+                        value={input}
+                        onChange={(e) => {
+                          const newInputs = [...benefitsInputs];
+                          newInputs[index] = e.target.value;
+                          setBenefitsInputs(newInputs);
+                        }}
+                      />
+                      {index === 0 ? (
+                        <IconButton onClick={addBenefitInput}>
+                          <AddIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      ) : (
+                        <IconButton>
+                          <DeleteIcon
+                            fontSize="small"
+                            color="error"
+                            onClick={() => {
+                              setBenefitsInputs(
+                                benefitsInputs.filter((_, i) => i !== index)
+                              );
+                            }}
+                          />
+                        </IconButton>
+                      )}
+                    </Box>
+                  ))}
+                  {/* <Typography variant="subtitle1" gutterBottom>
                       Benefits (optional)
                     </Typography>
-                    <RichTextEditor value={benefits} setValue={setBenefits} language="en" />
-                  </Grid>
+                    <RichTextEditor value={benefits} setValue={setBenefits} language="en" /> */}
+                </Grid>
 
-                  <Grid item xs={12}>
-                     <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                <Grid item xs={12}>
+                  <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
                     <Button
                       type="submit"
                       variant="outlined"
                       disabled={loading}
-                      sx={{ textTransform: 'none', borderRadius: 2,fontWeight:600 }}
+                      sx={{
+                        textTransform: "none",
+                        borderRadius: 2,
+                        fontWeight: 600,
+                      }}
                     >
-                      {loading ? <CircularProgress size={24} /> : 'Update Tier'}
+                      {loading ? <CircularProgress size={24} /> : "Update Tier"}
                     </Button>
-                    </Box>
+                  </Box>
 
-                    <br />
-                    <br />
-                    
-                  </Grid>
+                  <br />
+                  <br />
                 </Grid>
-              </Form>
-            )}
-          </Formik>
-        )}
-      
+              </Grid>
+            </Form>
+          )}
+        </Formik>
+      )}
     </>
   );
 };
