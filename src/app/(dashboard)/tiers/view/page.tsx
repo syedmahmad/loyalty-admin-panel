@@ -42,11 +42,12 @@ import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 type Tier = {
+  description?: string;
   id: number;
   name: string;
   min_points: number;
   points_conversion_rate: number;
-  benefits?: string;
+  benefits?: string[];
   business_unit?: { name: string };
 };
 
@@ -341,7 +342,11 @@ const TierList = () => {
                       Business Unit: {tier.business_unit?.name || "-"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mt={1}>
-                      Benefits: {htmlToPlainText(tier.benefits || "-")}
+                      Description: {htmlToPlainText(tier.description || "-")}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Benefits:
+                      {tier?.benefits?.join(", ")}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -362,7 +367,7 @@ const TierList = () => {
                     <TableCell>Name</TableCell>
                     <TableCell>Min Points</TableCell>
                     <TableCell>Business Unit</TableCell>
-                    <TableCell>Benefits</TableCell>
+                    <TableCell>Description</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -388,13 +393,17 @@ const TierList = () => {
                               <span
                                 dangerouslySetInnerHTML={{
                                   __html: DOMPurify.sanitize(
-                                    marked.parse(tier.benefits || "-") as string
+                                    marked.parse(
+                                      tier.description || "-"
+                                    ) as string
                                   ),
                                 }}
                               />
                             }
                           >
-                            <span>{htmlToPlainText(tier.benefits || "-")}</span>
+                            <span>
+                              {htmlToPlainText(tier.description || "-")}
+                            </span>
                           </Tooltip>
                         </TableCell>
                         <TableCell align="right">

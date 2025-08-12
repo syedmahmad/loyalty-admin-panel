@@ -50,7 +50,7 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
 const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
-  // const [benefits, setBenefits] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   // const [rules, setRules] = useState<any[]>([]);
   // const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const theme = useTheme();
@@ -89,6 +89,7 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
     name: "",
     min_points: "",
     benefits: "",
+    description: "",
     business_unit_ids: [] as number[],
     // conversion_rate: 0,
   };
@@ -112,7 +113,7 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const payloads = values.business_unit_ids.map((buId) => ({
       name: values.name,
       min_points: +values.min_points,
-      // benefits: benefits || "",
+      description: description || "",
       business_unit_id: buId,
       tenant_id: created_by,
       created_by,
@@ -288,6 +289,17 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     Benefits (optional)
                   </Typography>
                   <RichTextEditor value={benefits} setValue={setBenefits} language="en" /> */}
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Description (optional)
+                </Typography>
+                <RichTextEditor
+                  value={description}
+                  setValue={setDescription}
+                  language="en"
+                />
               </Grid>
 
               <Grid item xs={12}>

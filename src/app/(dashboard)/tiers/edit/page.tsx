@@ -48,7 +48,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
-  // const [benefits, setBenefits] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [benefitsInputs, setBenefitsInputs] = useState<string[]>(["A"]);
 
   // const fetchRules = async () => {
@@ -103,11 +103,14 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
       name: res.data.name,
       min_points: res.data.min_points,
       // points_conversion_rate: res.data.points_conversion_rate,
-      benefits: res.data.benefits || "",
       business_unit_id: res.data.business_unit_id.toString(),
     });
-    // setBenefits(res.data.benefits || "");
-    setBenefitsInputs(res.data.benefits.length ? res.data.benefits : [""]);
+    setDescription(res.data.description || "");
+    setBenefitsInputs(
+      Array.isArray(res.data.benefits)
+        ? res.data.benefits
+        : [res.data.benefits || ""]
+    );
     // setSelectedRules((res.data.rule_targets || []).map((t: any) => t.rule_id));
     setLoading(false);
   };
@@ -125,7 +128,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setLoading(true);
     const payload = {
       ...values,
-      // benefits: benefits || "",
+      description: description || "",
       benefits: benefitsInputs || [],
       business_unit_id: values.business_unit_id,
       min_points: +values.min_points,
@@ -326,6 +329,17 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                       Benefits (optional)
                     </Typography>
                     <RichTextEditor value={benefits} setValue={setBenefits} language="en" /> */}
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Description (optional)
+                  </Typography>
+                  <RichTextEditor
+                    value={description}
+                    setValue={setDescription}
+                    language="en"
+                  />
                 </Grid>
 
                 <Grid item xs={12}>
