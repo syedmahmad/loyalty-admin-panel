@@ -1,57 +1,76 @@
 "use client";
+import GoBackButton from "@/components/buttons/GoBackButton";
+import { GET } from "@/utils/AxiosUtility";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   Box,
-  Typography,
-  Grid,
-  Paper,
+  Button,
   Chip,
   CircularProgress,
+  Grid,
+  InputAdornment,
+  Pagination,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Button,
-  Pagination,
   TextField,
-  InputAdornment,
+  Typography,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import { Person, DirectionsCar, Star } from "@mui/icons-material";
-import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { GET } from "@/utils/AxiosUtility";
-import GoBackButton from "@/components/buttons/GoBackButton";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function CustomerDetail() {
   const params = useParams();
+  const router = useRouter();
   const customerId = Number(params?.id); // assuming URL is like /customers/detail/[id]
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>(null);
-  const [searchValue, setSearchValue] = useState("");
+  const [pointSearchValue, setPointSearchValue] = useState("");
+  const [couponSearchValue, setCouponSearchValue] = useState("");
 
   //Pagination
-  const [page, setPage] = useState(1);
+  const [pointPage, setPointPage] = useState(1);
+  const [couponPage, setCouponPage] = useState(1);
   const pageSize = 7;
-  const [totalPages, setTotalPages] = useState(1);
+  const [pointTotalPages, setPointTotalPages] = useState(1);
+  const [couponTotalPages, setCouponTotalPages] = useState(1);
 
-  const fetchCustomerDetail = async (
-    pageNumber: number,
-    searchValue: string
-  ) => {
+  const fetchCustomerDetail = async ({
+    pointPage,
+    couponPage,
+    pointSearchValue,
+    couponSearchValue,
+  }: {
+    pointPage: number;
+    couponPage: number;
+    pointSearchValue: string;
+    couponSearchValue: string;
+  }) => {
     try {
       const response: any = await GET(
-        `/customers/${customerId}/details?page=${pageNumber}&pageSize=${pageSize}&query=${searchValue}`
+        `/customers/${customerId}/details?pointPage=${pointPage}&couponPage=${couponPage}&pageSize=${pageSize}&point-search-query=${pointSearchValue}&coupon-search-query=${couponSearchValue}`
       );
 
       setCustomer(response.data);
-      setTotalPages(
+      setPointTotalPages(
         Math.ceil((response.data?.transactions?.total || 0) / pageSize)
       );
-      setPage(Number(response.data?.transactions?.page));
-    } catch (error) {
-      console.error("Error fetching customer details:", error);
+      setPointPage(Number(response.data?.transactions?.page));
+
+      setCouponTotalPages(
+        Math.ceil((response.data?.couponTransactionInfo?.total || 0) / pageSize)
+      );
+      setCouponPage(Number(response.data?.couponTransactionInfo?.page));
+    } catch (error: any) {
+      // console.error("Error fetching customer details:", error);
+      const msg = error.response.data.message || "Customer not found";
+      toast.error(msg);
+      router.push("/customers");
     } finally {
       setLoading(false);
     }
@@ -59,9 +78,18 @@ export default function CustomerDetail() {
 
   useEffect(() => {
     if (customerId) {
-      fetchCustomerDetail(page, searchValue);
+      fetchCustomerDetail({
+        pointPage,
+        couponPage,
+        pointSearchValue,
+        couponSearchValue,
+      });
     }
-  }, [customerId, searchValue]);
+  }, [
+    customerId,
+    pointSearchValue,
+    couponSearchValue,
+  ]);
 
   if (loading) {
     return (
@@ -82,21 +110,21 @@ export default function CustomerDetail() {
           fontWeight: 600,
         }}
       >
-        {customer.name}
+        {customer?.name}
       </Typography>
       <Typography sx={{ fontFamily: "Outfit" }}>
-        <strong>Phone Number:</strong> {customer.phone?.slice(0, 10)}...
+        <strong>Phone Number:</strong> {customer?.phone?.slice(0, 10)}...
       </Typography>
       <Typography sx={{ fontFamily: "Outfit" }}>
         <strong>Joined:</strong>{" "}
-        {new Date(customer.created_at).toLocaleDateString()}
+        {new Date(customer?.created_at).toLocaleDateString()}
       </Typography>
       <Box display="flex" alignItems="center" mt={1}>
         <Typography sx={{ fontFamily: "Outfit" }} mr={1}>
           <strong>Status:</strong>
         </Typography>
         <Chip
-          label={customer.status === 1 ? "Active" : "Inactive"}
+          label={customer?.status === 1 ? "Active" : "Inactive"}
           color="primary"
           variant="outlined"
           size="small"
@@ -108,10 +136,10 @@ export default function CustomerDetail() {
         />
       </Box>
       <Typography sx={{ fontFamily: "Outfit" }}>
-        <strong>City:</strong> {customer.city}
+        <strong>City:</strong> {customer?.city}
       </Typography>
       <Typography sx={{ fontFamily: "Outfit" }}>
-        <strong>Location:</strong> {customer.address}
+        <strong>Location:</strong> {customer?.address}
       </Typography>
 
       <Grid container spacing={2} mt={1}>
@@ -121,7 +149,7 @@ export default function CustomerDetail() {
               Available Points
             </Typography>
             <Typography variant="h6">
-              {customer.wallet?.available_balance}
+              {customer?.wallet?.available_balance}
             </Typography>
           </Paper>
         </Grid>
@@ -141,7 +169,7 @@ export default function CustomerDetail() {
               Total Points
             </Typography>
             <Typography variant="h6">
-              {customer.wallet?.total_balance}
+              {customer?.wallet?.total_balance}
             </Typography>
           </Paper>
         </Grid>
@@ -151,7 +179,7 @@ export default function CustomerDetail() {
               Locked Points
             </Typography>
             <Typography variant="h6">
-              {customer.wallet?.locked_balance}
+              {customer?.wallet?.locked_balance}
             </Typography>
           </Paper>
         </Grid>
@@ -167,8 +195,8 @@ export default function CustomerDetail() {
         <Box mb={2} mt={1}>
           <TextField
             placeholder="Search"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            value={pointSearchValue}
+            onChange={(e) => setPointSearchValue(e.target.value)}
             sx={{
               backgroundColor: "#fff",
               fontFamily: "Outfit",
@@ -247,8 +275,15 @@ export default function CustomerDetail() {
           {/* Previous Button */}
           <Button
             variant="outlined"
-            onClick={() => fetchCustomerDetail(page - 1, searchValue)}
-            disabled={page === 1}
+            onClick={() =>
+              fetchCustomerDetail({
+                pointPage: pointPage - 1,
+                couponPage,
+                pointSearchValue,
+                couponSearchValue,
+              })
+            }
+            disabled={pointPage === 1}
             sx={{
               textTransform: "none",
               borderRadius: 2,
@@ -261,9 +296,16 @@ export default function CustomerDetail() {
 
           {/* Pagination */}
           <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, value) => fetchCustomerDetail(value, searchValue)}
+            count={pointTotalPages}
+            page={pointPage}
+            onChange={(_, value) =>
+              fetchCustomerDetail({
+                pointPage: value,
+                couponPage,
+                pointSearchValue,
+                couponSearchValue,
+              })
+            }
             shape="rounded"
             siblingCount={1}
             boundaryCount={1}
@@ -282,8 +324,15 @@ export default function CustomerDetail() {
           {/* Next Button */}
           <Button
             variant="outlined"
-            onClick={() => fetchCustomerDetail(page + 1, searchValue)}
-            disabled={page === totalPages}
+            onClick={() =>
+              fetchCustomerDetail({
+                pointPage: pointPage + 1,
+                couponPage,
+                pointSearchValue,
+                couponSearchValue,
+              })
+            }
+            disabled={pointPage === pointTotalPages}
             sx={{
               textTransform: "none",
               borderRadius: 2,
@@ -306,8 +355,8 @@ export default function CustomerDetail() {
         <Box mb={2} mt={1}>
           <TextField
             placeholder="Search"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            value={couponSearchValue}
+            onChange={(e) => setCouponSearchValue(e.target.value)}
             sx={{
               backgroundColor: "#fff",
               fontFamily: "Outfit",
@@ -342,36 +391,38 @@ export default function CustomerDetail() {
             <TableHead>
               <TableRow>
                 <TableCell>Description</TableCell>
-                <TableCell>Points</TableCell>
+                <TableCell>Amounts</TableCell>
                 <TableCell>Source Type</TableCell>
                 <TableCell>Date</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {customer?.transactions?.data?.map((point: any, idx: number) => {
-                if (point.source_type !== 'coupon') return null;
-                return(
-                  <TableRow key={idx}>
-                    <TableCell>{point.description}</TableCell>
-                    <TableCell>{point.amount}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={point.source_type}
-                        color="primary"
-                        size="small"
-                        variant="outlined"
-                        sx={{
-                          backgroundColor: "#fff",
-                          fontFamily: "Outfit",
-                          fontWeight: 550,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {new Date(point.created_at).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                )})}
+              {customer?.couponTransactionInfo?.data?.map(
+                (point: any, idx: number) => {
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell>{point.description}</TableCell>
+                      <TableCell>{point.amount}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={point.source_type}
+                          color="primary"
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            backgroundColor: "#fff",
+                            fontFamily: "Outfit",
+                            fontWeight: 550,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(point.created_at).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -388,8 +439,15 @@ export default function CustomerDetail() {
           {/* Previous Button */}
           <Button
             variant="outlined"
-            onClick={() => fetchCustomerDetail(page - 1, searchValue)}
-            disabled={page === 1}
+            onClick={() =>
+              fetchCustomerDetail({
+                pointPage,
+                couponPage: couponPage - 1,
+                couponSearchValue,
+                pointSearchValue,
+              })
+            }
+            disabled={couponPage === 1}
             sx={{
               textTransform: "none",
               borderRadius: 2,
@@ -402,9 +460,16 @@ export default function CustomerDetail() {
 
           {/* Pagination */}
           <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, value) => fetchCustomerDetail(value, searchValue)}
+            count={couponTotalPages}
+            page={couponPage}
+            onChange={(_, value) =>
+              fetchCustomerDetail({
+                pointPage,
+                couponPage: value,
+                couponSearchValue,
+                pointSearchValue,
+              })
+            }
             shape="rounded"
             siblingCount={1}
             boundaryCount={1}
@@ -423,8 +488,15 @@ export default function CustomerDetail() {
           {/* Next Button */}
           <Button
             variant="outlined"
-            onClick={() => fetchCustomerDetail(page + 1, searchValue)}
-            disabled={page === totalPages}
+            onClick={() =>
+              fetchCustomerDetail({
+                pointPage,
+                couponPage: couponPage + 1,
+                couponSearchValue,
+                pointSearchValue,
+              })
+            }
+            disabled={couponPage === couponTotalPages}
             sx={{
               textTransform: "none",
               borderRadius: 2,

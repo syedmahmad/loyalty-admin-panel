@@ -25,7 +25,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { DateTime } from "luxon";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { GET, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -558,7 +558,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
         <Grid item xs={12}>
           <Typography variant="subtitle1">Tiers</Typography>
-          <FormGroup>
+          {/* <FormGroup>
             {allTiers.map((tier) => {
               const selected = isTierSelected(tier.id);
               const current = tiers.find((t) => t.tier_id === tier.id);
@@ -596,7 +596,50 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                 </Box>
               );
             })}
-          </FormGroup>
+          </FormGroup> */}
+
+          <Grid container>
+            {allTiers.map((tier, index) => {
+              const selected = isTierSelected(tier.id);
+              const current = tiers.find((t) => t.tier_id === tier.id);
+              return (
+                <React.Fragment key={index}>
+                  <Grid item xs={4}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={selected}
+                          onChange={() => handleTierToggle(tier.id)}
+                        />
+                      }
+                      sx={{ mb: 2 }}
+                      label={tier.name}
+                    />
+                  </Grid>
+
+                  <Grid item xs={8}>
+                    {selected && selectedCampaignType?.value === "POINTS" && (
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Point Conversion Rate"
+                        value={current?.point_conversion_rate ?? 1}
+                        onChange={(e) =>
+                          handleConversionRateChange(
+                            tier.id,
+                            Number(e.target.value)
+                          )
+                        }
+                        // size="small"
+                        sx={{ mb: 2 }}
+                        inputProps={{ step: 0.01, min: 0 }}
+                      />
+                    )}
+                  </Grid>
+                </React.Fragment>
+              );
+            })}
+          </Grid>
         </Grid>
 
         <Grid item xs={12}>

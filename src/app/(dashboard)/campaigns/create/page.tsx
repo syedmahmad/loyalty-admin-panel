@@ -25,7 +25,7 @@ import {
   useTheme,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -263,7 +263,6 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     }
     setAllCoupons(couponsRes?.data?.coupons || []);
   };
-
 
   return (
     <>
@@ -528,7 +527,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
             </Typography>
           </Alert>
           <br />
-          <FormGroup>
+          {/* <FormGroup>
             {allTiers.map((tier) => {
               const selected = isTierSelected(tier.id);
               const current = tiers.find((t) => t.tier_id === tier.id);
@@ -547,9 +546,51 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                     }
                     label={tier.name}
                   />
-                  {selected &&
-                    selectedCampaignType?.value === "POINTS" && (
+
+                  {selected && selectedCampaignType?.value === "POINTS" && (
+                    <TextField
+                      type="number"
+                      label="Point Conversion Rate"
+                      value={current?.point_conversion_rate ?? 1}
+                      onChange={(e) =>
+                        handleConversionRateChange(
+                          tier.id,
+                          Number(e.target.value)
+                        )
+                      }
+                      size="small"
+                      sx={{ ml: 2, width: 180 }}
+                      inputProps={{ step: 0.01, min: 0 }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
+          </FormGroup> */}
+
+          <Grid container>
+            {allTiers.map((tier, index) => {
+              const selected = isTierSelected(tier.id);
+              const current = tiers.find((t) => t.tier_id === tier.id);
+              return (
+                <React.Fragment key={index}>
+                  <Grid item xs={4}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={selected}
+                          onChange={() => handleTierToggle(tier.id)}
+                        />
+                      }
+                      sx={{ mb: 2 }}
+                      label={tier.name}
+                    />
+                  </Grid>
+
+                  <Grid item xs={8}>
+                    {selected && selectedCampaignType?.value === "POINTS" && (
                       <TextField
+                        fullWidth
                         type="number"
                         label="Point Conversion Rate"
                         value={current?.point_conversion_rate ?? 1}
@@ -559,15 +600,16 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                             Number(e.target.value)
                           )
                         }
-                        size="small"
-                        sx={{ ml: 2, width: 180 }}
+                        // size="small"
+                        sx={{ mb: 2 }}
                         inputProps={{ step: 0.01, min: 0 }}
                       />
                     )}
-                </Box>
+                  </Grid>
+                </React.Fragment>
               );
             })}
-          </FormGroup>
+          </Grid>
         </Grid>
 
         <Grid item xs={12}>
