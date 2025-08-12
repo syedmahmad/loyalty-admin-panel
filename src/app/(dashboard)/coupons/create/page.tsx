@@ -937,18 +937,27 @@ const CreateCouponForm = ({
                                           <MenuItem value="!=">
                                             Not Equal (!=)
                                           </MenuItem>
-                                          <MenuItem value=">">
-                                            Greater Than (&gt;)
-                                          </MenuItem>
-                                          <MenuItem value=">=">
-                                            Greater Than or Equal (&gt;=)
-                                          </MenuItem>
-                                          <MenuItem value="<">
-                                            Less Than (&lt;)
-                                          </MenuItem>
-                                          <MenuItem value="<=">
-                                            Less Than or Equal (&lt;=)
-                                          </MenuItem>
+
+                                          {![
+                                            COUPON_TYPE.USER_SPECIFIC,
+                                          ].includes(
+                                            dynamicCouponTypesRow?.selectedCouponType
+                                          ) && (
+                                            <div>
+                                              <MenuItem value=">">
+                                                Greater Than (&gt;)
+                                              </MenuItem>
+                                              <MenuItem value=">=">
+                                                Greater Than or Equal (&gt;=)
+                                              </MenuItem>
+                                              <MenuItem value="<">
+                                                Less Than (&lt;)
+                                              </MenuItem>
+                                              <MenuItem value="<=">
+                                                Less Than or Equal (&lt;=)
+                                              </MenuItem>
+                                            </div>
+                                          )}
                                         </TextField>
 
                                         <TextField
