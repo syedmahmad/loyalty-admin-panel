@@ -106,7 +106,9 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     setBus(campaign.business_unit_id);
     setDescription(campaign.description || "");
 
-    const newSelectedSegments = campaign.customerSegments.map((item: any) => item.segment);
+    const newSelectedSegments = campaign.customerSegments.map(
+      (item: any) => item.segment
+    );
     setAllSegments(segmentsRes?.data || []);
     setSelectedSegments(newSelectedSegments || []);
 
@@ -134,7 +136,6 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       grouped[type].push(id);
     });
 
-    
     const usedTypes = Object.keys(grouped);
     const available = ALL_RULE_TYPES.filter((t) => !usedTypes.includes(t));
     setSelectedRules(grouped);
@@ -227,6 +228,26 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     if (!name || !startDate || !endDate || !bus) {
       toast.error("Please fill all required fields");
       return;
+    }
+
+    if (
+      selectedCampaignType?.value === "COUPONS" &&
+      selectedCoupons.length === 0
+    ) {
+      toast.error("Please select coupon");
+      return;
+    }
+
+    if (selectedCampaignType?.value === "POINTS") {
+      const isValid =
+        Object.keys(selectedRules).length > 0 &&
+        Object.values(selectedRules).some(
+          (arr) => Array.isArray(arr) && arr.length > 0
+        );
+      if (!isValid) {
+        toast.error("Please select rule");
+        return;
+      }
     }
 
     const ruleIds: number[] = Object.values(selectedRules).flat();
@@ -386,7 +407,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
-        {selectedCampaignType?.value === "DISCOUNT_POINTS" && (
+        {selectedCampaignType?.value === "POINTS" && (
           <>
             {ruleTypes.map((type, idx) => (
               <Grid key={idx} item xs={12}>
@@ -451,7 +472,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                             </Typography>
                           )}
                         </Box>
-                      )
+                      );
                     })}
                   </RadioGroup>
                 </FormGroup>
@@ -471,7 +492,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
         )}
 
         {/* Coupons */}
-        {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
+        {selectedCampaignType?.value === "COUPONS" && (
           <>
             <Grid item xs={12}>
               <Autocomplete
@@ -483,7 +504,9 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                   setSelectedCoupons(newValue)
                 }
                 filterSelectedOptions
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                isOptionEqualToValue={(option, value) =>
+                  option.id === value?.id
+                }
                 loading={loading}
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>
@@ -554,7 +577,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                     }
                     label={tier.name}
                   />
-                  {selected && selectedCampaignType?.value === "DISCOUNT_POINTS" && (
+                  {selected && selectedCampaignType?.value === "POINTS" && (
                     <TextField
                       type="number"
                       label="Point Conversion Rate"

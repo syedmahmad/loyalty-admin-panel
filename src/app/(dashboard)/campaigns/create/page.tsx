@@ -73,8 +73,8 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [selectedCampaignType, setSelectedCampaignType] =
     useState<CampaignTypeOption | null>({
-      label: "DISCOUNT_POINTS",
-      value: "DISCOUNT_POINTS",
+      label: "POINTS",
+      value: "POINTS",
     });
 
   const ALL_RULE_TYPES = [
@@ -187,6 +187,26 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
       return;
     }
 
+    if (
+      selectedCampaignType?.value === "COUPONS" &&
+      selectedCoupons.length === 0
+    ) {
+      toast.error("Please select coupon");
+      return;
+    }
+
+    if (selectedCampaignType?.value === "POINTS") {
+      const isValid =
+        Object.keys(selectedRules).length > 0 &&
+        Object.values(selectedRules).some(
+          (arr) => Array.isArray(arr) && arr.length > 0
+        );
+      if (!isValid) {
+        toast.error("Please select rule");
+        return;
+      }
+    }
+
     const ruleIds: number[] = Object.values(selectedRules).flat();
     const rulesPayload = ruleIds.map((id) => ({ rule_id: id }));
     const tiersPayload = tiers.map((t) => ({
@@ -243,6 +263,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     }
     setAllCoupons(couponsRes?.data?.coupons || []);
   };
+
 
   return (
     <>
@@ -346,7 +367,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
-        {selectedCampaignType?.value === "DISCOUNT_POINTS" && (
+        {selectedCampaignType?.value === "POINTS" && (
           <>
             {ruleTypes.map((type, idx) => (
               <Grid key={idx} item xs={12}>
@@ -428,7 +449,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
         )}
 
         {/* Coupons */}
-        {selectedCampaignType?.value === "DISCOUNT_COUPONS" && (
+        {selectedCampaignType?.value === "COUPONS" && (
           <Grid item xs={12}>
             <Autocomplete
               multiple
@@ -526,22 +547,23 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
                     }
                     label={tier.name}
                   />
-                  {selected && selectedCampaignType?.value === "DISCOUNT_POINTS" && (
-                    <TextField
-                      type="number"
-                      label="Point Conversion Rate"
-                      value={current?.point_conversion_rate ?? 1}
-                      onChange={(e) =>
-                        handleConversionRateChange(
-                          tier.id,
-                          Number(e.target.value)
-                        )
-                      }
-                      size="small"
-                      sx={{ ml: 2, width: 180 }}
-                      inputProps={{ step: 0.01, min: 0 }}
-                    />
-                  )}
+                  {selected &&
+                    selectedCampaignType?.value === "POINTS" && (
+                      <TextField
+                        type="number"
+                        label="Point Conversion Rate"
+                        value={current?.point_conversion_rate ?? 1}
+                        onChange={(e) =>
+                          handleConversionRateChange(
+                            tier.id,
+                            Number(e.target.value)
+                          )
+                        }
+                        size="small"
+                        sx={{ ml: 2, width: 180 }}
+                        inputProps={{ step: 0.01, min: 0 }}
+                      />
+                    )}
                 </Box>
               );
             })}

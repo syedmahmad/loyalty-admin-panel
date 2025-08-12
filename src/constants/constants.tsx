@@ -98,6 +98,10 @@ export const FREQUENCY = [
     value: "once",
   },
   {
+    label: "Daily",
+    value: "daily",
+  },
+  {
     label: "Anytime",
     value: "anytime",
   },
@@ -109,12 +113,12 @@ export const FREQUENCY = [
 
 export const CAMPAIGN_TYPES = [
   {
-    label: "DISCOUNT_POINTS",
-    value: "DISCOUNT_POINTS",
+    label: "POINTS",
+    value: "POINTS",
   },
   {
-    label: "DISCOUNT_COUPONS",
-    value: "DISCOUNT_COUPONS",
+    label: "COUPONS",
+    value: "COUPONS",
   },
 ];
 

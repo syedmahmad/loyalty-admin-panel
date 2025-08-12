@@ -154,6 +154,8 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
     setLoading(true);
 
+    const burnType = form.rule_type === "burn" ? selectedBurnType?.value : null;
+
     const payload = {
       name: form.name,
       slug: slugify(form.name, {
@@ -185,7 +187,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       frequency: form.frequency || "once",
       description,
       updated_by,
-      burn_type: selectedBurnType?.value,
+      burn_type: burnType,
       reward_condition: form.reward_condition,
     };
 

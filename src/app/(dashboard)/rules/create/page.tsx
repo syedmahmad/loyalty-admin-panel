@@ -114,6 +114,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
 
+    const burnType = form.rule_type === "burn" ? selectedBurnType?.value : null;
+
     const payload = {
       name: form.name,
       slug: slugify(form.name, {
@@ -147,7 +149,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       frequency: form.frequency || "once",
       description,
       created_by,
-      burn_type: selectedBurnType?.value,
+      burn_type: burnType,
     };
 
     const response = await POST("/rules", payload);
