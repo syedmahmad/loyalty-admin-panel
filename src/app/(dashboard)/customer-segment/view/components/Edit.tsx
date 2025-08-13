@@ -72,7 +72,11 @@ const removeCustomerFromSegment = async (
   );
 };
 
-const CustomerSegmentEditPage = ({ segmentId, setSelectedSegmentId }: any) => {
+const CustomerSegmentEditPage = ({
+  segmentId,
+  setSelectedSegmentId,
+  onClose,
+}: any) => {
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
@@ -140,7 +144,7 @@ const CustomerSegmentEditPage = ({ segmentId, setSelectedSegmentId }: any) => {
     <>
       <Drawer
         anchor="right"
-        open={true}
+        open={segmentId}
         onClose={() => {
           setSelectedSegmentId(null);
         }}
@@ -162,7 +166,10 @@ const CustomerSegmentEditPage = ({ segmentId, setSelectedSegmentId }: any) => {
           </Typography>
           <IconButton
             edge="end"
-            onClick={() => router.push("/customer-segment/view")}
+            onClick={() => {
+              setSelectedSegmentId(null);
+              onClose();
+            }}
             aria-label="close"
           >
             <CloseIcon />

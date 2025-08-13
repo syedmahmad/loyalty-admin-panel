@@ -211,7 +211,7 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
       const tierInfo = allTiers.find(
         (singleTier) => singleTier.id === t.tier_id
       );
-      
+
       const rate = Number(t.point_conversion_rate);
       if (isNaN(rate)) {
         toast.error(
