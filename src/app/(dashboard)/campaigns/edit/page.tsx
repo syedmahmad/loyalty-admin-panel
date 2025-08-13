@@ -62,7 +62,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const [ruleTypes, setRuleTypes] = useState<string[]>([]);
   const [availableRuleTypes, setAvailableRuleTypes] = useState<string[]>([]);
   const [tiers, setTiers] = useState<
-    { tier_id: number; point_conversion_rate: number }[]
+    { tier_id: number; point_conversion_rate?: number }[]
   >([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
   const [description, setDescription] = useState<string>("");
@@ -216,7 +216,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   };
 
-  const handleConversionRateChange = (tierId: number, value: number) => {
+  const handleConversionRateChange = (tierId: number, value?: number) => {
     setTiers((prev) =>
       prev.map((t) =>
         t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
@@ -246,6 +246,27 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
         );
       if (!isValid) {
         toast.error("Please select rule");
+        return;
+      }
+    }
+
+    for (const t of tiers) {
+      const tierInfo = allTiers.find(
+        (singleTier) => singleTier.id === t.tier_id
+      );
+
+      const rate = Number(t.point_conversion_rate);
+      if (isNaN(rate)) {
+        toast.error(
+          `The point conversion rate for the ${tierInfo.name} tier is required.`
+        );
+        return;
+      }
+
+      if (rate < 0) {
+        toast.error(
+          `The point conversion rate for the ${tierInfo.name} tier cannot be negative`
+        );
         return;
       }
     }
@@ -623,14 +644,14 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                         fullWidth
                         type="number"
                         label="Point Conversion Rate"
-                        value={current?.point_conversion_rate ?? 1}
-                        onChange={(e) =>
+                        value={current?.point_conversion_rate ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
                           handleConversionRateChange(
                             tier.id,
-                            Number(e.target.value)
-                          )
-                        }
-                        // size="small"
+                            val === "" ? undefined : Number(val)
+                          );
+                        }}
                         sx={{ mb: 2 }}
                         inputProps={{ step: 0.01, min: 0 }}
                       />
