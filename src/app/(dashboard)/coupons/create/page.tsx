@@ -1137,6 +1137,7 @@ const CreateCouponForm = ({
             </TextField>
           </Grid>
 
+          {/* Customer Segments */}
           <Grid item xs={12}>
             <Autocomplete
               multiple

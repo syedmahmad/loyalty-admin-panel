@@ -204,9 +204,9 @@ export default function WalletDetailDrawer({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactions.map((tx) => (
+                {transactions.map((tx, index) => (
                   <TableRow key={tx.id}>
-                    <TableCell>{tx.id}</TableCell>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{tx.type}</TableCell>
                     <TableCell>{tx.amount}</TableCell>
                     <TableCell>{tx.status}</TableCell>
