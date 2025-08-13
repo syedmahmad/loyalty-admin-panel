@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Box,
@@ -8,62 +8,102 @@ import {
   TextField,
   Typography,
   CircularProgress,
-} from '@mui/material';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { POST } from '@/utils/AxiosUtility';
-import { toast } from 'react-toastify';
+  MenuItem,
+} from "@mui/material";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { GET, POST } from "@/utils/AxiosUtility";
+import { toast } from "react-toastify";
+
+const fetchAllCustomers = async (tenantId: number) => {
+  const response = await GET(`/customers`);
+  if (response?.status !== 200) {
+    throw new Error("Failed to fetch customers");
+  }
+  return response.data;
+};
 
 const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
+  const clientInfo = localStorage.getItem("client-info");
+  const parsed = JSON.parse(clientInfo!);
+  const tenantId = parsed?.id || 1;
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  const InfoLabel = ({
+    label,
+    tooltip,
+  }: {
+    label: string;
+    tooltip: string;
+  }) => (
     <Box display="flex" alignItems="center" mb={0.5}>
       <InputLabel sx={{ mr: 0.5 }}>{label}</InputLabel>
       {/* Tooltip could be added here if needed */}
     </Box>
   );
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const allCustomers = await fetchAllCustomers(tenantId);
+      setCustomers(allCustomers);
+    };
+    fetchData();
+  }, []);
+
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Name is required');
+      setError("Name is required");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const clientInfo = localStorage.getItem('client-info');
-      if (!clientInfo) throw new Error('Client info not found in localStorage.');
+      const clientInfo = localStorage.getItem("client-info");
+      if (!clientInfo)
+        throw new Error("Client info not found in localStorage.");
 
       const parsed = JSON.parse(clientInfo);
       const payload = {
         name,
         description,
         tenant_id: parsed.id,
+        selected_customer_ids: selectedCustomerIds,
       };
 
-      console.log('Creating customer segment with payload:', payload);
+      console.log("Creating customer segment with payload:", payload);
 
-      const res = await POST('/customer-segments', payload);
+      const res = await POST("/customer-segments", payload);
 
       if (res?.status === 201 || res?.status === 200) {
-        toast.success('Customer segment created successfully!');
+        toast.success("Customer segment created successfully!");
         setSubmitted(true);
         onSuccess?.();
-        router.push('/customer-segment/view');
+        router.push("/customer-segment/view");
       } else {
-        setError('Failed to create customer segment');
+        setError("Failed to create customer segment");
       }
     } catch (err: any) {
-      console.error('Error:', err);
-      setError(err?.response?.data?.message || err.message || 'Unexpected error occurred');
+      console.error("Error:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err.message ||
+          "Unexpected error occurred"
+      );
+      setError(
+        err?.response?.data?.message ||
+          err.message ||
+          "Unexpected error occurred"
+      );
     } finally {
       setLoading(false);
     }
@@ -101,6 +141,50 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
+        {customers.length > 0 ? (
+          <Grid item xs={12}>
+            <TextField
+              select
+              fullWidth
+              label="Add Customers"
+              SelectProps={{
+                multiple: true,
+                value: selectedCustomerIds,
+                onChange: (e: any) => setSelectedCustomerIds(e.target.value),
+                renderValue: (selected: any) =>
+                  customers
+                    .filter((c) => selected.includes(c.id))
+                    .map((c) => c.name)
+                    .join(", "),
+              }}
+            >
+              {customers.length > 0 &&
+                customers.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name} (
+                    <span
+                      style={{
+                        maxWidth: 150,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {c.email.trim()}
+                    </span>
+                    )
+                  </MenuItem>
+                ))}
+            </TextField>
+          </Grid>
+        ) : (
+          <Grid item xs={12}>
+            <Typography variant="h5" textAlign="center" sx={{ mt: 2 }}>
+              No customers available to add.
+            </Typography>
+          </Grid>
+        )}
+
         {error && (
           <Grid item xs={12}>
             <Typography color="error">{error}</Typography>
@@ -115,9 +199,9 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
             color="primary"
             onClick={handleSubmit}
             disabled={loading || submitted}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 550 }}
+            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 550 }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Create'}
+            {loading ? <CircularProgress size={24} /> : "Create"}
           </Button>
         </Box>
       </Grid>

@@ -295,6 +295,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       customer_segment_ids: segmentIds,
       campaign_type: selectedCampaignType?.value,
     };
+
     setLoading(true);
     try {
       const res = await PUT(`/campaigns/${paramId}`, payload);

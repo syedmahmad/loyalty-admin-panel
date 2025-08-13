@@ -180,6 +180,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </Typography> */}
 
       <Grid container spacing={2}>
+        {/* Rule Name */}
         <Grid item xs={12}>
           <InfoLabel
             label="Rule Name"
@@ -192,6 +193,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
+        {/* Rule Type */}
         <Grid item xs={12}>
           <InfoLabel
             label="Rule Type"
@@ -210,6 +212,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           </TextField>
         </Grid>
 
+        {/* Event Triggerer */}
         {form.rule_type === "event based earn" && (
           <Grid item xs={12}>
             <InfoLabel
@@ -426,6 +429,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
             />
           </Grid>
         )}
+
+        {/* Frequency */}
         <Grid item xs={12}>
           <InfoLabel
             label="Frequency"

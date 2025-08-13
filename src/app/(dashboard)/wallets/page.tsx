@@ -57,7 +57,6 @@ export default function WalletListPage() {
           singleBu.location === "system created"
       );
 
-      console.log("defaultBu:::", defaultBu)
       setSelectedBU(Number(defaultBu.id));
       setBusinessUnits(res?.data);
     });
@@ -91,7 +90,6 @@ export default function WalletListPage() {
     viewMode === "card"
       ? wallets
       : wallets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
 
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>

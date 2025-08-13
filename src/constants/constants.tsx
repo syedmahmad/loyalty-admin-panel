@@ -102,6 +102,10 @@ export const FREQUENCY = [
     value: "daily",
   },
   {
+    label: "Monthly",
+    value: "monthly",
+  },
+  {
     label: "Anytime",
     value: "anytime",
   },
