@@ -5,10 +5,13 @@ import {
   TextField,
   Typography,
   MenuItem,
-} from '@mui/material';
-import { useState } from 'react';
-import { toast } from 'react-toastify';
-import { WalletService } from '../service/wallet.service';
+  IconButton,
+  Divider,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { WalletService } from "../service/wallet.service";
 
 interface Props {
   open: boolean;
@@ -19,7 +22,7 @@ interface Props {
   fetchWallets: () => void;
 }
 
-const statusOptions = ['pending', 'active'];
+const statusOptions = ["pending", "active"];
 
 export default function WalletTransactionDrawer({
   selectedBU,
@@ -27,12 +30,12 @@ export default function WalletTransactionDrawer({
   onClose,
   walletId,
   onSuccess,
-  fetchWallets
+  fetchWallets,
 }: Props) {
   const [form, setForm] = useState({
-    amount: '',
-    status: 'active',
-    description: '',
+    amount: "",
+    status: "active",
+    description: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,45 +45,66 @@ export default function WalletTransactionDrawer({
 
   const handleSubmit = async () => {
     if (!form.amount) {
-      toast.warn('Amount is required');
+      toast.warn("Amount is required");
       return;
     }
 
     try {
-      const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+      const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
       await WalletService.addTransaction({
         business_unit_id: selectedBU,
         wallet_id: walletId,
         amount: parseFloat(form.amount),
-        status: form.status as 'pending' | 'active',
-        type: 'adjustment', // always adjustment
-        source_type: 'admin',
+        status: form.status as "pending" | "active",
+        type: "adjustment", // always adjustment
+        source_type: "admin",
         source_id: userInfo.id,
         description: form.description,
-        created_by: userInfo.id
+        created_by: userInfo.id,
       });
 
-      toast.success('Transaction added');
-      fetchWallets()
+      toast.success("Transaction added");
+      fetchWallets();
       onClose();
       onSuccess(); // reload transactions
     } catch (err: any) {
       console.log("Error adding transaction:", err);
-      if (err?.response?.data?.message === "User does not have permission to perform this action") {
-        toast.error('You do not have permission to perform this action');
+      if (
+        err?.response?.data?.message ===
+        "User does not have permission to perform this action"
+      ) {
+        toast.error("You do not have permission to perform this action");
       } else {
-        toast.error('Failed to add transaction');
+        toast.error("Failed to add transaction");
       }
     }
   };
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={500} p={3}>
-        <Typography variant="h6" mb={2}>
-          Manual Adjustment
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          py:1
+        }}
+      >
+        <Typography variant="h5">Manual Adjustment</Typography>
+        <IconButton
+          edge="end"
+          onClick={() => {
+            onClose();
+          }}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <Divider sx={{ mb: 1 }} />
 
+      <Box width={500} p={2}>
         <TextField
           fullWidth
           size="small"

@@ -608,7 +608,7 @@ const RuleList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Rule"
-          width={500}
+          width={750}
         >
           <RuleCreateForm
             onSuccess={() => {
@@ -624,7 +624,7 @@ const RuleList = () => {
             open={true}
             onClose={handleCloseDrawer}
             title="Edit Rule"
-            width={500}
+            width={750}
           >
             <RuleEdit
               onSuccess={() => {

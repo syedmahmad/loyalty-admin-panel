@@ -15,9 +15,13 @@ import {
   useTheme,
   InputAdornment,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import React, { useState } from "react";
 import { POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -67,6 +71,10 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
     condition_value: "",
     validity_after_assignment: 0,
     frequency: "once",
+    conditions: [
+      { condition_type: "", condition_operator: "", condition_value: "" },
+    ],
+    is_priority: 0,
   };
 
   const [form, setForm] = useState(initialForm);
@@ -100,16 +108,25 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           (selectedBurnType?.value === "FIXED" &&
             !form.points_conversion_factor) ||
           (selectedBurnType?.value === "PERCENTAGE" &&
-            !form.max_burn_percent_on_invoice))) ||
-      (form.rule_type === "dynamic rule" &&
-        (!form.condition_type ||
-          !form.condition_operator ||
-          !form.condition_value))
+            !form.max_burn_percent_on_invoice)))
     ) {
       toast.error("Please fill all required fields for this rule type");
       return;
     }
 
+    if (
+      form.rule_type === "dynamic rule" &&
+      form.conditions.length &&
+      !form.conditions.every(
+        ({ condition_type, condition_operator, condition_value }) =>
+          condition_type?.trim() &&
+          condition_operator?.trim() &&
+          condition_value?.toString().trim()
+      )
+    ) {
+      toast.error("Please fill all fields for dynamic rule");
+      return;
+    }
     setLoading(true);
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -150,6 +167,9 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       description,
       created_by,
       burn_type: burnType,
+      dynamic_conditions:
+        form.rule_type === "dynamic rule" ? form.conditions : null,
+      is_priority: form.is_priority ? 1 : 0,
     };
 
     const response = await POST("/rules", payload);
@@ -269,7 +289,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           </Grid>
         )}
 
-        {form.rule_type === "dynamic rule" && (
+        {/* {form.rule_type === "dynamic rule" && (
           <Grid item xs={12}>
             <Box display="flex" gap={1}>
               <TextField
@@ -304,7 +324,83 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
               />
             </Box>
           </Grid>
-        )}
+        )} */}
+
+        {form.rule_type === "dynamic rule" &&
+          form.conditions?.map((eachCondition, index) => (
+            <Grid item xs={12} key={index}>
+              <Box display="flex" gap={1} alignItems={"center"}>
+                <TextField
+                  label="Condition Type"
+                  fullWidth
+                  value={eachCondition.condition_type}
+                  onChange={(e) => {
+                    const updated = [...form.conditions];
+                    updated[index].condition_type = e.target.value;
+                    handleChange("conditions", updated);
+                  }}
+                />
+                <TextField
+                  select
+                  fullWidth
+                  label="Condition Operator"
+                  value={eachCondition.condition_operator}
+                  onChange={(e) => {
+                    const updated = [...form.conditions];
+                    updated[index].condition_operator = e.target.value;
+                    handleChange("conditions", updated);
+                  }}
+                >
+                  <MenuItem value="==">Equal To (==)</MenuItem>
+                  <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                  <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                  <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
+                  <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                  <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+                </TextField>
+                <TextField
+                  label="Value"
+                  fullWidth
+                  value={eachCondition.condition_value}
+                  onChange={(e) => {
+                    const updated = [...form.conditions];
+                    updated[index].condition_value = e.target.value;
+                    handleChange("conditions", updated);
+                  }}
+                />
+                {index === 0 ? (
+                  <IconButton
+                    onClick={() => {
+                      const updated = [
+                        ...(form.conditions || []),
+                        {
+                          condition_type: "",
+                          condition_operator: "",
+                          condition_value: "",
+                        },
+                      ];
+                      handleChange("conditions", updated);
+                    }}
+                    color="primary"
+                  >
+                    <AddIcon />
+                  </IconButton>
+                ) : (
+                  <IconButton
+                    onClick={() => {
+                      const updated = form.conditions.filter(
+                        (_, i) => i !== index
+                      );
+                      handleChange("conditions", updated);
+                    }}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
+            </Grid>
+          ))}
 
         {(form.rule_type === "event based earn" ||
           form.rule_type === "spend and earn" ||
@@ -448,6 +544,24 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
             ))}
           </TextField>
         </Grid>
+
+        {/* Mark as Priority */}
+        {form.rule_type === "dynamic rule" && (
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="is_priority"
+                  checked={!!form.is_priority}
+                  onChange={(e) =>
+                    handleChange("is_priority", e.target.checked)
+                  }
+                />
+              }
+              label="Mark as Priority"
+            />
+          </Grid>
+        )}
 
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>

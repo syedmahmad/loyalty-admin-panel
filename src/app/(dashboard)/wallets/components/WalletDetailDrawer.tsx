@@ -17,6 +17,7 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import { useEffect, useState } from "react";
@@ -102,20 +103,37 @@ export default function WalletDetailDrawer({
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={800} p={3}>
+      <Box width={800} p={2}>
         {/* Wallet ID + User */}
-        <Grid container spacing={2} alignItems="center" mb={3}>
-          <Grid item xs={6}>
+        <Grid container spacing={2} alignItems="center" mb={0}>
+          {/* Customer Name - Left */}
+          <Grid item xs={5}>
             <Typography variant="h4">
               {wallet?.customer?.name || "N/A"}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
-            <Typography variant="h4" textAlign="right">
+
+          {/* Wallet ID - Center */}
+          <Grid item xs={5}>
+            <Typography variant="h4">
               Wallet ID: <strong>{wallet?.id}</strong>
             </Typography>
           </Grid>
+
+          {/* Close Button - Right */}
+          <Grid item xs={2} textAlign="right">
+            <IconButton
+              edge="end"
+              onClick={() => {
+                onClose();
+              }}
+              aria-label="close"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Grid>
         </Grid>
+        <Divider sx={{ mb: 2 }} />
 
         {/* Stat Cards */}
         <Grid container spacing={2} mb={3}>
@@ -319,7 +337,7 @@ export default function WalletDetailDrawer({
           selectedBU={selectedBU}
           open={txDrawerOpen}
           onClose={() => {
-            setTxDrawerOpen(false), onClose();
+            setTxDrawerOpen(false)
           }}
           walletId={wallet?.id || 0}
           onSuccess={() =>

@@ -3,11 +3,14 @@ import {
   Box,
   Card,
   CardContent,
+  Divider,
   Drawer,
   Grid,
+  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import React from "react";
 
@@ -24,11 +27,29 @@ export default function WalletOrderDrawer({
 }: Props) {
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={500} p={3}>
-        <Typography variant="h5" mb={2}>
-          Order Details
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          py: 1,
+        }}
+      >
+        <Typography variant="h5">Order Details</Typography>
+        <IconButton
+          edge="end"
+          onClick={() => {
+            onClose();
+          }}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <Divider sx={{ mb: 1 }} />
 
+      <Box width={500} p={3}>
         <Grid container spacing={1} mb={4}>
           {orderDetails &&
             Object?.entries(orderDetails).map(([label, value]) => {
