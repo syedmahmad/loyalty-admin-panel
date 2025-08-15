@@ -348,34 +348,6 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           )} */}
 
-          {/* REWARD_CONDITIONS */}
-          {(form.rule_type === "spend and earn" ||
-            form.rule_type === "dynamic rule") && (
-            <Grid item xs={12}>
-              <InfoLabel
-                label="Reward Condition"
-                tooltip={
-                  "Per Amount Spent: Points are given for every set amount spent (e.g., 5 points for every ₹10).\n" +
-                  "Minimum Spend: Points are given only once when the customer spends at least the minimum amount."
-                }
-              />
-              <TextField
-                select
-                fullWidth
-                value={form.reward_condition}
-                onChange={(e) =>
-                  handleChange("reward_condition", e.target.value)
-                }
-              >
-                {REWARD_CONDITIONS.map((condition) => (
-                  <MenuItem key={condition.value} value={condition.value}>
-                    {condition.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-          )}
-
           {form.rule_type === "dynamic rule" &&
             form.conditions?.map((eachCondition, index) => (
               <Grid item xs={12} key={index}>
@@ -453,6 +425,34 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                 </Box>
               </Grid>
             ))}
+
+          {/* REWARD_CONDITIONS */}
+          {(form.rule_type === "spend and earn" ||
+            form.rule_type === "dynamic rule") && (
+            <Grid item xs={12}>
+              <InfoLabel
+                label="Reward Condition"
+                tooltip={
+                  "Per Amount Spent: Points are given for every set amount spent (e.g., 5 points for every ₹10).\n" +
+                  "Minimum Spend: Points are given only once when the customer spends at least the minimum amount."
+                }
+              />
+              <TextField
+                select
+                fullWidth
+                value={form.reward_condition}
+                onChange={(e) =>
+                  handleChange("reward_condition", e.target.value)
+                }
+              >
+                {REWARD_CONDITIONS.map((condition) => (
+                  <MenuItem key={condition.value} value={condition.value}>
+                    {condition.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          )}
 
           {form.rule_type === "event based earn" && (
             <Grid item xs={12}>
