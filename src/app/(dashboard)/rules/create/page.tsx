@@ -34,6 +34,7 @@ import {
   tooltipMessagesValidityAfterAssignmentForRule,
 } from "@/constants/constants";
 import slugify from "slugify";
+import { log } from "node:console";
 
 const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
   <Box display="flex" alignItems="center" mb={0.5}>
@@ -250,15 +251,21 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
             <Grid item xs={12} key={index}>
               <Box display="flex" gap={1} alignItems={"center"}>
                 <TextField
+                  select
                   label="Condition Type"
                   fullWidth
                   value={eachCondition.condition_type}
                   onChange={(e) => {
+                    console.log("Condition Type Changed", form.conditions, e.target.value);
                     const updated = [...form.conditions];
                     updated[index].condition_type = e.target.value;
                     handleChange("conditions", updated);
                   }}
-                />
+                >
+                  <MenuItem value="station_id">Station ID</MenuItem>
+                  <MenuItem value="fuel_type">Fuel Type</MenuItem>
+                  <MenuItem value="quantity">Quantity</MenuItem>
+                </TextField>
                 <TextField
                   select
                   fullWidth

@@ -353,6 +353,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
               <Grid item xs={12} key={index}>
                 <Box display="flex" gap={1} alignItems={"center"}>
                   <TextField
+                    select
                     label="Condition Type"
                     fullWidth
                     value={eachCondition.condition_type}
@@ -361,7 +362,11 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                       updated[index].condition_type = e.target.value;
                       handleChange("conditions", updated);
                     }}
-                  />
+                  >
+                    <MenuItem value="station_id">Station ID</MenuItem>
+                    <MenuItem value="fuel_type">Fuel Type</MenuItem>
+                    <MenuItem value="quantity">Quantity</MenuItem>
+                  </TextField>
                   <TextField
                     select
                     fullWidth
