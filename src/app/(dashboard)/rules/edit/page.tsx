@@ -209,8 +209,9 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       updated_by,
       burn_type: burnType,
       reward_condition: form.reward_condition,
-      dynamic_conditions:
-        form.rule_type === "dynamic rule" ? form.conditions : null,
+      dynamic_conditions: ["dynamic rule", "burn"].includes(form.rule_type)
+        ? form.conditions
+        : null,
       is_priority: form.is_priority ? 1 : 0,
     };
 
@@ -348,7 +349,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           )} */}
 
-          {form.rule_type === "dynamic rule" &&
+          {["dynamic rule", "burn"].includes(form.rule_type) &&
             form.conditions?.map((eachCondition, index) => (
               <Grid item xs={12} key={index}>
                 <Box display="flex" gap={1} alignItems={"center"}>
@@ -648,7 +649,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           </Grid>
 
           {/* Mark as Priority */}
-          {form.rule_type === "dynamic rule" && (
+          {["dynamic rule", "burn"].includes(form.rule_type) && (
             <Grid item xs={12}>
               <FormControlLabel
                 control={

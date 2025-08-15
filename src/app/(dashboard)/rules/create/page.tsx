@@ -168,8 +168,9 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       description,
       created_by,
       burn_type: burnType,
-      dynamic_conditions:
-        form.rule_type === "dynamic rule" ? form.conditions : null,
+      dynamic_conditions: ["dynamic rule", "burn"].includes(form.rule_type)
+        ? form.conditions
+        : null,
       is_priority: form.is_priority ? 1 : 0,
     };
 
@@ -213,6 +214,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           />
         </Grid>
 
+        {/* Rule Type */}
         <Grid item xs={12}>
           <InfoLabel
             label="Rule Type"
@@ -246,7 +248,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           </Grid>
         )}
 
-        {form.rule_type === "dynamic rule" &&
+        {["dynamic rule", "burn"].includes(form.rule_type) &&
           form.conditions?.map((eachCondition, index) => (
             <Grid item xs={12} key={index}>
               <Box display="flex" gap={1} alignItems={"center"}>
@@ -256,7 +258,11 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   fullWidth
                   value={eachCondition.condition_type}
                   onChange={(e) => {
-                    console.log("Condition Type Changed", form.conditions, e.target.value);
+                    console.log(
+                      "Condition Type Changed",
+                      form.conditions,
+                      e.target.value
+                    );
                     const updated = [...form.conditions];
                     updated[index].condition_type = e.target.value;
                     handleChange("conditions", updated);
@@ -556,7 +562,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
         </Grid>
 
         {/* Mark as Priority */}
-        {form.rule_type === "dynamic rule" && (
+        {["dynamic rule", "burn"].includes(form.rule_type) && (
           <Grid item xs={12}>
             <FormControlLabel
               control={
