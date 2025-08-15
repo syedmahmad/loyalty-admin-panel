@@ -245,87 +245,6 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           </Grid>
         )}
 
-        {/* REWARD_CONDITIONS */}
-        {form.rule_type === "spend and earn" && (
-          <Grid item xs={12}>
-            <InfoLabel
-              label="Reward Condition"
-              tooltip={
-                "Per Amount Spent: Points are given for every set amount spent (e.g., 5 points for every ₹10).\n" +
-                "Minimum Spend: Points are given only once when the customer spends at least the minimum amount."
-              }
-            />
-            <TextField
-              select
-              fullWidth
-              value={form.reward_condition}
-              onChange={(e) => handleChange("reward_condition", e.target.value)}
-            >
-              {REWARD_CONDITIONS.map((condition) => (
-                <MenuItem key={condition.value} value={condition.value}>
-                  {condition.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-        )}
-
-        {(form.rule_type === "spend and earn" || form.rule_type === "burn") && (
-          <Grid item xs={12}>
-            <InfoLabel
-              label={`${
-                form.reward_condition === "minimum" ? "Minimum" : "Per"
-              } Amount Spent`}
-              tooltip={`${
-                form.reward_condition === "minimum" ? "Minimum" : "Per"
-              } spend amount to activate the rule.`}
-            />
-            <TextField
-              fullWidth
-              type="number"
-              value={form.min_amount_spent}
-              onChange={(e) => handleChange("min_amount_spent", e.target.value)}
-            />
-          </Grid>
-        )}
-
-        {/* {form.rule_type === "dynamic rule" && (
-          <Grid item xs={12}>
-            <Box display="flex" gap={1}>
-              <TextField
-                label="Condition Type"
-                fullWidth
-                value={form.condition_type}
-                onChange={(e) => handleChange("condition_type", e.target.value)}
-              />
-              <TextField
-                select
-                fullWidth
-                label="Condition Operator"
-                value={form.condition_operator}
-                onChange={(e) =>
-                  handleChange("condition_operator", e.target.value)
-                }
-              >
-                <MenuItem value="==">Equal To (==)</MenuItem>
-                <MenuItem value="!=">Not Equal (!=)</MenuItem>
-                <MenuItem value=">">Greater Than (&gt;)</MenuItem>
-                <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
-                <MenuItem value="<">Less Than (&lt;)</MenuItem>
-                <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
-              </TextField>
-              <TextField
-                label="Value"
-                fullWidth
-                value={form.condition_value}
-                onChange={(e) =>
-                  handleChange("condition_value", e.target.value)
-                }
-              />
-            </Box>
-          </Grid>
-        )} */}
-
         {form.rule_type === "dynamic rule" &&
           form.conditions?.map((eachCondition, index) => (
             <Grid item xs={12} key={index}>
@@ -401,6 +320,90 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
               </Box>
             </Grid>
           ))}
+
+        {/* REWARD_CONDITIONS */}
+        {(form.rule_type === "spend and earn" ||
+          form.rule_type === "dynamic rule") && (
+          <Grid item xs={12}>
+            <InfoLabel
+              label="Reward Condition"
+              tooltip={
+                "Per Amount Spent: Points are given for every set amount spent (e.g., 5 points for every ₹10).\n" +
+                "Minimum Spend: Points are given only once when the customer spends at least the minimum amount."
+              }
+            />
+            <TextField
+              select
+              fullWidth
+              value={form.reward_condition}
+              onChange={(e) => handleChange("reward_condition", e.target.value)}
+            >
+              {REWARD_CONDITIONS.map((condition) => (
+                <MenuItem key={condition.value} value={condition.value}>
+                  {condition.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+        )}
+
+        {(form.rule_type === "spend and earn" ||
+          form.rule_type === "burn" ||
+          form.rule_type === "dynamic rule") && (
+          <Grid item xs={12}>
+            <InfoLabel
+              label={`${
+                form.reward_condition === "minimum" ? "Minimum" : "Per"
+              } Amount Spent`}
+              tooltip={`${
+                form.reward_condition === "minimum" ? "Minimum" : "Per"
+              } spend amount to activate the rule.`}
+            />
+            <TextField
+              fullWidth
+              type="number"
+              value={form.min_amount_spent}
+              onChange={(e) => handleChange("min_amount_spent", e.target.value)}
+            />
+          </Grid>
+        )}
+
+        {/* {form.rule_type === "dynamic rule" && (
+          <Grid item xs={12}>
+            <Box display="flex" gap={1}>
+              <TextField
+                label="Condition Type"
+                fullWidth
+                value={form.condition_type}
+                onChange={(e) => handleChange("condition_type", e.target.value)}
+              />
+              <TextField
+                select
+                fullWidth
+                label="Condition Operator"
+                value={form.condition_operator}
+                onChange={(e) =>
+                  handleChange("condition_operator", e.target.value)
+                }
+              >
+                <MenuItem value="==">Equal To (==)</MenuItem>
+                <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
+                <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+              </TextField>
+              <TextField
+                label="Value"
+                fullWidth
+                value={form.condition_value}
+                onChange={(e) =>
+                  handleChange("condition_value", e.target.value)
+                }
+              />
+            </Box>
+          </Grid>
+        )} */}
 
         {(form.rule_type === "event based earn" ||
           form.rule_type === "spend and earn" ||

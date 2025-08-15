@@ -68,7 +68,7 @@ export default function WalletOrderDrawer({
                   </Grid>
                   <Grid item xs={6}>
                     <Typography fontSize={14} textAlign="right">
-                      {String(value)}
+                      {value === null ? "" : String(value)}
                     </Typography>
                   </Grid>
                 </React.Fragment>
