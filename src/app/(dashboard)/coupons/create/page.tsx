@@ -70,6 +70,8 @@ const CreateCouponForm = ({
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
+  const [termsAndConditionsEn, setTermsAndConditionsEn] = useState<string>("");
+  const [termsAndConditionsAr, setTermsAndConditionsAr] = useState<string>("");
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [makes, setMakes] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
@@ -111,6 +113,7 @@ const CreateCouponForm = ({
   const formik = useFormik<CouponFormValues>({
     initialValues: {
       coupon_title: "",
+      coupon_title_ar: "",
       code: "",
       coupon_type: "",
       discount_type: "fixed_discount",
@@ -132,6 +135,8 @@ const CreateCouponForm = ({
       is_point_earning_disabled: 0,
       status: 1,
       customer_segment_ids: [] as number[],
+      description_en: "",
+      description_ar: "",
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
@@ -383,6 +388,7 @@ const CreateCouponForm = ({
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
       coupon_title: values.coupon_title,
+      coupon_title_ar: values.coupon_title_ar,
       code: values.code,
       // coupon_type_id: values.coupon_type,
       // conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
@@ -414,6 +420,10 @@ const CreateCouponForm = ({
       created_by,
       updated_by: created_by,
       customer_segment_ids: values.customer_segment_ids,
+      description_en: values.description_en,
+      description_ar: values.description_ar,
+      terms_and_conditions_en: termsAndConditionsEn || "",
+      terms_and_conditions_ar: termsAndConditionsAr || "",
     }));
 
     const responses = await Promise.all(
@@ -608,17 +618,31 @@ const CreateCouponForm = ({
     <>
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
-          {/* Coupon Title */}
+          {/* Coupon Title English */}
           <Grid item xs={12}>
             <TextField
               fullWidth
               variant="outlined"
-              label="Coupon Title"
+              label="Coupon Title English"
               value={values.coupon_title}
               name="coupon_title"
               onChange={handleChange}
               error={!!touched.coupon_title && !!errors.coupon_title}
               helperText={touched.coupon_title && errors.coupon_title}
+            />
+          </Grid>
+
+          {/* Coupon Title Arabic */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Coupon Title Arabic"
+              value={values.coupon_title_ar}
+              name="coupon_title_ar"
+              onChange={handleChange}
+              error={!!touched.coupon_title_ar && !!errors.coupon_title_ar}
+              helperText={touched.coupon_title_ar && errors.coupon_title_ar}
             />
           </Grid>
 
@@ -1451,6 +1475,64 @@ const CreateCouponForm = ({
                 />
               </Grid>
             </Grid>
+          </Grid>
+
+          {/* Description English */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Description (English)
+            </Typography>
+            <TextField
+              label="Description English"
+              variant="outlined"
+              name="description_en"
+              onChange={handleChange}
+              fullWidth
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          {/* Description Arabic */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Description (Arabic)
+            </Typography>
+            <TextField
+              label="Description Arabic"
+              variant="outlined"
+              name="description_ar"
+              onChange={handleChange}
+              fullWidth
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          {/* Terms And Conditions English*/}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Terms And Conditions (English)
+            </Typography>
+            <RichTextEditor
+              value={termsAndConditionsEn}
+              setValue={setTermsAndConditionsEn}
+              language="en"
+              height={250}
+            />
+          </Grid>
+
+          {/* Terms And Conditions Arabic*/}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Terms And Conditions (Arabic)
+            </Typography>
+            <RichTextEditor
+              value={termsAndConditionsAr}
+              setValue={setTermsAndConditionsAr}
+              language="en"
+              height={250}
+            />
           </Grid>
 
           {/* Benefits */}

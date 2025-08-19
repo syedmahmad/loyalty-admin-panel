@@ -41,6 +41,7 @@ import TierEdit from "../edit/page";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
+import { BusinessUnit } from "../../coupons/types";
 type Tier = {
   description?: string;
   id: number;
@@ -73,27 +74,46 @@ const TierList = () => {
   const drawerOpen = searchParams.get("drawer");
   const drawerId = searchParams.get("id");
   const [selectedTier, setSelectedTier] = useState<null | Tier>(null);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [selectedBU, setSelectedBU] = useState<number>(0);
 
   const handleCloseDrawer = () => {
     router.push("/tiers/view");
   };
-  const fetchTiers = async (name = "") => {
+
+  const fetchTiers = async (name = "", selectedBU: number = 0) => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const res = await GET(
-      `/tiers/${clientInfo.id}?name=${encodeURIComponent(name)}`
-    );
+
+    let query = name ? `?name=${encodeURIComponent(name)}` : "";
+    if (selectedBU !== 0 && selectedBU !== undefined) {
+      query += query ? `&bu=${selectedBU}` : `?bu=${selectedBU}`;
+    }
+
+    const res = await GET(`/tiers/${clientInfo.id}${query}`);
     setTiers(res?.data?.tiers || []);
     setLoading(false);
+  };
+
+  const fetchBusinessUnits = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const response = await GET(`/business-units/${clientInfo.id}`);
+    if (response?.data) {
+      setBusinessUnits(response.data);
+    } else {
+      console.warn("No business units found");
+      setBusinessUnits([]);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
     setTimeout(() => {
-      fetchTiers(value);
+      fetchTiers(value, selectedBU);
     }, 300);
   };
+
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
     tier: Tier
@@ -110,13 +130,14 @@ const TierList = () => {
     const res = await DELETE(`/tiers/${deleteId}`);
     if (res?.status === 200) {
       toast.success("Tier deleted!");
-      fetchTiers(search);
+      fetchTiers(search, selectedBU);
     } else {
       toast.error("Failed to delete tier");
     }
 
     setDeleteId(null);
   };
+
   const handleClose = () => {
     setAnchorEl(null);
     setSelectedTier(null);
@@ -139,7 +160,12 @@ const TierList = () => {
 
   useEffect(() => {
     fetchTiers();
+    fetchBusinessUnits();
   }, []);
+
+  useEffect(() => {
+    fetchTiers(search, selectedBU);
+  }, [selectedBU]);
 
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
@@ -188,7 +214,8 @@ const TierList = () => {
           </Button>
         </Box>
       </Box>
-      <Box mb={2}>
+
+      <Box mb={2} gap={2} display="flex">
         <TextField
           placeholder="Search by name"
           value={search}
@@ -221,7 +248,39 @@ const TierList = () => {
             },
           }}
         />
+
+        <Select
+          size="small"
+          value={selectedBU}
+          onChange={(e) => setSelectedBU(Number(e.target.value))}
+          displayEmpty
+          sx={{
+            backgroundColor: "#fff",
+            fontFamily: "Outfit",
+            fontWeight: 400,
+            fontStyle: "normal",
+            fontSize: "15px",
+            lineHeight: "22px",
+            borderBottom: "1px solid #e0e0e0",
+            borderRadius: 2,
+            minWidth: 250,
+            "& .MuiInputBase-input": {
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontSize: "15px",
+              lineHeight: "22px",
+            },
+          }}
+        >
+          <MenuItem value={0}>Select Business Unit</MenuItem>
+          {businessUnits.map((bu) => (
+            <MenuItem key={bu.id} value={bu.id}>
+              {bu.name}
+            </MenuItem>
+          ))}
+        </Select>
       </Box>
+
       <Paper
         elevation={3}
         sx={{

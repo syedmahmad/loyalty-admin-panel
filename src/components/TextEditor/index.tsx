@@ -1,7 +1,12 @@
 import React, { useRef } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 
-export const RichTextEditor = ({ value, setValue, language }: any) => {
+export const RichTextEditor = ({
+  value,
+  setValue,
+  language,
+  height = 400,
+}: any) => {
   const editorRef = useRef(null);
 
   // Get the language code from the field name (e.g., news_title__ar -> ar)
@@ -53,7 +58,7 @@ export const RichTextEditor = ({ value, setValue, language }: any) => {
         onEditorChange={(newContent: any) => settingValue(newContent)}
         init={{
           license_key: "gpl",
-          height: 400,
+          height: height,
           menubar: true,
           readonly: false,
           directionality: isRTL ? "rtl" : "ltr",
