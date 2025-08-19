@@ -128,19 +128,6 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       return;
     }
 
-    if (
-      ["dynamic rule", "burn"].includes(form.rule_type) &&
-      form.conditions.length &&
-      !form.conditions.every(
-        ({ condition_type, condition_operator, condition_value }) =>
-          condition_type?.trim() &&
-          condition_operator?.trim() &&
-          condition_value?.toString().trim()
-      )
-    ) {
-      toast.error("Please fill all fields for dynamic rule");
-      return;
-    }
     setLoading(true);
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -225,7 +212,6 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
     fetchBusinessUnitInfo();
   }, []);
 
-  console.log("form:::", form);
 
   return (
     <>

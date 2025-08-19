@@ -186,20 +186,6 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       return;
     }
 
-    if (
-      ["dynamic rule", "burn"].includes(form.rule_type) &&
-      form.conditions.length &&
-      !form.conditions.every(
-        ({ condition_type, condition_operator, condition_value }) =>
-          condition_type?.trim() &&
-          condition_operator?.trim() &&
-          condition_value?.toString().trim()
-      )
-    ) {
-      toast.error("Please fill all fields for dynamic rule");
-      return;
-    }
-
     setLoading(true);
 
     const burnType = form.rule_type === "burn" ? selectedBurnType?.value : null;
