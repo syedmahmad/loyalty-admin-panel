@@ -72,6 +72,7 @@ const EditCouponForm = ({
   const [selectedCouponType, setSelectedCouponType] = useState("");
   const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
   const [segments, setSegments] = useState([]);
+  const [benefitsInputs, setBenefitsInputs] = useState<string[]>([""]);
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -299,7 +300,12 @@ const EditCouponForm = ({
     }
     setSelectedId(id);
     setCouponData(res.data);
-    setBenefits(res.data.benefits || "");
+    // setBenefits(res.data.benefits || "");
+    setBenefitsInputs(
+      Array.isArray(res.data.benefits)
+        ? res.data.benefits
+        : [res.data.benefits || ""]
+    );
     setTermsAndConditionsEn(res.data.terms_and_conditions_en || "");
     setTermsAndConditionsAr(res.data.terms_and_conditions_ar || "");
     setLoading(false);
@@ -555,7 +561,8 @@ const EditCouponForm = ({
         : values.validity_after_assignment,
       is_point_earning_disabled: values.is_point_earning_disabled || 0,
       status: values.status,
-      benefits: benefits || "",
+      // benefits: benefits || "",
+      benefits: benefitsInputs || [],
       updated_by: userId,
       tenant_id: userId,
       created_by: userId,
@@ -763,7 +770,9 @@ const EditCouponForm = ({
     ));
   };
 
-  console.log("description_en:::", couponData);
+  const addBenefitInput = () => {
+    setBenefitsInputs([...benefitsInputs, ""]);
+  };
 
   return (
     <>
@@ -1624,6 +1633,50 @@ const EditCouponForm = ({
               />
             </Grid>
 
+            {/* Benefits */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Benefits (optional)
+              </Typography>
+              {benefitsInputs.map((input, index) => (
+                <Box display="flex" gap={1} key={index + 1} mb={2}>
+                  <TextField
+                    fullWidth
+                    name="benefits"
+                    label={`Benefit ${index + 1}`}
+                    value={input}
+                    onChange={(e) => {
+                      const newInputs = [...benefitsInputs];
+                      newInputs[index] = e.target.value;
+                      setBenefitsInputs(newInputs);
+                    }}
+                  />
+                  {index === 0 ? (
+                    <IconButton onClick={addBenefitInput}>
+                      <AddIcon fontSize="small" color="primary" />
+                    </IconButton>
+                  ) : (
+                    <IconButton>
+                      <DeleteIcon
+                        fontSize="small"
+                        color="error"
+                        onClick={() => {
+                          setBenefitsInputs(
+                            benefitsInputs.filter((_, i) => i !== index)
+                          );
+                        }}
+                      />
+                    </IconButton>
+                  )}
+                </Box>
+              ))}
+              {/* <RichTextEditor
+                value={benefits}
+                setValue={setBenefits}
+                language="en"
+              /> */}
+            </Grid>
+
             {/* is_point_earning_disabled */}
             <Grid item xs={12}>
               <FormControlLabel
@@ -1717,18 +1770,6 @@ const EditCouponForm = ({
                 setValue={setTermsAndConditionsAr}
                 language="en"
                 height={250}
-              />
-            </Grid>
-
-            {/* Benefits */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
-                Benefits (optional)
-              </Typography>
-              <RichTextEditor
-                value={benefits}
-                setValue={setBenefits}
-                language="en"
               />
             </Grid>
 

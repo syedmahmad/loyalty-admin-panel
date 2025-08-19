@@ -18,8 +18,8 @@ export default function ConditionTypeDropdown({
 
   // Map of backend values -> UI labels
   const options = [
-    { value: "station_id", label: "Station ID" },
-    { value: "fuel_type", label: "Fuel Type" },
+    { value: "store_id", label: "Store ID" },
+    { value: "product_type", label: "Product Type" },
     { value: "quantity", label: "Quantity" },
   ];
 

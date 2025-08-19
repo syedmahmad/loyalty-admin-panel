@@ -198,6 +198,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
           {({ values, errors, touched, handleChange }) => (
             <Form noValidate>
               <Grid container spacing={2}>
+                {/* Tier Name */}
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -226,6 +227,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     />
                   </Grid> */}
 
+                {/* Min Points */}
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
@@ -243,6 +245,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   />
                 </Grid>
 
+                {/* Business Unit */}
                 <Grid item xs={12}>
                   <TextField
                     select
@@ -288,6 +291,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     </TextField>
                   </Grid> */}
 
+                {/* Benefits */}
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" gutterBottom>
                     Benefits (optional)
@@ -331,6 +335,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     <RichTextEditor value={benefits} setValue={setBenefits} language="en" /> */}
                 </Grid>
 
+                {/* Description */}
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" gutterBottom>
                     Description (optional)
