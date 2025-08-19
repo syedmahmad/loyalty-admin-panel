@@ -439,27 +439,16 @@ const RuleList = () => {
 
                         {rule?.burn_type === "FIXED" ? (
                           <>
-                            {rule?.points_conversion_factor && (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                Conversion:{" "}
-                                {rule.points_conversion_factor ?? "-"}
-                              </Typography>
-                            )}
+                            <Typography variant="body2" color="text.secondary">
+                              Conversion: {rule.points_conversion_factor ?? "-"}
+                            </Typography>
                           </>
                         ) : (
                           <>
-                            {rule?.max_burn_percent_on_invoice && (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                Max Burn %:{" "}
-                                {rule.max_burn_percent_on_invoice ?? "-"}
-                              </Typography>
-                            )}
+                            <Typography variant="body2" color="text.secondary">
+                              Max Burn %:{" "}
+                              {rule.max_burn_percent_on_invoice ?? "-"}
+                            </Typography>
                           </>
                         )}
                       </>
