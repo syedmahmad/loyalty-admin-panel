@@ -21,8 +21,8 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import React, { useState } from "react";
-import { POST } from "@/utils/AxiosUtility";
+import React, { useEffect, useState } from "react";
+import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { RichTextEditor } from "@/components/TextEditor";
@@ -35,6 +35,8 @@ import {
 } from "@/constants/constants";
 import slugify from "slugify";
 import { log } from "node:console";
+import ConditionTypeDropdown from "@/components/third-party/ConditionTypeInput";
+import { BusinessUnit } from "../../coupons/types";
 
 const InfoLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
   <Box display="flex" alignItems="center" mb={0.5}>
@@ -51,6 +53,15 @@ interface BurnTypeOption {
   label: string;
   value: string;
 }
+
+const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
+  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+  const response = await GET(`/business-units/${clientInfo.id}`);
+  if (response?.status !== 200) {
+    throw new Error("Failed to fetch business units");
+  }
+  return response.data;
+};
 
 const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const router = useRouter();
@@ -76,11 +87,13 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       { condition_type: "", condition_operator: "", condition_value: "" },
     ],
     is_priority: 0,
+    business_unit_id: "",
   };
 
   const [form, setForm] = useState(initialForm);
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [selectedBurnType, setSelectedBurnType] =
     useState<BurnTypeOption | null>({
       label: "FIXED",
@@ -93,7 +106,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.rule_type) {
+    if (!form.name || !form.rule_type || !form.business_unit_id) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -116,7 +129,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
     }
 
     if (
-      form.rule_type === "dynamic rule" &&
+      ["dynamic rule", "burn"].includes(form.rule_type) &&
       form.conditions.length &&
       !form.conditions.every(
         ({ condition_type, condition_operator, condition_value }) =>
@@ -172,6 +185,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
         ? form.conditions
         : null,
       is_priority: form.is_priority ? 1 : 0,
+      business_unit_id: form.business_unit_id,
     };
 
     const response = await POST("/rules", payload);
@@ -188,6 +202,31 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setLoading(false);
   };
 
+  const handleConditionTypeDropdownChange = (
+    index: number,
+    newValue: string
+  ) => {
+    const updated = [...form.conditions];
+    updated[index].condition_type = newValue;
+    handleChange("conditions", updated);
+  };
+
+  const fetchBusinessUnitInfo = async () => {
+    setLoading(true);
+    try {
+      const [buData] = await Promise.all([fetchBusinessUnits()]);
+      setBusinessUnits(buData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBusinessUnitInfo();
+  }, []);
+
+  console.log("form:::", form);
+
   return (
     <>
       {/* <Tooltip title="Go Back">
@@ -202,6 +241,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </Typography> */}
 
       <Grid container spacing={2}>
+
+        {/* Rule Name */}
         <Grid item xs={12}>
           <InfoLabel
             label="Rule Name"
@@ -212,6 +253,25 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
             value={form.name}
             onChange={(e) => handleChange("name", e.target.value)}
           />
+        </Grid>
+
+        {/* Business Unit */}
+        <Grid item xs={12}>
+          <TextField
+            select
+            fullWidth
+            name="business_unit_id"
+            label="Business Unit"
+            SelectProps={{ multiple: false }}
+            value={form.business_unit_id}
+            onChange={(e) => handleChange("business_unit_id", e.target.value)}
+          >
+            {businessUnits.map((bu) => (
+              <MenuItem key={bu.id} value={bu.id}>
+                {bu.name}
+              </MenuItem>
+            ))}
+          </TextField>
         </Grid>
 
         {/* Rule Type */}
@@ -252,9 +312,10 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           form.conditions?.map((eachCondition, index) => (
             <Grid item xs={12} key={index}>
               <Box display="flex" gap={1} alignItems={"center"}>
-                <TextField
+                {/* Condition Type */}
+                {/* <TextField
                   select
-                  label="Condition Type"
+                  label={`Condition Type ${eachCondition.condition_type}`}
                   fullWidth
                   value={eachCondition.condition_type}
                   onChange={(e) => {
@@ -271,7 +332,16 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   <MenuItem value="station_id">Station ID</MenuItem>
                   <MenuItem value="fuel_type">Fuel Type</MenuItem>
                   <MenuItem value="quantity">Quantity</MenuItem>
-                </TextField>
+                </TextField> */}
+
+                <ConditionTypeDropdown
+                  preFilledvalue={eachCondition.condition_type}
+                  handleConditionTypeDropdownChange={(val) =>
+                    handleConditionTypeDropdownChange(index, val)
+                  }
+                />
+
+                {/* Condition Operator */}
                 <TextField
                   select
                   fullWidth
@@ -290,6 +360,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   <MenuItem value="<">Less Than (&lt;)</MenuItem>
                   <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
                 </TextField>
+
+                {/* Value */}
                 <TextField
                   label="Value"
                   fullWidth
@@ -300,6 +372,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
                     handleChange("conditions", updated);
                   }}
                 />
+
+                {/* Add and Remove buttons */}
                 {index === 0 ? (
                   <IconButton
                     onClick={() => {
@@ -538,6 +612,8 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
             />
           </Grid>
         )}
+
+        {/* Frequency */}
         <Grid item xs={12}>
           <InfoLabel
             label="Frequency"
@@ -579,6 +655,7 @@ const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
           </Grid>
         )}
 
+        {/* Description */}
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom>
             Description (optional)

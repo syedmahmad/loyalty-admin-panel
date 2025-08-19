@@ -727,6 +727,30 @@ const EditCouponForm = ({
     }
   };
 
+  // helper to generate MenuItems
+  const getOperatorMenuItems = (includeComparisons: boolean) => {
+    const baseOperators = [
+      { value: "==", label: "Equal To (==)" },
+      { value: "!=", label: "Not Equal (!=)" },
+    ];
+
+    const comparisonOperators = [
+      { value: ">", label: "Greater Than (>)" },
+      { value: ">=", label: "Greater Than or Equal (>=)" },
+      { value: "<", label: "Less Than (<)" },
+      { value: "<=", label: "Less Than or Equal (<=)" },
+    ];
+
+    return [
+      ...baseOperators,
+      ...(includeComparisons ? comparisonOperators : []),
+    ].map((op) => (
+      <MenuItem key={op.value} value={op.value}>
+        {op.label}
+      </MenuItem>
+    ));
+  };
+
   return (
     <>
       {couponData && (
@@ -1084,7 +1108,7 @@ const EditCouponForm = ({
                                             dynamicCouponTypesRow
                                           )}
 
-                                          {![
+                                          {/* {![
                                             COUPON_TYPE.BIRTHDAY,
                                             COUPON_TYPE.PRODUCT_SPECIFIC,
                                             COUPON_TYPE.GEO_TARGETED,
@@ -1124,6 +1148,53 @@ const EditCouponForm = ({
                                                 <MenuItem value="<=">
                                                   Less Than or Equal (&lt;=)
                                                 </MenuItem>
+                                              </TextField>
+
+                                              <TextField
+                                                label="Value"
+                                                fullWidth
+                                                value={row.value}
+                                                onChange={(e) =>
+                                                  handleChangeCondition(
+                                                    dynamicCouponTypesRow.id,
+                                                    row.id,
+                                                    "value",
+                                                    e.target.value
+                                                  )
+                                                }
+                                              />
+                                            </>
+                                          )} */}
+
+                                          {![
+                                            COUPON_TYPE.BIRTHDAY,
+                                            COUPON_TYPE.PRODUCT_SPECIFIC,
+                                            COUPON_TYPE.GEO_TARGETED,
+                                          ].includes(
+                                            dynamicCouponTypesRow?.selectedCouponType
+                                          ) && (
+                                            <>
+                                              <TextField
+                                                select
+                                                fullWidth
+                                                label="Condition Operator"
+                                                value={row.operator}
+                                                onChange={(e) =>
+                                                  handleChangeCondition(
+                                                    dynamicCouponTypesRow.id,
+                                                    row.id,
+                                                    "operator",
+                                                    e.target.value
+                                                  )
+                                                }
+                                              >
+                                                {getOperatorMenuItems(
+                                                  ![
+                                                    COUPON_TYPE.USER_SPECIFIC,
+                                                  ].includes(
+                                                    dynamicCouponTypesRow?.selectedCouponType
+                                                  )
+                                                )}
                                               </TextField>
 
                                               <TextField
