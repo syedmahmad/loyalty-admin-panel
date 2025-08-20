@@ -25,6 +25,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
 type Customer = {
+  tenant: any;
   id: number;
   external_customer_id: string;
   name: string;
@@ -44,7 +45,10 @@ type Customer = {
 };
 
 const fetchCustomers = async (search = ""): Promise<Customer[]> => {
-  const res = await GET(`/customers?search=${encodeURIComponent(search)}`);
+  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+  const res = await GET(
+    `/customers/${clientInfo.id}?search=${encodeURIComponent(search)}`
+  );
   if (res?.status !== 200) throw new Error("Failed to fetch customers");
   return res.data;
 };
@@ -108,8 +112,6 @@ const CustomerList = () => {
       loadData(search);
     }
   };
-
-  console.log("loading:::", loading);
 
   return (
     <Box sx={{ mt: "-25px", backgroundColor: "#F9FAFB" }}>
@@ -208,7 +210,7 @@ const CustomerList = () => {
                       </TableCell>
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
                       <TableCell>
-                        {c.business_unit?.tenant?.name || "—"}
+                        {c?.tenant?.name || "—"}
                       </TableCell>
                       <TableCell align="right">
                         <IconButton onClick={(e) => handleMenuClick(e, c)}>

@@ -52,14 +52,12 @@ export default function WalletListPage() {
 
   useEffect(() => {
     WalletService.getBusinessUnits().then((res) => {
+      setBusinessUnits(res?.data);
       const defaultBu = res?.data.find(
         (singleBu: { location: string }) =>
           singleBu.location === "system created"
       );
-
-      console.log("defaultBu:::", defaultBu)
-      setSelectedBU(Number(defaultBu.id));
-      setBusinessUnits(res?.data);
+      setSelectedBU(Number(defaultBu?.id) || 0);
     });
   }, []);
 
