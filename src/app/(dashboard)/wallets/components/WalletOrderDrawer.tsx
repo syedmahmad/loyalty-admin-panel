@@ -54,6 +54,29 @@ export default function WalletOrderDrawer({
           {orderDetails &&
             Object?.entries(orderDetails).map(([label, value]) => {
               if (label === "id" || label === "items") return null;
+
+              // ✅ Special handling for metadata object
+              if (label === "metadata" && value && typeof value === "object") {
+                return Object.entries(value).map(([metaKey, metaValue]) => (
+                  <React.Fragment key={`metadata-${metaKey}`}>
+                    <Grid item xs={6}>
+                      <Typography color="text.secondary" fontSize={14}>
+                        {metaKey
+                          .replace(/_/g, " ")
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/\s+/g, " ")
+                          .trim()
+                          .replace(/^./, (s) => s.toUpperCase())}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography fontSize={14} textAlign="right">
+                        {metaValue === null ? "" : String(metaValue)}
+                      </Typography>
+                    </Grid>
+                  </React.Fragment>
+                ));
+              }
               return (
                 <React.Fragment key={label}>
                   <Grid item xs={6}>
