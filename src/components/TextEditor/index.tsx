@@ -1,7 +1,15 @@
 import React, { useRef } from "react";
 import { Editor } from "@tinymce/tinymce-react";
+import { Box, CircularProgress } from "@mui/material";
 
-export const RichTextEditor = ({ value, setValue, language }: any) => {
+export const RichTextEditor = ({
+  value,
+  setValue,
+  language,
+  height = 400,
+  onBlur,
+  translationLoading,
+}: any) => {
   const editorRef = useRef(null);
 
   // Get the language code from the field name (e.g., news_title__ar -> ar)
@@ -14,7 +22,7 @@ export const RichTextEditor = ({ value, setValue, language }: any) => {
   };
 
   return (
-    <div className="as-form-field">
+    <Box position="relative">
       <style jsx global>{`
         .rtl-editor .tox-tinymce {
           direction: rtl !important;
@@ -53,7 +61,7 @@ export const RichTextEditor = ({ value, setValue, language }: any) => {
         onEditorChange={(newContent: any) => settingValue(newContent)}
         init={{
           license_key: "gpl",
-          height: 400,
+          height: height,
           menubar: true,
           readonly: false,
           directionality: isRTL ? "rtl" : "ltr",
@@ -165,8 +173,28 @@ export const RichTextEditor = ({ value, setValue, language }: any) => {
             }
           },
         }}
+        onBlur={(_: React.FocusEvent<HTMLElement>, editor: any) => {
+          const content = editor.getContent();
+          if (onBlur) onBlur(content);
+        }}
       />
-    </div>
+
+      {translationLoading && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          display="flex"
+          justifyContent="right"
+          alignItems="center"
+          zIndex={10}
+        >
+          <CircularProgress size={32} />
+        </Box>
+      )}
+    </Box>
   );
 };
 

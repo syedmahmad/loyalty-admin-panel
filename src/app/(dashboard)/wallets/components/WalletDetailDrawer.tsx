@@ -17,6 +17,7 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import { useEffect, useState } from "react";
@@ -64,6 +65,8 @@ export default function WalletDetailDrawer({
   const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState({});
   const [searchValue, setSearchValue] = useState("");
+  const [totalEarn, setTotalEarn] = useState(0);
+  const [totalBurn, setTotalBurn] = useState(0);
 
   //Pagination
   const [page, setPage] = useState(1);
@@ -93,6 +96,17 @@ export default function WalletDetailDrawer({
       setTransactions(res?.data?.data || []);
       setTotalPages(Math.ceil((res?.data?.total || 0) / pageSize));
       setPage(pageNumber);
+
+      const { totalEarnAmount, totalBurnAmount } = res?.data?.data.reduce(
+        (acc: any, curr: any) => {
+          if (curr.type === "earn") acc.totalEarnAmount += Number(curr.amount);
+          if (curr.type === "burn") acc.totalBurnAmount += Number(curr.amount);
+          return acc;
+        },
+        { totalEarnAmount: 0, totalBurnAmount: 0 }
+      );
+      setTotalEarn(totalEarnAmount);
+      setTotalBurn(totalBurnAmount);
     } catch (err) {
       toast.error("Failed to load transactions");
     } finally {
@@ -102,43 +116,122 @@ export default function WalletDetailDrawer({
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={800} p={3}>
+      <Box width={800} p={2}>
         {/* Wallet ID + User */}
-        <Grid container spacing={2} alignItems="center" mb={3}>
-          <Grid item xs={6}>
+        <Grid container spacing={2} alignItems="center" mb={0}>
+          {/* Customer Name - Left */}
+          <Grid item xs={5}>
             <Typography variant="h4">
               {wallet?.customer?.name || "N/A"}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
-            <Typography variant="h4" textAlign="right">
+
+          {/* Wallet ID - Center */}
+          <Grid item xs={5}>
+            <Typography variant="h4">
               Wallet ID: <strong>{wallet?.id}</strong>
             </Typography>
           </Grid>
+
+          {/* Close Button - Right */}
+          <Grid item xs={2} textAlign="right">
+            <IconButton
+              edge="end"
+              onClick={() => {
+                onClose();
+              }}
+              aria-label="close"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Grid>
         </Grid>
+        <Divider sx={{ mb: 2 }} />
 
         {/* Stat Cards */}
-        <Grid container spacing={2} mb={3}>
+        <Grid container spacing={2} mb={3} alignItems="stretch">
+          {/* Total Points Breakdown */}
           <Grid item xs={4}>
-            <Paper elevation={1} sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="subtitle2">Total Points</Typography>
-              <Typography fontWeight={600}>
-                {wallet?.total_balance ?? 0}
-              </Typography>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Box display="flex" justifyContent="space-between" mb={1}>
+                <Typography variant="body2" color="text.secondary">
+                  Total Earn
+                </Typography>
+                <Typography fontWeight={600}>{totalEarn}</Typography>
+              </Box>
+
+              <Box display="flex" justifyContent="space-between" mb={1}>
+                <Typography variant="body2" color="text.secondary">
+                  Total Burn
+                </Typography>
+                <Typography fontWeight={600} color="error.main">
+                  {totalBurn}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 1 }} />
+
+              <Box display="flex" justifyContent="space-between" mt="auto">
+                <Typography variant="body1" fontWeight={600}>
+                  Total Points
+                </Typography>
+                <Typography variant="h6" fontWeight={700} color="primary.main">
+                  {wallet?.total_balance ?? 0}
+                </Typography>
+              </Box>
             </Paper>
           </Grid>
+
+          {/* Available Points */}
           <Grid item xs={4}>
-            <Paper elevation={1} sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="subtitle2">Available Points</Typography>
-              <Typography fontWeight={600}>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                textAlign: "center",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                Available Points
+              </Typography>
+              <Typography variant="h6" fontWeight={700} color="success.main">
                 {wallet?.available_balance ?? 0}
               </Typography>
             </Paper>
           </Grid>
+
+          {/* Locked Points */}
           <Grid item xs={4}>
-            <Paper elevation={1} sx={{ p: 2, textAlign: "center" }}>
-              <Typography variant="subtitle2">Locked Points</Typography>
-              <Typography fontWeight={600}>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                textAlign: "center",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                Locked Points
+              </Typography>
+              <Typography variant="h6" fontWeight={700} color="warning.main">
                 {wallet?.locked_balance ?? 0}
               </Typography>
             </Paper>
@@ -319,7 +412,7 @@ export default function WalletDetailDrawer({
           selectedBU={selectedBU}
           open={txDrawerOpen}
           onClose={() => {
-            setTxDrawerOpen(false), onClose();
+            setTxDrawerOpen(false);
           }}
           walletId={wallet?.id || 0}
           onSuccess={() =>

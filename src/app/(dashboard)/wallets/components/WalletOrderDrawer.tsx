@@ -3,11 +3,14 @@ import {
   Box,
   Card,
   CardContent,
+  Divider,
   Drawer,
   Grid,
+  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import CollectionsIcon from "@mui/icons-material/Collections";
 import React from "react";
 
@@ -24,15 +27,56 @@ export default function WalletOrderDrawer({
 }: Props) {
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box width={500} p={3}>
-        <Typography variant="h5" mb={2}>
-          Order Details
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          py: 1,
+        }}
+      >
+        <Typography variant="h5">Order Details</Typography>
+        <IconButton
+          edge="end"
+          onClick={() => {
+            onClose();
+          }}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <Divider sx={{ mb: 1 }} />
 
+      <Box width={500} p={3}>
         <Grid container spacing={1} mb={4}>
           {orderDetails &&
             Object?.entries(orderDetails).map(([label, value]) => {
               if (label === "id" || label === "items") return null;
+
+              // ✅ Special handling for metadata object
+              if (label === "metadata" && value && typeof value === "object") {
+                return Object.entries(value).map(([metaKey, metaValue]) => (
+                  <React.Fragment key={`metadata-${metaKey}`}>
+                    <Grid item xs={6}>
+                      <Typography color="text.secondary" fontSize={14}>
+                        {metaKey
+                          .replace(/_/g, " ")
+                          .replace(/([A-Z])/g, " $1")
+                          .replace(/\s+/g, " ")
+                          .trim()
+                          .replace(/^./, (s) => s.toUpperCase())}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography fontSize={14} textAlign="right">
+                        {metaValue === null ? "" : String(metaValue)}
+                      </Typography>
+                    </Grid>
+                  </React.Fragment>
+                ));
+              }
               return (
                 <React.Fragment key={label}>
                   <Grid item xs={6}>
@@ -47,7 +91,7 @@ export default function WalletOrderDrawer({
                   </Grid>
                   <Grid item xs={6}>
                     <Typography fontSize={14} textAlign="right">
-                      {value?.toString() ?? ""}
+                      {value === null ? "" : String(value)}
                     </Typography>
                   </Grid>
                 </React.Fragment>

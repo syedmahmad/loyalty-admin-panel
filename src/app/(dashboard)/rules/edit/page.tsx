@@ -15,8 +15,12 @@ import {
   useTheme,
   InputAdornment,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { GET, PUT } from "@/utils/AxiosUtility";
@@ -30,6 +34,8 @@ import {
 } from "@/constants/constants";
 import { FREQUENCY } from "@/constants/constants";
 import slugify from "slugify";
+import ConditionTypeDropdown from "@/components/third-party/ConditionTypeInput";
+import { BusinessUnit } from "../../coupons/types";
 
 const initialForm = {
   name: "",
@@ -46,12 +52,26 @@ const initialForm = {
   condition_value: "",
   validity_after_assignment: 0,
   frequency: "once",
+  conditions: [
+    { condition_type: "", condition_operator: "", condition_value: "" },
+  ],
+  is_priority: 0,
+  business_unit_id: "",
 };
 
 interface BurnTypeOption {
   label: string;
   value: string;
 }
+
+const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
+  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+  const response = await GET(`/business-units/${clientInfo.id}`);
+  if (response?.status !== 200) {
+    throw new Error("Failed to fetch business units");
+  }
+  return response.data;
+};
 
 const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const searchParams = useSearchParams();
@@ -65,6 +85,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
   const [selectedId, setSelectedId] = useState(paramId || "");
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [selectedBurnType, setSelectedBurnType] =
     useState<BurnTypeOption | null>({
       label: "FIXED",
@@ -99,6 +120,9 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
         validity_after_assignment: rule.validity_after_assignment || 0,
         frequency: rule.frequency || "once",
         reward_condition: rule.reward_condition || "minimum",
+        conditions: rule.dynamic_conditions || form.conditions,
+        is_priority: rule.is_priority,
+        business_unit_id: rule.business_unit_id || 0,
       });
       setDescription(rule.description || "");
 
@@ -125,8 +149,22 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   }, [paramId]);
 
+  const fetchBusinessUnitInfo = async () => {
+    setLoading(true);
+    try {
+      const [buData] = await Promise.all([fetchBusinessUnits()]);
+      setBusinessUnits(buData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBusinessUnitInfo();
+  }, []);
+
   const handleSubmit = async () => {
-    if (!form.name || !form.rule_type) {
+    if (!form.name || !form.rule_type || !form.business_unit_id) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -142,11 +180,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
           (selectedBurnType?.value === "FIXED" &&
             !form.points_conversion_factor) ||
           (selectedBurnType?.value === "PERCENTAGE" &&
-            !form.max_burn_percent_on_invoice))) ||
-      (form.rule_type === "dynamic rule" &&
-        (!form.condition_type ||
-          !form.condition_operator ||
-          !form.condition_value))
+            !form.max_burn_percent_on_invoice)))
     ) {
       toast.error("Please fill all required fields for this rule type");
       return;
@@ -189,6 +223,11 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
       updated_by,
       burn_type: burnType,
       reward_condition: form.reward_condition,
+      dynamic_conditions: ["dynamic rule", "burn"].includes(form.rule_type)
+        ? form.conditions
+        : null,
+      is_priority: form.is_priority ? 1 : 0,
+      business_unit_id: form.business_unit_id,
     };
 
     const res = await PUT(`/rules/${selectedId}`, payload);
@@ -201,6 +240,15 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     }
 
     setLoading(false);
+  };
+
+  const handleConditionTypeDropdownChange = (
+    index: number,
+    newValue: string
+  ) => {
+    const updated = [...form.conditions];
+    updated[index].condition_type = newValue;
+    handleChange("conditions", updated);
   };
 
   return (
@@ -218,6 +266,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
       {!paramId && (
         <Grid container spacing={2} sx={{ mb: 1 }}>
+          {/* Select Rule */}
           <Grid item xs={12}>
             <TextField
               select
@@ -243,6 +292,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
 
       {selectedId && (
         <Grid container spacing={2}>
+          {/* Rule Name */}
           <Grid item xs={12}>
             <InfoLabel
               label="Rule Name "
@@ -255,6 +305,26 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             />
           </Grid>
 
+          {/* Business Unit */}
+          <Grid item xs={12}>
+            <TextField
+              select
+              fullWidth
+              name="business_unit_id"
+              label="Business Unit"
+              SelectProps={{ multiple: false }}
+              value={form.business_unit_id}
+              onChange={(e) => handleChange("business_unit_id", e.target.value)}
+            >
+              {businessUnits.map((bu) => (
+                <MenuItem key={bu.id} value={bu.id}>
+                  {bu.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          {/* Rule Type */}
           <Grid item xs={12}>
             <InfoLabel
               label="Rule Type"
@@ -273,7 +343,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </TextField>
           </Grid>
 
-          {form.rule_type === "dynamic rule" && (
+          {/* {form.rule_type === "dynamic rule" && (
             <Grid item xs={12}>
               <Grid container spacing={1}>
                 <Grid item xs={4}>
@@ -322,27 +392,107 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
                 </Grid>
               </Grid>
             </Grid>
-          )}
+          )} */}
 
-          {form.rule_type === "event based earn" && (
-            <Grid item xs={12}>
-              <InfoLabel
-                label="Event Triggerer"
-                tooltip="Triggering event like signup or birthday."
-              />
-              <TextField
-                fullWidth
-                value={form.event_triggerer}
-                onChange={(e) =>
-                  handleChange("event_triggerer", e.target.value)
-                }
-                placeholder="e.g. signup, birthday"
-              />
-            </Grid>
-          )}
+          {["dynamic rule", "burn"].includes(form.rule_type) &&
+            form.conditions?.map((eachCondition, index) => (
+              <Grid item xs={12} key={index}>
+                <Box display="flex" gap={1} alignItems={"center"}>
+                  {/* <TextField
+                    select
+                    label="Condition Type"
+                    fullWidth
+                    value={eachCondition.condition_type}
+                    onChange={(e) => {
+                      const updated = [...form.conditions];
+                      updated[index].condition_type = e.target.value;
+                      handleChange("conditions", updated);
+                    }}
+                  >
+                    <MenuItem value="station_id">Station ID</MenuItem>
+                    <MenuItem value="fuel_type">Fuel Type</MenuItem>
+                    <MenuItem value="quantity">Quantity</MenuItem>
+                  </TextField> */}
+
+                  <ConditionTypeDropdown
+                    preFilledvalue={eachCondition.condition_type}
+                    handleConditionTypeDropdownChange={(val) =>
+                      handleConditionTypeDropdownChange(index, val)
+                    }
+                  />
+
+                  {/* Condition Operator */}
+                  <TextField
+                    select
+                    fullWidth
+                    label="Condition Operator"
+                    value={eachCondition.condition_operator}
+                    onChange={(e) => {
+                      const updated = [...form.conditions];
+                      updated[index].condition_operator = e.target.value;
+                      handleChange("conditions", updated);
+                    }}
+                  >
+                    <MenuItem value="==">Equal To (==)</MenuItem>
+                    <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                    <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                    <MenuItem value=">=">
+                      Greater Than or Equal (&gt;=)
+                    </MenuItem>
+                    <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                    <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+                  </TextField>
+
+                  {/* Value */}
+                  <TextField
+                    label="Value"
+                    fullWidth
+                    value={eachCondition.condition_value}
+                    onChange={(e) => {
+                      const updated = [...form.conditions];
+                      updated[index].condition_value = e.target.value;
+                      handleChange("conditions", updated);
+                    }}
+                  />
+
+                  {/* Add and Remove buttons */}
+                  {index === 0 ? (
+                    <IconButton
+                      onClick={() => {
+                        const updated = [
+                          ...(form.conditions || []),
+                          {
+                            condition_type: "",
+                            condition_operator: "",
+                            condition_value: "",
+                          },
+                        ];
+                        handleChange("conditions", updated);
+                      }}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  ) : (
+                    <IconButton
+                      onClick={() => {
+                        const updated = form.conditions.filter(
+                          (_, i) => i !== index
+                        );
+                        handleChange("conditions", updated);
+                      }}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                </Box>
+              </Grid>
+            ))}
 
           {/* REWARD_CONDITIONS */}
-          {form.rule_type === "spend and earn" && (
+          {(form.rule_type === "spend and earn" ||
+            form.rule_type === "dynamic rule") && (
             <Grid item xs={12}>
               <InfoLabel
                 label="Reward Condition"
@@ -368,8 +518,26 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           )}
 
+          {form.rule_type === "event based earn" && (
+            <Grid item xs={12}>
+              <InfoLabel
+                label="Event Triggerer"
+                tooltip="Triggering event like signup or birthday."
+              />
+              <TextField
+                fullWidth
+                value={form.event_triggerer}
+                onChange={(e) =>
+                  handleChange("event_triggerer", e.target.value)
+                }
+                placeholder="e.g. signup, birthday"
+              />
+            </Grid>
+          )}
+
           {(form.rule_type === "spend and earn" ||
-            form.rule_type === "burn") && (
+            form.rule_type === "burn" ||
+            form.rule_type === "dynamic rule") && (
             <Grid item xs={12}>
               <InfoLabel
                 label={`${
@@ -514,6 +682,7 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </Grid>
           )}
 
+          {/* Frequency */}
           <Grid item xs={12}>
             <InfoLabel
               label="Frequency"
@@ -537,6 +706,25 @@ const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
             </TextField>
           </Grid>
 
+          {/* Mark as Priority */}
+          {["dynamic rule", "burn"].includes(form.rule_type) && (
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name="is_priority"
+                    checked={!!form.is_priority}
+                    onChange={(e) =>
+                      handleChange("is_priority", e.target.checked)
+                    }
+                  />
+                }
+                label="Mark as Priority"
+              />
+            </Grid>
+          )}
+
+          {/* Description */}
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
               Description (optional)

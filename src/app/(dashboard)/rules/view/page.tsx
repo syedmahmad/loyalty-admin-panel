@@ -40,8 +40,11 @@ import RuleEdit from "../edit/page";
 import BaseDrawer from "@/components/drawer/basedrawer";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
+import { BusinessUnit } from "../../coupons/types";
+import { htmlToPlainText } from "@/utils/Index";
 
 type Rule = {
+  burn_type: string;
   uuid: string;
   id: number;
   name: string;
@@ -69,6 +72,9 @@ const RuleList = () => {
   const count = rules.length;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRule, setSelectedRule] = useState<null | Rule>(null);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [selectedBU, setSelectedBU] = useState<number>(0);
+
   const open = Boolean(anchorEl);
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, rule: any) => {
     setAnchorEl(event.currentTarget);
@@ -85,14 +91,30 @@ const RuleList = () => {
   const drawerOpen = searchParams.get("drawer");
   const drawerId = searchParams.get("uuid");
   const router = useRouter();
-  const fetchRules = async (name = "") => {
+  const fetchRules = async (name = "", selectedBU: number = 0) => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const query = name ? `?name=${encodeURIComponent(name)}` : "";
+    let query = name ? `?name=${encodeURIComponent(name)}` : "";
+    if (selectedBU !== 0 && selectedBU !== undefined) {
+      query += query ? `&bu=${selectedBU}` : `?bu=${selectedBU}`;
+    }
+
     const res = await GET(`/rules/${clientInfo.id}${query}`);
     setRules(res?.data || []);
     setLoading(false);
   };
+
+  const fetchBusinessUnits = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const response = await GET(`/business-units/${clientInfo.id}`);
+    if (response?.data) {
+      setBusinessUnits(response.data);
+    } else {
+      console.warn("No business units found");
+      setBusinessUnits([]);
+    }
+  };
+
   const handleCloseDrawer = () => {
     const currentUrl = window.location.pathname;
     router.push(currentUrl);
@@ -109,7 +131,7 @@ const RuleList = () => {
     const res = await DELETE(`/rules/${deleteId}`);
     if (res?.status === 200) {
       toast.success("Rule deleted!");
-      fetchRules(nameFilter);
+      fetchRules(nameFilter, selectedBU);
     } else {
       toast.error("Failed to delete rule");
     }
@@ -118,16 +140,17 @@ const RuleList = () => {
 
   useEffect(() => {
     fetchRules();
+    fetchBusinessUnits();
   }, []);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
       setNameFilter(searchName);
-      fetchRules(searchName);
+      fetchRules(searchName, selectedBU);
     }, 300);
 
     return () => clearTimeout(debounce);
-  }, [searchName]);
+  }, [searchName, selectedBU]);
 
   const handleChangePage = (_: unknown, newPage: number) =>
     setPage(newPage - 1);
@@ -190,7 +213,8 @@ const RuleList = () => {
         </Box>
       </Box>
 
-      <Box mb={2}>
+      {/* Filters */}
+      <Box mb={2} gap={2} display="flex">
         <TextField
           size="small"
           placeholder="Search by name"
@@ -225,7 +249,39 @@ const RuleList = () => {
             },
           }}
         />
+
+        <Select
+          size="small"
+          value={selectedBU}
+          onChange={(e) => setSelectedBU(Number(e.target.value))}
+          displayEmpty
+          sx={{
+            backgroundColor: "#fff",
+            fontFamily: "Outfit",
+            fontWeight: 400,
+            fontStyle: "normal",
+            fontSize: "15px",
+            lineHeight: "22px",
+            borderBottom: "1px solid #e0e0e0",
+            borderRadius: 2,
+            minWidth: 250,
+            "& .MuiInputBase-input": {
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontSize: "15px",
+              lineHeight: "22px",
+            },
+          }}
+        >
+          <MenuItem value={0}>Select Business Unit</MenuItem>
+          {businessUnits.map((bu) => (
+            <MenuItem key={bu.id} value={bu.id}>
+              {bu.name}
+            </MenuItem>
+          ))}
+        </Select>
       </Box>
+
       <Paper
         elevation={3}
         sx={{
@@ -370,21 +426,37 @@ const RuleList = () => {
 
                     {rule.rule_type === "burn" && (
                       <>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          mt={1}
-                        >
-                          Max Redeem: {rule.max_redeemption_points_limit ?? "-"}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Conversion: {rule.points_conversion_factor ?? "-"}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Max Burn %: {rule.max_burn_percent_on_invoice ?? "-"}
-                        </Typography>
+                        {rule?.max_redeemption_points_limit && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            mt={1}
+                          >
+                            Max Redeem:{" "}
+                            {rule.max_redeemption_points_limit ?? "-"}
+                          </Typography>
+                        )}
+
+                        {rule?.burn_type === "FIXED" ? (
+                          <>
+                            <Typography variant="body2" color="text.secondary">
+                              Conversion: {rule.points_conversion_factor ?? "-"}
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <Typography variant="body2" color="text.secondary">
+                              Max Burn %:{" "}
+                              {rule.max_burn_percent_on_invoice ?? "-"}
+                            </Typography>
+                          </>
+                        )}
                       </>
                     )}
+
+                    <Typography variant="body2" color="text.secondary" mt={1}>
+                      Description: {htmlToPlainText(rule?.description || "")}
+                    </Typography>
                   </CardContent>
                 </Card>
               </Grid>
@@ -608,7 +680,7 @@ const RuleList = () => {
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
           title="Create Rule"
-          width={500}
+          width={750}
         >
           <RuleCreateForm
             onSuccess={() => {
@@ -624,7 +696,7 @@ const RuleList = () => {
             open={true}
             onClose={handleCloseDrawer}
             title="Edit Rule"
-            width={500}
+            width={750}
           >
             <RuleEdit
               onSuccess={() => {

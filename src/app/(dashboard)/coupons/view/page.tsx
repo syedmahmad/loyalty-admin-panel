@@ -357,6 +357,10 @@ const CouponList = () => {
                     </Box>
 
                     <Typography variant="body2" color="text.secondary" mt={1}>
+                      Code: {coupon.code}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary" mt={1}>
                       Discount Type:{" "}
                       {coupon?.discount_type === "fixed_discount"
                         ? "Fixed"
@@ -379,7 +383,7 @@ const CouponList = () => {
                       Used: {coupon.number_of_times_used ?? "0"} times
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mt={1}>
-                      Benefits: {htmlToPlainText(coupon.benefits || "-")}
+                      Benefits: {htmlToPlainText(coupon.benefits || "-").trim()}
                     </Typography>
                   </CardContent>
                 </Card>

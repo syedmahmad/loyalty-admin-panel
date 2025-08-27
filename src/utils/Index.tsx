@@ -48,3 +48,10 @@ export const getYearsArray = () => {
   }
   return yearsArray;
 };
+
+export const createSlug = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, "_") // replace spaces with underscores
+    .replace(/[^\w\-]+/g, ""); // remove non-alphanumeric chars
+};

@@ -1,10 +1,12 @@
 import { GET, POST } from "@/utils/AxiosUtility";
 
 export const WalletService = {
-  getWallets: (businessUnitId?: number) =>
-    GET("/wallets", {
+  getWallets: (businessUnitId?: number) => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    return GET(`/wallets/${clientInfo.id}`, {
       params: businessUnitId ? { business_unit: businessUnitId } : {},
-    }),
+    });
+  },
 
   getWalletTransactions: (
     walletId: number,
@@ -23,9 +25,15 @@ export const WalletService = {
   getSettings: (businessUnitId: number) =>
     GET(`/wallets/settings/${businessUnitId}`),
 
-  getAllWalletSettings: () => GET(`/wallets/all-settings`),
+  getAllWalletSettings: () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    return GET(`/wallets/all-settings/${clientInfo.id}`);
+  },
 
-  saveSettings: (data: any) => POST("/wallets/settings", data),
+  saveSettings: (data: any) => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    return POST(`/wallets/settings/${clientInfo.id}`, data);
+  },
 
   getBusinessUnits: () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);

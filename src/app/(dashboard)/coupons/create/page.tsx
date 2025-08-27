@@ -70,11 +70,17 @@ const CreateCouponForm = ({
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
+  const [termsAndConditionsEn, setTermsAndConditionsEn] = useState<string>("");
+  const [termsAndConditionsAr, setTermsAndConditionsAr] = useState<string>("");
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [makes, setMakes] = useState([]);
   const [selectedCouponType, setSelectedCouponType] = useState("");
   const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
   const [segments, setSegments] = useState([]);
+  const [benefitsInputs, setBenefitsInputs] = useState<string[]>([""]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -111,6 +117,7 @@ const CreateCouponForm = ({
   const formik = useFormik<CouponFormValues>({
     initialValues: {
       coupon_title: "",
+      coupon_title_ar: "",
       code: "",
       coupon_type: "",
       discount_type: "fixed_discount",
@@ -118,7 +125,7 @@ const CreateCouponForm = ({
       usage_limit: 1,
       business_unit_ids: [] as number[],
       once_per_customer: 0,
-      max_usage_per_user: 1,
+      max_usage_per_user: 0,
       reuse_interval: 0,
       conditions: {},
       general_error_message_en: "",
@@ -132,6 +139,8 @@ const CreateCouponForm = ({
       is_point_earning_disabled: 0,
       status: 1,
       customer_segment_ids: [] as number[],
+      description_en: "",
+      description_ar: "",
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
@@ -142,7 +151,7 @@ const CreateCouponForm = ({
 
       usage_limit: Yup.number().min(1).required("Usage limit is required"),
       max_usage_per_user: Yup.number()
-        .min(1)
+        .min(0)
         .required("Max usage per user is required"),
       business_unit_ids: Yup.array().min(
         1,
@@ -383,6 +392,7 @@ const CreateCouponForm = ({
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
       coupon_title: values.coupon_title,
+      coupon_title_ar: values.coupon_title_ar,
       code: values.code,
       // coupon_type_id: values.coupon_type,
       // conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
@@ -408,12 +418,17 @@ const CreateCouponForm = ({
         : values.validity_after_assignment,
       is_point_earning_disabled: values.is_point_earning_disabled || 0,
       status: values.status,
-      benefits: benefits || "",
+      // benefits: benefits || "",
+      benefits: benefitsInputs || [],
       business_unit_id: buId,
       tenant_id: created_by,
       created_by,
       updated_by: created_by,
       customer_segment_ids: values.customer_segment_ids,
+      description_en: values.description_en,
+      description_ar: values.description_ar,
+      terms_and_conditions_en: termsAndConditionsEn || "",
+      terms_and_conditions_ar: termsAndConditionsAr || "",
     }));
 
     const responses = await Promise.all(
@@ -580,21 +595,101 @@ const CreateCouponForm = ({
     }
   };
 
+  // helper to generate MenuItems
+  const getOperatorMenuItems = (includeComparisons: boolean) => {
+    const baseOperators = [
+      { value: "==", label: "Equal To (==)" },
+      { value: "!=", label: "Not Equal (!=)" },
+    ];
+
+    const comparisonOperators = [
+      { value: ">", label: "Greater Than (>)" },
+      { value: ">=", label: "Greater Than or Equal (>=)" },
+      { value: "<", label: "Less Than (<)" },
+      { value: "<=", label: "Less Than or Equal (<=)" },
+    ];
+
+    return [
+      ...baseOperators,
+      ...(includeComparisons ? comparisonOperators : []),
+    ].map((op) => (
+      <MenuItem key={op.value} value={op.value}>
+        {op.label}
+      </MenuItem>
+    ));
+  };
+
+  const addBenefitInput = () => {
+    setBenefitsInputs([...benefitsInputs, ""]);
+  };
+
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        if (richEditor) {
+          setTermsAndConditionsAr(res?.data?.data);
+        } else {
+          setFieldValue(key, res?.data?.data);
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   return (
     <>
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
-          {/* Coupon Title */}
+          {/* Coupon Title English */}
           <Grid item xs={12}>
             <TextField
               fullWidth
               variant="outlined"
-              label="Coupon Title"
+              label="Coupon Title English"
               value={values.coupon_title}
               name="coupon_title"
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate("coupon_title_ar", e.target.value)
+              }
               error={!!touched.coupon_title && !!errors.coupon_title}
               helperText={touched.coupon_title && errors.coupon_title}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["coupon_title_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Coupon Title Arabic */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Coupon Title Arabic"
+              value={values.coupon_title_ar}
+              name="coupon_title_ar"
+              onChange={handleChange}
+              error={!!touched.coupon_title_ar && !!errors.coupon_title_ar}
+              helperText={touched.coupon_title_ar && errors.coupon_title_ar}
             />
           </Grid>
 
@@ -909,7 +1004,7 @@ const CreateCouponForm = ({
                                       dynamicCouponTypesRow
                                     )}
 
-                                    {![
+                                    {/* {![
                                       COUPON_TYPE.BIRTHDAY,
                                       COUPON_TYPE.PRODUCT_SPECIFIC,
                                       COUPON_TYPE.GEO_TARGETED,
@@ -957,6 +1052,53 @@ const CreateCouponForm = ({
                                                 Less Than or Equal (&lt;=)
                                               </MenuItem>
                                             </div>
+                                          )}
+                                        </TextField>
+
+                                        <TextField
+                                          label="Value"
+                                          fullWidth
+                                          value={row.value}
+                                          onChange={(e) =>
+                                            handleChangeCondition(
+                                              dynamicCouponTypesRow.id,
+                                              row.id,
+                                              "value",
+                                              e.target.value
+                                            )
+                                          }
+                                        />
+                                      </>
+                                    )} */}
+
+                                    {![
+                                      COUPON_TYPE.BIRTHDAY,
+                                      COUPON_TYPE.PRODUCT_SPECIFIC,
+                                      COUPON_TYPE.GEO_TARGETED,
+                                    ].includes(
+                                      dynamicCouponTypesRow?.selectedCouponType
+                                    ) && (
+                                      <>
+                                        <TextField
+                                          select
+                                          fullWidth
+                                          label="Condition Operator"
+                                          value={row.operator}
+                                          onChange={(e) =>
+                                            handleChangeCondition(
+                                              dynamicCouponTypesRow.id,
+                                              row.id,
+                                              "operator",
+                                              e.target.value
+                                            )
+                                          }
+                                        >
+                                          {getOperatorMenuItems(
+                                            ![
+                                              COUPON_TYPE.USER_SPECIFIC,
+                                            ].includes(
+                                              dynamicCouponTypesRow?.selectedCouponType
+                                            )
                                           )}
                                         </TextField>
 
@@ -1177,7 +1319,7 @@ const CreateCouponForm = ({
               label="Max Usage Per User"
               value={values.max_usage_per_user}
               type="number"
-              inputProps={{ min: 1 }}
+              inputProps={{ min: 0 }}
               name="max_usage_per_user"
               onChange={handleChange}
               error={
@@ -1280,6 +1422,12 @@ const CreateCouponForm = ({
               value={values.general_error_message_en}
               name="general_error_message_en"
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate(
+                  "general_error_message_ar",
+                  e.target.value
+                )
+              }
               error={
                 !!touched.general_error_message_en &&
                 !!errors.general_error_message_en
@@ -1288,6 +1436,15 @@ const CreateCouponForm = ({
                 touched.general_error_message_en &&
                 errors.general_error_message_en
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["general_error_message_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -1318,6 +1475,12 @@ const CreateCouponForm = ({
               value={values.exception_error_message_en}
               name="exception_error_message_en"
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate(
+                  "exception_error_message_ar",
+                  e.target.value
+                )
+              }
               error={
                 !!touched.exception_error_message_en &&
                 !!errors.exception_error_message_en
@@ -1326,6 +1489,15 @@ const CreateCouponForm = ({
                 touched.exception_error_message_en &&
                 errors.exception_error_message_en
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["exception_error_message_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -1345,6 +1517,51 @@ const CreateCouponForm = ({
                 errors.exception_error_message_ar
               }
             />
+          </Grid>
+
+          {/* Benefits */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Benefits (optional)
+            </Typography>
+
+            {benefitsInputs.map((input, index) => (
+              <Box display="flex" gap={1} key={index + 1} mb={2}>
+                <TextField
+                  fullWidth
+                  name="benefits"
+                  label={`Benefit ${index + 1}`}
+                  value={input}
+                  onChange={(e) => {
+                    const newInputs = [...benefitsInputs];
+                    newInputs[index] = e.target.value;
+                    setBenefitsInputs(newInputs);
+                  }}
+                />
+                {index === 0 ? (
+                  <IconButton onClick={addBenefitInput}>
+                    <AddIcon fontSize="small" color="primary" />
+                  </IconButton>
+                ) : (
+                  <IconButton>
+                    <DeleteIcon
+                      fontSize="small"
+                      color="error"
+                      onClick={() => {
+                        setBenefitsInputs(
+                          benefitsInputs.filter((_, i) => i !== index)
+                        );
+                      }}
+                    />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            {/* <RichTextEditor
+              value={benefits}
+              setValue={setBenefits}
+              language="en"
+            /> */}
           </Grid>
 
           {/* is_point_earning_disabled */}
@@ -1383,15 +1600,83 @@ const CreateCouponForm = ({
             </Grid>
           </Grid>
 
-          {/* Benefits */}
+          {/* Description English */}
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
-              Benefits (optional)
+              Description (English)
+            </Typography>
+            <TextField
+              label="Description English"
+              variant="outlined"
+              name="description_en"
+              value={values.description_en}
+              onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate("description_ar", e.target.value)
+              }
+              fullWidth
+              multiline
+              rows={4}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["description_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Description Arabic */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Description (Arabic)
+            </Typography>
+            <TextField
+              label="Description Arabic"
+              variant="outlined"
+              name="description_ar"
+              value={values.description_ar}
+              onChange={handleChange}
+              fullWidth
+              multiline
+              rows={4}
+            />
+          </Grid>
+
+          {/* Terms And Conditions English*/}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Terms And Conditions (English)
             </Typography>
             <RichTextEditor
-              value={benefits}
-              setValue={setBenefits}
+              value={termsAndConditionsEn}
+              setValue={setTermsAndConditionsEn}
               language="en"
+              height={250}
+              onBlur={() =>
+                handleArabictranslate(
+                  "termsAndConditionsAr",
+                  termsAndConditionsEn,
+                  true
+                )
+              }
+              translationLoading={translationLoading["termsAndConditionsAr"]}
+            />
+          </Grid>
+
+          {/* Terms And Conditions Arabic*/}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Terms And Conditions (Arabic)
+            </Typography>
+            <RichTextEditor
+              value={termsAndConditionsAr}
+              setValue={setTermsAndConditionsAr}
+              language="en"
+              height={250}
             />
           </Grid>
 
