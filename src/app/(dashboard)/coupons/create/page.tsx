@@ -78,6 +78,9 @@ const CreateCouponForm = ({
   const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
   const [segments, setSegments] = useState([]);
   const [benefitsInputs, setBenefitsInputs] = useState<string[]>([""]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -122,7 +125,7 @@ const CreateCouponForm = ({
       usage_limit: 1,
       business_unit_ids: [] as number[],
       once_per_customer: 0,
-      max_usage_per_user: 1,
+      max_usage_per_user: 0,
       reuse_interval: 0,
       conditions: {},
       general_error_message_en: "",
@@ -148,7 +151,7 @@ const CreateCouponForm = ({
 
       usage_limit: Yup.number().min(1).required("Usage limit is required"),
       max_usage_per_user: Yup.number()
-        .min(1)
+        .min(0)
         .required("Max usage per user is required"),
       business_unit_ids: Yup.array().min(
         1,
@@ -620,6 +623,32 @@ const CreateCouponForm = ({
     setBenefitsInputs([...benefitsInputs, ""]);
   };
 
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        if (richEditor) {
+          setTermsAndConditionsAr(res?.data?.data);
+        } else {
+          setFieldValue(key, res?.data?.data);
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   return (
     <>
       <form onSubmit={formik.handleSubmit}>
@@ -633,8 +662,20 @@ const CreateCouponForm = ({
               value={values.coupon_title}
               name="coupon_title"
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate("coupon_title_ar", e.target.value)
+              }
               error={!!touched.coupon_title && !!errors.coupon_title}
               helperText={touched.coupon_title && errors.coupon_title}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["coupon_title_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
@@ -1277,7 +1318,7 @@ const CreateCouponForm = ({
               label="Max Usage Per User"
               value={values.max_usage_per_user}
               type="number"
-              inputProps={{ min: 1 }}
+              inputProps={{ min: 0 }}
               name="max_usage_per_user"
               onChange={handleChange}
               error={
@@ -1380,6 +1421,12 @@ const CreateCouponForm = ({
               value={values.general_error_message_en}
               name="general_error_message_en"
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate(
+                  "general_error_message_ar",
+                  e.target.value
+                )
+              }
               error={
                 !!touched.general_error_message_en &&
                 !!errors.general_error_message_en
@@ -1388,6 +1435,15 @@ const CreateCouponForm = ({
                 touched.general_error_message_en &&
                 errors.general_error_message_en
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["general_error_message_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -1418,6 +1474,12 @@ const CreateCouponForm = ({
               value={values.exception_error_message_en}
               name="exception_error_message_en"
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate(
+                  "exception_error_message_ar",
+                  e.target.value
+                )
+              }
               error={
                 !!touched.exception_error_message_en &&
                 !!errors.exception_error_message_en
@@ -1426,6 +1488,15 @@ const CreateCouponForm = ({
                 touched.exception_error_message_en &&
                 errors.exception_error_message_en
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["exception_error_message_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -1537,10 +1608,23 @@ const CreateCouponForm = ({
               label="Description English"
               variant="outlined"
               name="description_en"
+              value={values.description_en}
               onChange={handleChange}
+              onBlur={(e) =>
+                handleArabictranslate("description_ar", e.target.value)
+              }
               fullWidth
               multiline
               rows={4}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["description_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
@@ -1553,6 +1637,7 @@ const CreateCouponForm = ({
               label="Description Arabic"
               variant="outlined"
               name="description_ar"
+              value={values.description_ar}
               onChange={handleChange}
               fullWidth
               multiline
@@ -1570,6 +1655,14 @@ const CreateCouponForm = ({
               setValue={setTermsAndConditionsEn}
               language="en"
               height={250}
+              onBlur={() =>
+                handleArabictranslate(
+                  "termsAndConditionsAr",
+                  termsAndConditionsEn,
+                  true
+                )
+              }
+              translationLoading={translationLoading["termsAndConditionsAr"]}
             />
           </Grid>
 

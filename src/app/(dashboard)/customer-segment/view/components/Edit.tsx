@@ -41,7 +41,7 @@ const fetchSegment = async (id: any) => {
 };
 
 const fetchAllCustomers = async (tenantId: number) => {
-  const response = await GET(`/customers`);
+  const response = await GET(`/customers/${tenantId}`);
   if (response?.status !== 200) {
     throw new Error("Failed to fetch customers");
   }

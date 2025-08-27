@@ -73,6 +73,9 @@ const EditCouponForm = ({
   const [selectedCouponTypeId, setSelectedCouponTypeId] = useState<number>();
   const [segments, setSegments] = useState([]);
   const [benefitsInputs, setBenefitsInputs] = useState<string[]>([""]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -371,7 +374,7 @@ const EditCouponForm = ({
         ? [couponData.business_unit_id]
         : [],
       once_per_customer: couponData?.once_per_customer || 0,
-      max_usage_per_user: couponData?.max_usage_per_user || 1,
+      max_usage_per_user: couponData?.max_usage_per_user || 0,
       reuse_interval: couponData?.reuse_interval || 0,
       conditions: couponData?.conditions || {},
       general_error_message_en:
@@ -550,7 +553,7 @@ const EditCouponForm = ({
       discount_type: values.discount_type,
       discount_price: values.discount_price || 0,
       // once_per_customer: values.once_per_customer,
-      max_usage_per_user: values.max_usage_per_user || 1,
+      max_usage_per_user: values.max_usage_per_user || 0,
       reuse_interval: values.reuse_interval,
       usage_limit: values.usage_limit,
       business_unit_id: buId,
@@ -774,6 +777,32 @@ const EditCouponForm = ({
     setBenefitsInputs([...benefitsInputs, ""]);
   };
 
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        if (richEditor) {
+          setTermsAndConditionsAr(res?.data?.data);
+        } else {
+          setFieldValue(key, res?.data?.data);
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   return (
     <>
       {couponData && (
@@ -788,8 +817,20 @@ const EditCouponForm = ({
                 value={values.coupon_title}
                 name="coupon_title"
                 onChange={handleChange}
+                onBlur={(e) =>
+                  handleArabictranslate("coupon_title_ar", e.target.value)
+                }
                 error={!!touched.coupon_title && !!errors.coupon_title}
                 helperText={touched.coupon_title && errors.coupon_title}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["coupon_title_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
 
@@ -1462,7 +1503,7 @@ const EditCouponForm = ({
                 label="Max Usage Per User"
                 value={values.max_usage_per_user}
                 type="number"
-                inputProps={{ min: 1 }}
+                inputProps={{ min: 0 }}
                 name="max_usage_per_user"
                 onChange={handleChange}
                 error={
@@ -1566,6 +1607,12 @@ const EditCouponForm = ({
                 value={values.general_error_message_en}
                 name="general_error_message_en"
                 onChange={handleChange}
+                onBlur={(e) =>
+                  handleArabictranslate(
+                    "general_error_message_ar",
+                    e.target.value
+                  )
+                }
                 error={
                   !!touched.general_error_message_en &&
                   !!errors.general_error_message_en
@@ -1574,6 +1621,15 @@ const EditCouponForm = ({
                   touched.general_error_message_en &&
                   errors.general_error_message_en
                 }
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["general_error_message_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1604,6 +1660,12 @@ const EditCouponForm = ({
                 value={values.exception_error_message_en}
                 name="exception_error_message_en"
                 onChange={handleChange}
+                onBlur={(e) =>
+                  handleArabictranslate(
+                    "exception_error_message_ar",
+                    e.target.value
+                  )
+                }
                 error={
                   !!touched.exception_error_message_en &&
                   !!errors.exception_error_message_en
@@ -1612,6 +1674,15 @@ const EditCouponForm = ({
                   touched.exception_error_message_en &&
                   errors.exception_error_message_en
                 }
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["exception_error_message_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1727,6 +1798,18 @@ const EditCouponForm = ({
                 fullWidth
                 multiline
                 rows={4}
+                onBlur={(e) =>
+                  handleArabictranslate("description_ar", e.target.value)
+                }
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["description_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
 
@@ -1757,6 +1840,14 @@ const EditCouponForm = ({
                 setValue={setTermsAndConditionsEn}
                 language="en"
                 height={250}
+                onBlur={() =>
+                  handleArabictranslate(
+                    "termsAndConditionsAr",
+                    termsAndConditionsEn,
+                    true
+                  )
+                }
+                translationLoading={translationLoading["termsAndConditionsAr"]}
               />
             </Grid>
 
