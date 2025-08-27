@@ -16,7 +16,7 @@ import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 
 const fetchAllCustomers = async (tenantId: number) => {
-  const response = await GET(`/customers`);
+  const response = await GET(`/customers/${tenantId}`);
   if (response?.status !== 200) {
     throw new Error("Failed to fetch customers");
   }

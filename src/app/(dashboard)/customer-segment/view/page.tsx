@@ -512,7 +512,7 @@ const CustomerSegmentList = () => {
         <CustomerSegmentEditPage
           segmentId={selectedSegmentId}
           setSelectedSegmentId={setSelectedSegmentId}
-           onClose={handleCloseDrawer}
+          onClose={handleCloseDrawer}
         />
       ) : null}
     </Box>
