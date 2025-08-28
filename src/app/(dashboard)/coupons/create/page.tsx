@@ -334,6 +334,54 @@ const CreateCouponForm = ({
               }));
         break;
 
+      case "VEHICLE_SPECIFIC": {
+        type Make = { MakeCode: string; Make: string };
+        condtionsArr =
+          dynamicCouponTypesRows.length > 1
+            ? null
+            : dynamicCouponTypesRows[0]?.dynamicRows.map(
+                ({
+                  models = [],
+                  variants = [],
+                  make,
+                  model,
+                  variant,
+                  ...rest
+                }: any) => {
+                  const make_name =
+                    (makes as Make[])?.find(
+                      (singleMake) => singleMake.MakeCode === make
+                    )?.Make ?? "";
+
+                  const model_name =
+                    models.find(
+                      (singleModel: { ModelId: number }) =>
+                        singleModel.ModelId === model
+                    )?.Model ?? "";
+
+                  const variant_names =
+                    variants
+                      ?.filter((singleVariant: { TrimId: number }) =>
+                        variant.includes(singleVariant.TrimId)
+                      )
+                      .map(
+                        (singleVariant: { Trim: string }) => singleVariant.Trim
+                      ) ?? [];
+
+                  return {
+                    ...rest,
+                    make,
+                    model,
+                    variant,
+                    make_name,
+                    model_name,
+                    variant_names,
+                  };
+                }
+              );
+        break;
+      }
+
       default:
         condtionsArr =
           dynamicCouponTypesRows.length > 1
@@ -368,10 +416,54 @@ const CreateCouponForm = ({
                   })),
                 };
 
-              case "VEHICLE_SPECIFIC":
+              case "VEHICLE_SPECIFIC": {
+                const modifiedRules = row.dynamicRows.map(
+                  ({
+                    models = [],
+                    variants = [],
+                    make,
+                    model,
+                    variant,
+                    ...rest
+                  }: any) => {
+                    const make_name =
+                      (makes as Make[])?.find(
+                        (singleMake) => singleMake.MakeCode === make
+                      )?.Make ?? "";
+
+                    const model_name =
+                      models.find(
+                        (singleModel: { ModelId: number }) =>
+                          singleModel.ModelId === model
+                      )?.Model ?? "";
+
+                    const variant_names =
+                      variants
+                        ?.filter((singleVariant: { TrimId: number }) =>
+                          variant.includes(singleVariant.TrimId)
+                        )
+                        .map(
+                          (singleVariant: { Trim: string }) =>
+                            singleVariant.Trim
+                        ) ?? [];
+
+                    return {
+                      ...rest,
+                      make,
+                      model,
+                      variant,
+                      make_name,
+                      model_name,
+                      variant_names,
+                    };
+                  }
+                );
+
                 return {
                   ...row,
+                  dynamicRows: modifiedRules,
                 };
+              }
 
               default:
                 return {
@@ -542,7 +634,6 @@ const CreateCouponForm = ({
       case COUPON_TYPE.PRODUCT_SPECIFIC:
       case COUPON_TYPE.SERVICE_BASED:
       case COUPON_TYPE.GEO_TARGETED:
-      case COUPON_TYPE.DISCOUNT:
         return (
           <TextField
             label={`Condition Type ${
@@ -565,6 +656,7 @@ const CreateCouponForm = ({
         );
 
       case COUPON_TYPE.BIRTHDAY:
+      case COUPON_TYPE.TIER_BASED:
         return null;
 
       default:
@@ -824,7 +916,7 @@ const CreateCouponForm = ({
                                             e.target.value
                                           )
                                         }
-                                        sx={{ minWidth: 150 }}
+                                        sx={{ minWidth: "95%" }}
                                       >
                                         {tiers?.map((tier) => (
                                           <MenuItem
@@ -1004,77 +1096,11 @@ const CreateCouponForm = ({
                                       dynamicCouponTypesRow
                                     )}
 
-                                    {/* {![
-                                      COUPON_TYPE.BIRTHDAY,
-                                      COUPON_TYPE.PRODUCT_SPECIFIC,
-                                      COUPON_TYPE.GEO_TARGETED,
-                                    ].includes(
-                                      dynamicCouponTypesRow?.selectedCouponType
-                                    ) && (
-                                      <>
-                                        <TextField
-                                          select
-                                          fullWidth
-                                          label="Condition Operator"
-                                          value={row.operator}
-                                          onChange={(e) =>
-                                            handleChangeCondition(
-                                              dynamicCouponTypesRow.id,
-                                              row.id,
-                                              "operator",
-                                              e.target.value
-                                            )
-                                          }
-                                        >
-                                          <MenuItem value="==">
-                                            Equal To (==)
-                                          </MenuItem>
-                                          <MenuItem value="!=">
-                                            Not Equal (!=)
-                                          </MenuItem>
-
-                                          {![
-                                            COUPON_TYPE.USER_SPECIFIC,
-                                          ].includes(
-                                            dynamicCouponTypesRow?.selectedCouponType
-                                          ) && (
-                                            <div>
-                                              <MenuItem value=">">
-                                                Greater Than (&gt;)
-                                              </MenuItem>
-                                              <MenuItem value=">=">
-                                                Greater Than or Equal (&gt;=)
-                                              </MenuItem>
-                                              <MenuItem value="<">
-                                                Less Than (&lt;)
-                                              </MenuItem>
-                                              <MenuItem value="<=">
-                                                Less Than or Equal (&lt;=)
-                                              </MenuItem>
-                                            </div>
-                                          )}
-                                        </TextField>
-
-                                        <TextField
-                                          label="Value"
-                                          fullWidth
-                                          value={row.value}
-                                          onChange={(e) =>
-                                            handleChangeCondition(
-                                              dynamicCouponTypesRow.id,
-                                              row.id,
-                                              "value",
-                                              e.target.value
-                                            )
-                                          }
-                                        />
-                                      </>
-                                    )} */}
-
                                     {![
                                       COUPON_TYPE.BIRTHDAY,
                                       COUPON_TYPE.PRODUCT_SPECIFIC,
                                       COUPON_TYPE.GEO_TARGETED,
+                                      COUPON_TYPE.TIER_BASED,
                                     ].includes(
                                       dynamicCouponTypesRow?.selectedCouponType
                                     ) && (
@@ -1185,62 +1211,58 @@ const CreateCouponForm = ({
             )
           )}
 
-          {selectedCouponType !== COUPON_TYPE.TIER_BASED && (
-            <>
-              {/* Discount Type */}
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  name="discount_type"
-                  label="Discount Type"
-                  value={values.discount_type}
-                  onChange={handleChange}
-                  error={!!touched.discount_type && !!errors.discount_type}
-                  helperText={touched.discount_type && errors.discount_type}
+          {/* Discount Type */}
+          <Grid item xs={12}>
+            <TextField
+              select
+              fullWidth
+              name="discount_type"
+              label="Discount Type"
+              value={values.discount_type}
+              onChange={handleChange}
+              error={!!touched.discount_type && !!errors.discount_type}
+              helperText={touched.discount_type && errors.discount_type}
+            >
+              {discountTypes?.map((eachDiscountType) => (
+                <MenuItem
+                  key={eachDiscountType.value}
+                  value={eachDiscountType.value}
                 >
-                  {discountTypes?.map((eachDiscountType) => (
-                    <MenuItem
-                      key={eachDiscountType.value}
-                      value={eachDiscountType.value}
-                    >
-                      {eachDiscountType.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+                  {eachDiscountType.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="discount_price"
-                  label="Discount Amount"
-                  type="number"
-                  inputProps={{ min: 0 }}
-                  value={values.discount_price}
-                  onChange={handleChange}
-                  InputProps={{
-                    endAdornment: selectedCouponType ? (
-                      <InputAdornment position="end">
-                        <Tooltip
-                          title={
-                            tooltipMessages.discountPrice[selectedCouponType] ||
-                            ""
-                          }
-                        >
-                          <IconButton edge="end">
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </InputAdornment>
-                    ) : null,
-                  }}
-                  error={!!touched.discount_price && !!errors.discount_price}
-                  helperText={touched.discount_price && errors.discount_price}
-                />
-              </Grid>
-            </>
-          )}
+          {/* Discount Amount */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              name="discount_price"
+              label="Discount Amount"
+              type="number"
+              inputProps={{ min: 0 }}
+              value={values.discount_price}
+              onChange={handleChange}
+              InputProps={{
+                endAdornment: selectedCouponType ? (
+                  <InputAdornment position="end">
+                    <Tooltip
+                      title={
+                        tooltipMessages.discountPrice[selectedCouponType] || ""
+                      }
+                    >
+                      <IconButton edge="end">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ) : null,
+              }}
+              error={!!touched.discount_price && !!errors.discount_price}
+              helperText={touched.discount_price && errors.discount_price}
+            />
+          </Grid>
 
           {/* Usage Limit */}
           <Grid item xs={12}>
