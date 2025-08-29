@@ -284,25 +284,34 @@ const EditCouponForm = ({
           modelsRes = await GET(
             `/coupons/vehicle/models?makeId=${row.make}&year=${row.year}`
           );
-          model_name = modelsRes?.data?.data.find(
-            (singleModel: any) => singleModel.ModelId == row.model
-          ).Model;
+
+          if (modelsRes?.data?.data.length) {
+            const foundModel = modelsRes?.data?.data.find(
+              (singleModel: any) => singleModel.ModelId == row.model
+            );
+            model_name = foundModel?.Model ?? "";
+          }
         }
 
         if (row.model != null) {
           variantsRes = await GET(`/coupons/vehicle/variants/${row.model}`);
+
+          const variantIds = Array.isArray(row.variant)
+            ? row.variant
+            : [row.variant];
+
           variant_names = variantsRes?.data?.data
             .filter((variant: { TrimId: string; Trim: string }) =>
-              row.variant.includes(variant.TrimId)
+              variantIds.includes(variant.TrimId)
             )
             .map((variant: { TrimId: string; Trim: string }) => variant.Trim);
         }
 
         return {
           ...row,
-          model_name,
-          make_name,
-          variant_names,
+          model_name: model_name || "",
+          make_name: make_name || "",
+          variant_names: variant_names || [],
           models: modelsRes?.data?.data || [],
           variants: variantsRes?.data?.data || [],
         };
