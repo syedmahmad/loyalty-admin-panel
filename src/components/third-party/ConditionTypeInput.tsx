@@ -18,9 +18,9 @@ export default function ConditionTypeDropdown({
 
   // Map of backend values -> UI labels
   const options = [
-    { value: "store_id", label: "Store ID" },
-    { value: "product_type", label: "Product Type" },
-    { value: "quantity", label: "Quantity" },
+    { value: "store_id", label: "store_id" },
+    { value: "name", label: "product_name" },
+    { value: "quantity", label: "product_quantity" },
   ];
 
   useEffect(() => {
