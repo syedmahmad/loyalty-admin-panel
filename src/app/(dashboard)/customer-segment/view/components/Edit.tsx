@@ -20,6 +20,7 @@ import {
   Tooltip,
   Stack,
   Paper,
+  Autocomplete,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import GroupIcon from "@mui/icons-material/Group";
@@ -187,6 +188,8 @@ const CustomerSegmentEditPage = ({
               initialValues={{
                 name: segment.name || "",
                 description: segment.description || "",
+                name_ar: segment.name_ar || "",
+                description_ar: segment.description_ar || "",
               }}
               validationSchema={Yup.object().shape({
                 name: Yup.string().required("Name is required"),
@@ -208,6 +211,30 @@ const CustomerSegmentEditPage = ({
                         helperText={
                           touched.name && typeof errors.name === "string"
                             ? errors.name
+                            : undefined
+                        }
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <GroupIcon color="action" />
+                            </InputAdornment>
+                          ),
+                        }}
+                        disabled
+                      />
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        name="name_ar"
+                        label="Segment Name Arabic"
+                        value={values.name_ar}
+                        onChange={handleChange}
+                        error={touched.name_ar && Boolean(errors.name_ar)}
+                        helperText={
+                          touched.name_ar && typeof errors.name_ar === "string"
+                            ? errors.name_ar
                             : undefined
                         }
                         InputProps={{
@@ -248,51 +275,82 @@ const CustomerSegmentEditPage = ({
                       />
                     </Grid>
 
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        name="description_ar"
+                        label="Description Arabic"
+                        value={values.description_ar}
+                        onChange={handleChange}
+                        error={
+                          touched.description_ar && Boolean(errors.description_ar)
+                        }
+                        helperText={
+                          touched.description_ar &&
+                          typeof errors.description_ar === "string"
+                            ? errors.description_ar
+                            : undefined
+                        }
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <DescriptionIcon color="action" />
+                            </InputAdornment>
+                          ),
+                        }}
+                        disabled
+                      />
+                    </Grid>
+
                     {customers.filter(
                       (c) => !segmentCustomers.some((sc: any) => sc.id === c.id)
                     ).length > 0 ? (
                       <Grid item xs={12}>
-                        <TextField
-                          select
+                        <Autocomplete
+                          multiple
                           fullWidth
-                          label="Add Customers"
-                          SelectProps={{
-                            multiple: true,
-                            value: selectedCustomerIds,
-                            onChange: (e: any) =>
-                              setSelectedCustomerIds(e.target.value),
-                            renderValue: (selected: any) =>
-                              customers
-                                .filter((c) => selected.includes(c.id))
-                                .map((c) => c.name)
-                                .join(", "),
-                          }}
-                        >
-                          {customers.length > 0 &&
-                            customers
-                              .filter(
-                                (c) =>
-                                  !segmentCustomers.some(
-                                    (sc: any) => sc.id === c.id
-                                  )
+                          options={customers.filter(
+                            (c) =>
+                              !segmentCustomers.some(
+                                (sc: any) => sc.id === c.id
                               )
-                              .map((c) => (
-                                <MenuItem key={c.id} value={c.id}>
-                                  {c.name} (
-                                  <span
-                                    style={{
-                                      maxWidth: 150,
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
-                                    {c.email.trim()}
-                                  </span>
-                                  )
-                                </MenuItem>
-                              ))}
-                        </TextField>
+                          )}
+                          value={customers.filter((c) =>
+                            selectedCustomerIds.includes(c.id)
+                          )}
+                          getOptionLabel={(option) =>
+                            `${option.name} (${option.email.trim()})`
+                          }
+                          onChange={(_, newValue) =>
+                            setSelectedCustomerIds(newValue.map((c) => c.id))
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Add Customers"
+                              placeholder="Select customers"
+                            />
+                          )}
+                          renderOption={(props, option) => {
+                            const { key, ...rest } = props; // ✅ take key out
+                            return (
+                              <li key={key} {...rest}>
+                                {option.name} (
+                                <span
+                                  style={{
+                                    maxWidth: 150,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {option.email.trim()}
+                                </span>
+                                )
+                              </li>
+                            );
+                          }}
+                        />
                       </Grid>
                     ) : (
                       <Grid item xs={12}>

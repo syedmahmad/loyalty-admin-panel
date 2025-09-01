@@ -9,6 +9,8 @@ import {
   Typography,
   CircularProgress,
   MenuItem,
+  Autocomplete,
+  InputAdornment,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,6 +28,8 @@ const fetchAllCustomers = async (tenantId: number) => {
 const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [nameAr, setNameAr] = useState("");
+  const [descriptionAr, setDescriptionAr] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -36,6 +40,9 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
   const tenantId = parsed?.id || 1;
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const InfoLabel = ({
     label,
@@ -76,6 +83,8 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
       const payload = {
         name,
         description,
+        name_ar: nameAr,
+        description_ar: descriptionAr,
         tenant_id: parsed.id,
         selected_customer_ids: selectedCustomerIds,
       };
@@ -109,6 +118,30 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   };
 
+  const handleArabictranslate = async (key: string, value: string) => {
+    if (value) {
+      try {
+        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+        const res = await POST("/openai/translate-to-arabic", { value });
+        if (res?.data.status) {
+          if (key === "segment_name_arabic") {
+            setNameAr(res?.data?.data);
+          } else if (key === "description_arabic") {
+            setDescriptionAr(res?.data?.data);
+          }
+        }
+      } catch (error: any) {
+        return {
+          success: false,
+          status: error?.response?.status || 500,
+          message: error?.response?.data?.message || "Unknown error",
+        };
+      } finally {
+        setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+      }
+    }
+  };
+
   return (
     <>
       <Grid container spacing={2}>
@@ -121,6 +154,32 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
             fullWidth
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onBlur={(e) =>
+              handleArabictranslate("segment_name_arabic", e.target.value)
+            }
+            required
+            disabled={loading || submitted}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {translationLoading["segment_name_arabic"] && (
+                    <CircularProgress size={20} />
+                  )}
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <InfoLabel
+            label="Segment Name Arabic"
+            tooltip="Give your customer segment a meaningful name."
+          />
+          <TextField
+            fullWidth
+            value={nameAr}
+            onChange={(e) => setNameAr(e.target.value)}
             required
             disabled={loading || submitted}
           />
@@ -137,31 +196,58 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
             minRows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            onBlur={(e) =>
+              handleArabictranslate("description_arabic", e.target.value)
+            }
+            disabled={loading || submitted}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {translationLoading["description_arabic"] && (
+                    <CircularProgress size={20} />
+                  )}
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <InfoLabel
+            label="Description Arabic"
+            tooltip="Optional: Describe what defines this segment."
+          />
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            value={descriptionAr}
+            onChange={(e) => setDescriptionAr(e.target.value)}
             disabled={loading || submitted}
           />
         </Grid>
 
         {customers.length > 0 ? (
           <Grid item xs={12}>
-            <TextField
-              select
-              fullWidth
-              label="Add Customers"
-              SelectProps={{
-                multiple: true,
-                value: selectedCustomerIds,
-                onChange: (e: any) => setSelectedCustomerIds(e.target.value),
-                renderValue: (selected: any) =>
-                  customers
-                    .filter((c) => selected.includes(c.id))
-                    .map((c) => c.name)
-                    .join(", "),
-              }}
-            >
-              {customers.length > 0 &&
-                customers.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.name} (
+            <Autocomplete
+              multiple
+              options={customers}
+              value={customers.filter((c) =>
+                selectedCustomerIds.includes(c.id)
+              )}
+              onChange={(_, newValue) =>
+                setSelectedCustomerIds(newValue.map((c) => c.id))
+              }
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              getOptionLabel={(option) => option.name}
+              renderInput={(params) => (
+                <TextField {...params} label="Add Customers" fullWidth />
+              )}
+              renderOption={(props, option) => {
+                const { key, ...rest } = props; // ✅ take key out
+                return (
+                  <li key={key} {...rest}>
+                    {option.name} (
                     <span
                       style={{
                         maxWidth: 150,
@@ -170,12 +256,13 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {c.email.trim()}
+                      {option.email.trim()}
                     </span>
                     )
-                  </MenuItem>
-                ))}
-            </TextField>
+                  </li>
+                );
+              }}
+            />
           </Grid>
         ) : (
           <Grid item xs={12}>
