@@ -44,10 +44,24 @@ type Customer = {
   };
 };
 
-const fetchCustomers = async (search = ""): Promise<Customer[]> => {
+type FetchCustomersResponse = {
+  data: Customer[];
+  total: number;
+  page: number;
+};
+
+const fetchCustomers = async (
+  search = "",
+  pageSize: number,
+  pageNumber: number
+): Promise<FetchCustomersResponse> => {
   const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
   const res = await GET(
-    `/customers/${clientInfo.id}?search=${encodeURIComponent(search)}`
+    `/customers/${
+      clientInfo.id
+    }?page=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
+      search
+    )}`
   );
   if (res?.status !== 200) throw new Error("Failed to fetch customers");
   return res.data;
@@ -59,32 +73,44 @@ const CustomerList = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
+
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 20;
+
   const router = useRouter();
 
   const handleRowClick = (id: number) => {
     router.push(`/customers/${id}`);
   };
-  const loadData = async (searchTerm = "") => {
+  const loadData = async (
+    searchTerm = "",
+    pageSize: number,
+    pageNumber: number
+  ) => {
     setLoading(true);
     try {
-      const data = await fetchCustomers(searchTerm);
-      setCustomers(data);
+      const data = await fetchCustomers(searchTerm, pageSize, pageNumber);
+      setCustomers(data?.data || []);
+      setTotalPages(Math.ceil((data?.total || 0) / pageSize));
+      setPageNumber(data.page);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const delay = setTimeout(() => loadData(search.trim()), 300);
+    const delay = setTimeout(
+      () => loadData(search.trim(), pageSize, pageNumber),
+      300
+    );
     return () => clearTimeout(delay);
   }, [search]);
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
   const paginated = customers.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -109,7 +135,7 @@ const CustomerList = () => {
         status: selectedCustomer.status === 1 ? 0 : 1,
       });
       handleCloseMenu();
-      loadData(search);
+      loadData(search, pageSize, pageNumber);
     }
   };
 
@@ -209,9 +235,7 @@ const CustomerList = () => {
                         {c.status === 1 ? "Active" : "Inactive"}
                       </TableCell>
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
-                      <TableCell>
-                        {c?.tenant?.name || "—"}
-                      </TableCell>
+                      <TableCell>{c?.tenant?.name || "—"}</TableCell>
                       <TableCell align="right">
                         <IconButton onClick={(e) => handleMenuClick(e, c)}>
                           <MoreVertIcon />
@@ -242,25 +266,42 @@ const CustomerList = () => {
             >
               <Button
                 variant="outlined"
-                onClick={() => handleChangePage(null, page - 1)}
-                disabled={page === 0}
+                onClick={() =>
+                  loadData(search, pageSize, Number(pageNumber) - 1)
+                }
+                disabled={Number(pageNumber) === 1}
               >
                 ← Previous
               </Button>
 
               <Pagination
-                count={Math.ceil(customers.length / rowsPerPage)}
-                page={page + 1}
-                onChange={(_, p) => setPage(p - 1)}
+                count={Number(totalPages)}
+                page={Number(pageNumber)}
+                onChange={(_, value) => {
+                  setPageNumber(value);
+                  loadData(search, pageSize, value);
+                }}
                 shape="rounded"
+                siblingCount={1}
+                boundaryCount={1}
                 hidePrevButton
                 hideNextButton
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    borderRadius: "8px",
+                    fontWeight: 500,
+                    minWidth: "36px",
+                    height: "36px",
+                  },
+                }}
               />
 
               <Button
                 variant="outlined"
-                onClick={() => handleChangePage(null, page + 1)}
-                disabled={(page + 1) * rowsPerPage >= customers.length}
+                onClick={() =>
+                  loadData(search, pageSize, Number(pageNumber) + 1)
+                }
+                disabled={Number(pageNumber) === Number(totalPages)}
               >
                 Next →
               </Button>

@@ -73,6 +73,10 @@ const CustomerSegmentList = () => {
   const [selectedSegment, setSelectedSegment] =
     useState<null | CustomerSegment>(null);
 
+  const [totalNumberOfPages, setTotalNumberOfPages] = useState<number>(1);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const pageSize = 10;
+
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
     segment: CustomerSegment
@@ -85,15 +89,27 @@ const CustomerSegmentList = () => {
     router.push("/customer-segment/view");
   };
 
-  const loadSegments = async (name = "") => {
+  const loadSegments = async (
+    name = "",
+    pageSize: number,
+    pageNumber: number
+  ) => {
     setLoading(true);
     try {
       const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
       const res = await GET(
-        `/customer-segments/${clientInfo.id}?name=${encodeURIComponent(name)}`
+        `/customer-segments/${
+          clientInfo.id
+        }?page=${pageNumber}&pageSize=${pageSize}&name=${encodeURIComponent(
+          name
+        )}`
       );
       if (res?.status === 200) {
-        setSegments(res.data);
+        setSegments(res.data.data);
+        setTotalNumberOfPages(
+          Number(Math.ceil((res.data?.total || 0) / pageSize))
+        );
+        setPageNumber(Number(res.data.page));
       }
     } finally {
       setLoading(false);
@@ -102,16 +118,12 @@ const CustomerSegmentList = () => {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      loadSegments(searchName.trim());
+      loadSegments(searchName.trim(), pageSize, pageNumber);
     }, 300);
     return () => clearTimeout(debounce);
   }, [searchName]);
 
-  const paginatedSegments =
-    viewMode === "card"
-      ? segments
-      : segments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const totalPages = Math.ceil(segments.length / rowsPerPage);
+  const paginatedSegments = viewMode === "card" ? segments : segments;
 
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
@@ -433,8 +445,10 @@ const CustomerSegmentList = () => {
             >
               <Button
                 variant="outlined"
-                onClick={() => setPage((prev) => prev - 1)}
-                disabled={page === 0}
+                onClick={() =>
+                  loadSegments(searchName, pageSize, Number(pageNumber) - 1)
+                }
+                disabled={Number(pageNumber) === 1}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
@@ -446,9 +460,12 @@ const CustomerSegmentList = () => {
               </Button>
 
               <Pagination
-                count={totalPages}
-                page={page + 1}
-                onChange={(_, newPage) => setPage(newPage - 1)}
+                count={Number(totalNumberOfPages)}
+                page={Number(pageNumber)}
+                onChange={(_, value) => {
+                  setPageNumber(value);
+                  loadSegments(searchName, pageSize, value);
+                }}
                 shape="rounded"
                 hidePrevButton
                 hideNextButton
@@ -456,8 +473,10 @@ const CustomerSegmentList = () => {
 
               <Button
                 variant="outlined"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= totalPages - 1}
+                onClick={() =>
+                  loadSegments(searchName, pageSize, Number(pageNumber + 1))
+                }
+                disabled={Number(pageNumber) === Number(totalNumberOfPages)}
               >
                 Next →
               </Button>
@@ -474,7 +493,7 @@ const CustomerSegmentList = () => {
           >
             <CreateCustomerSegment
               onSuccess={() => {
-                loadSegments();
+                loadSegments(searchName.trim(), pageSize, pageNumber);
                 handleCloseDrawer();
               }}
             />
@@ -502,7 +521,7 @@ const CustomerSegmentList = () => {
           segmentId={selectedSegmentIdForDelete}
           setSelectedSegmentId={setSelectedSegmentIdForDelete}
           onSuccess={() => {
-            loadSegments();
+            loadSegments(searchName.trim(), pageSize, pageNumber);
             setSelectedSegmentIdForDelete(null);
           }}
         />

@@ -43,6 +43,7 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
+  const [searchText, setSearchText] = useState("");
 
   const InfoLabel = ({
     label,
@@ -60,7 +61,7 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
   useEffect(() => {
     const fetchData = async () => {
       const allCustomers = await fetchAllCustomers(tenantId);
-      setCustomers(allCustomers);
+      setCustomers(allCustomers.data);
     };
     fetchData();
   }, []);

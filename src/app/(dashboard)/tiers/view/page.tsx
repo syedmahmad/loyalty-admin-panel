@@ -403,10 +403,10 @@ const TierList = () => {
                     <Typography variant="body2" color="text.secondary" mt={1}>
                       Description: {htmlToPlainText(tier.description || "-")}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" mt={1}>
+                    {/* <Typography variant="body2" color="text.secondary" mt={1}>
                       Benefits:
                       {tier?.benefits?.join(", ")}
-                    </Typography>
+                    </Typography> */}
                   </CardContent>
                 </Card>
               </Grid>

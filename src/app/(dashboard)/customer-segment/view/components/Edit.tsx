@@ -100,7 +100,7 @@ const CustomerSegmentEditPage = ({
       const tenantId = parsed?.id || 1;
       const allCustomers = await fetchAllCustomers(tenantId);
       setSegment(segment);
-      setCustomers(allCustomers);
+      setCustomers(allCustomers.data);
       setLoading(false);
     };
     fetchData();
@@ -283,7 +283,8 @@ const CustomerSegmentEditPage = ({
                         value={values.description_ar}
                         onChange={handleChange}
                         error={
-                          touched.description_ar && Boolean(errors.description_ar)
+                          touched.description_ar &&
+                          Boolean(errors.description_ar)
                         }
                         helperText={
                           touched.description_ar &&
