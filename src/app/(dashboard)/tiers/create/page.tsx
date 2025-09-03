@@ -47,6 +47,12 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
 //   return response.data;
 // };
 
+type Benefit = {
+  name_en: string;
+  name_ar: string;
+  icon: string;
+};
+
 const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
@@ -56,7 +62,12 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const theme = useTheme();
   const router = useRouter();
 
-  const [benefitsInputs, setBenefitsInputs] = useState<string[]>([""]);
+  const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
+    { name_en: "", name_ar: "", icon: "" },
+  ]);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   const created_by =
     typeof window !== "undefined"
@@ -82,7 +93,10 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   }, []);
 
   const addBenefitInput = () => {
-    setBenefitsInputs([...benefitsInputs, ""]);
+    setBenefitsInputs([
+      ...benefitsInputs,
+      { name_en: "", name_ar: "", icon: "" },
+    ]);
   };
 
   const initialValues = {
@@ -137,6 +151,37 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
       setLoading(false);
       // router.push('/tiers/view');
       onSuccess();
+    }
+  };
+
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      setUploadingIndex(index);
+      const res = await POST("/tiers/file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (res?.data.success) {
+        setBenefitsInputs((prev) =>
+          prev.map((item, i) =>
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploadingIndex(null); // stop loader
     }
   };
 
@@ -255,18 +300,77 @@ const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                 </Typography>
 
                 {benefitsInputs.map((input, index) => (
-                  <Box display="flex" gap={1} key={index + 1} mb={2}>
-                    <TextField
-                      fullWidth
-                      name="benefits"
-                      label={`Benefit ${index + 1}`}
-                      value={input}
-                      onChange={(e) => {
-                        const newInputs = [...benefitsInputs];
-                        newInputs[index] = e.target.value;
-                        setBenefitsInputs(newInputs);
-                      }}
-                    />
+                  <Box
+                    display="flex"
+                    alignItems="flex-start"
+                    gap={1}
+                    key={index + 1}
+                    mb={2}
+                    p={2}
+                    border="1px solid #ddd"
+                    borderRadius="12px"
+                    boxShadow="0 2px 5px rgba(0,0,0,0.05)"
+                  >
+                    <Box display="flex" gap={2} flex={1} flexDirection="column">
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          fullWidth
+                          size="small"
+                          sx={{ width: 150, height: 35 }}
+                          disabled={uploadingIndex === index}
+                        >
+                          {/* {input.icon ? "Change Icon" : "Upload Icon"} */}
+                          {uploadingIndex === index ? (
+                            <CircularProgress size={18} />
+                          ) : input.icon ? (
+                            "Change Icon"
+                          ) : (
+                            "Upload Icon"
+                          )}
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e, index)}
+                          />
+                        </Button>
+                        {input.icon && (
+                          <Box mt={1}>
+                            <img
+                              src={input.icon}
+                              alt="Benefit Icon"
+                              style={{ width: 33, height: 33, borderRadius: 2 }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+
+                      <TextField
+                        fullWidth
+                        name="benefits"
+                        label={`Benefit ${index + 1}`}
+                        value={input.name_en}
+                        onChange={(e) => {
+                          const newInputs = [...benefitsInputs];
+                          newInputs[index].name_en = e.target.value;
+                          setBenefitsInputs(newInputs);
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        name="benefits"
+                        label={`Arabic Benefit ${index + 1}`}
+                        value={input.name_ar}
+                        onChange={(e) => {
+                          const newInputs = [...benefitsInputs];
+                          newInputs[index].name_ar = e.target.value;
+                          setBenefitsInputs(newInputs);
+                        }}
+                      />
+                    </Box>
+
                     {index === 0 ? (
                       <IconButton onClick={addBenefitInput}>
                         <AddIcon fontSize="small" color="primary" />

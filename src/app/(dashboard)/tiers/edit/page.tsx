@@ -22,7 +22,7 @@ import * as Yup from "yup";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { GET, PUT } from "@/utils/AxiosUtility";
+import { GET, POST, PUT } from "@/utils/AxiosUtility";
 import { RichTextEditor } from "@/components/TextEditor";
 
 type Tier = {
@@ -33,6 +33,12 @@ type Tier = {
 type BusinessUnit = {
   id: number;
   name: string;
+};
+
+type Benefit = {
+  name_en: string;
+  name_ar: string;
+  icon: string;
 };
 
 const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
@@ -49,7 +55,10 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [description, setDescription] = useState<string>("");
-  const [benefitsInputs, setBenefitsInputs] = useState<string[]>(["A"]);
+  const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
+    { name_en: "", name_ar: "", icon: "" },
+  ]);
+  const [file, setFile] = useState<File | null>(null);
 
   // const fetchRules = async () => {
   //   const res = await GET('/rules');
@@ -64,7 +73,10 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
       : 0;
 
   const addBenefitInput = () => {
-    setBenefitsInputs([...benefitsInputs, ""]);
+    setBenefitsInputs([
+      ...benefitsInputs,
+      { name_en: "", name_ar: "", icon: "" },
+    ]);
   };
 
   useEffect(() => {
@@ -108,9 +120,14 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
     setDescription(res.data.description || "");
     setBenefitsInputs(
       Array.isArray(res.data.benefits)
-        ? res.data.benefits
-        : [res.data.benefits || ""]
+        ? res.data.benefits.map((item: any) =>
+            typeof item === "string"
+              ? { name_en: item, name_ar: "", icon: "" }
+              : item
+          )
+        : []
     );
+
     // setSelectedRules((res.data.rule_targets || []).map((t: any) => t.rule_id));
     setLoading(false);
   };
@@ -153,6 +170,31 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
       </Box>
     );
   }
+
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    setFile(selectedFile);
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    try {
+      const res = await POST("/tiers/file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (res?.data.success) {
+        setBenefitsInputs((prev) =>
+          prev.map((item, i) =>
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    }
+  };
 
   return (
     <>
@@ -298,18 +340,77 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   </Typography>
 
                   {benefitsInputs.map((input, index) => (
-                    <Box display="flex" gap={1} key={index + 1} mb={2}>
-                      <TextField
-                        fullWidth
-                        name="benefits"
-                        label={`Benefit ${index + 1}`}
-                        value={input}
-                        onChange={(e) => {
-                          const newInputs = [...benefitsInputs];
-                          newInputs[index] = e.target.value;
-                          setBenefitsInputs(newInputs);
-                        }}
-                      />
+                    <Box
+                      display="flex"
+                      alignItems="flex-start"
+                      gap={1}
+                      key={index + 1}
+                      mb={2}
+                      p={2}
+                      border="1px solid #ddd"
+                      borderRadius="12px"
+                      boxShadow="0 2px 5px rgba(0,0,0,0.05)"
+                    >
+                      <Box
+                        display="flex"
+                        gap={2}
+                        flex={1}
+                        flexDirection="column"
+                      >
+                        <Box display="flex" alignItems="center" gap={2}>
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            fullWidth
+                            size="small"
+                            sx={{ width: 150, height: 35 }}
+                          >
+                            {input.icon ? "Change Icon" : "Upload Icon"}
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*"
+                              onChange={(e) => handleFileChange(e, index)}
+                            />
+                          </Button>
+                          {input.icon && (
+                            <Box mt={1}>
+                              <img
+                                src={input.icon}
+                                alt="Benefit Icon"
+                                style={{
+                                  width: 33,
+                                  height: 33,
+                                  borderRadius: 2,
+                                }}
+                              />
+                            </Box>
+                          )}
+                        </Box>
+                        <TextField
+                          fullWidth
+                          name="benefits"
+                          label={`Benefit ${index + 1}`}
+                          value={input.name_en}
+                          onChange={(e) => {
+                            const newInputs = [...benefitsInputs];
+                            newInputs[index].name_en = e.target.value;
+                            setBenefitsInputs(newInputs);
+                          }}
+                        />
+                        <TextField
+                          fullWidth
+                          name="benefits"
+                          label={`Arabic Benefit ${index + 1}`}
+                          value={input.name_ar}
+                          onChange={(e) => {
+                            const newInputs = [...benefitsInputs];
+                            newInputs[index].name_ar = e.target.value;
+                            setBenefitsInputs(newInputs);
+                          }}
+                        />
+                      </Box>
+
                       {index === 0 ? (
                         <IconButton onClick={addBenefitInput}>
                           <AddIcon fontSize="small" color="primary" />
@@ -329,6 +430,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                       )}
                     </Box>
                   ))}
+
                   {/* <Typography variant="subtitle1" gutterBottom>
                       Benefits (optional)
                     </Typography>
