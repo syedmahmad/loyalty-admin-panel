@@ -50,6 +50,10 @@ export default function WalletListPage() {
   const count = wallets.length;
   const totalPages = Math.ceil(count / rowsPerPage);
 
+  const [totalNumberOfPages, setTotalNumberOfPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 10;
+
   useEffect(() => {
     WalletService.getBusinessUnits().then((res) => {
       setBusinessUnits(res?.data);
@@ -63,18 +67,24 @@ export default function WalletListPage() {
 
   useEffect(() => {
     setPage(0);
-    fetchWallets();
+    fetchWallets(pageNumber);
   }, [selectedBU]);
 
-  const fetchWallets = async () => {
+  const fetchWallets = async (pageNumber: number = 1) => {
     setLoading(true);
     try {
       // if (!selectedBU) {
       //   setWallets([]);
       //   return;
       // }
-      const res = await WalletService.getWallets(selectedBU ?? undefined);
-      setWallets(res?.data || []);
+      const res = await WalletService.getWallets(
+        pageNumber,
+        pageSize,
+        selectedBU ?? undefined
+      );
+      setWallets(res?.data?.data || []);
+      setTotalNumberOfPages(res?.data?.totalPages);
+      setPageNumber(res?.data?.page);
     } catch (err) {
       console.error(err);
     } finally {
@@ -85,11 +95,7 @@ export default function WalletListPage() {
   const handleChangePage = (_: unknown, newPage: number) =>
     setPage(newPage - 1);
 
-  const paginatedWallet =
-    viewMode === "card"
-      ? wallets
-      : wallets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
+  const paginatedWallet = viewMode === "card" ? wallets : wallets;
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
       <Box
@@ -282,22 +288,20 @@ export default function WalletListPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {wallets
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((wallet: any) => (
-                    <TableRow key={wallet.id}>
-                      <TableCell>{wallet.id}</TableCell>
-                      <TableCell>{wallet.customer.name}</TableCell>
-                      <TableCell>{wallet.total_balance}</TableCell>
-                      <TableCell>{wallet.available_balance}</TableCell>
-                      <TableCell>{wallet.locked_balance}</TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => setSelectedWallet(wallet)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {wallets.map((wallet: any) => (
+                  <TableRow key={wallet.id}>
+                    <TableCell>{wallet.id}</TableCell>
+                    <TableCell>{wallet.customer.name}</TableCell>
+                    <TableCell>{wallet.total_balance}</TableCell>
+                    <TableCell>{wallet.available_balance}</TableCell>
+                    <TableCell>{wallet.locked_balance}</TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => setSelectedWallet(wallet)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -316,8 +320,8 @@ export default function WalletListPage() {
             {/* Previous Button */}
             <Button
               variant="outlined"
-              onClick={() => setPage((prev) => prev - 1)}
-              disabled={page === 0}
+              onClick={() => fetchWallets(Number(pageNumber) - 1)}
+              disabled={Number(pageNumber) === 1}
               sx={{
                 textTransform: "none",
                 borderRadius: 2,
@@ -330,9 +334,12 @@ export default function WalletListPage() {
 
             {/* Pagination */}
             <Pagination
-              count={totalPages}
-              page={page + 1}
-              onChange={handleChangePage}
+              count={Number(totalNumberOfPages)}
+              page={Number(pageNumber)}
+              onChange={(_, value) => {
+                setPageNumber(value);
+                fetchWallets(value);
+              }}
               shape="rounded"
               siblingCount={1}
               boundaryCount={1}
@@ -351,8 +358,8 @@ export default function WalletListPage() {
             {/* Next Button */}
             <Button
               variant="outlined"
-              onClick={() => setPage((prev) => prev + 1)}
-              disabled={page === totalPages - 1}
+              onClick={() => fetchWallets(Number(pageNumber) + 1)}
+              disabled={Number(pageNumber) === Number(totalNumberOfPages)}
               sx={{
                 textTransform: "none",
                 borderRadius: 2,

@@ -88,7 +88,7 @@ export default function WalletTransactionDrawer({
           alignItems: "center",
           justifyContent: "space-between",
           px: 2,
-          py:1
+          py: 1,
         }}
       >
         <Typography variant="h5">Manual Adjustment</Typography>

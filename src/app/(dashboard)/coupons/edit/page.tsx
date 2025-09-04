@@ -80,7 +80,7 @@ const EditCouponForm = ({
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
     const res = await GET(`/customer-segments/${clientInfo.id}`);
-    setSegments(res?.data || []);
+    setSegments(res?.data.data || []);
   };
 
   const [conditionOfCouponTypes, setConditionOfCouponTypes] = useState<

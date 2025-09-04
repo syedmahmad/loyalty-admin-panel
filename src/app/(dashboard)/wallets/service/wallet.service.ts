@@ -1,9 +1,9 @@
 import { GET, POST } from "@/utils/AxiosUtility";
 
 export const WalletService = {
-  getWallets: (businessUnitId?: number) => {
+  getWallets: (page: number, pageSize: number, businessUnitId?: number) => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    return GET(`/wallets/${clientInfo.id}`, {
+    return GET(`/wallets/${clientInfo.id}?page=${page}&pageSize=${pageSize}`, {
       params: businessUnitId ? { business_unit: businessUnitId } : {},
     });
   },
