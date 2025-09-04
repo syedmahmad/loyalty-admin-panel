@@ -32,6 +32,7 @@ import { GET, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import CloseIcon from "@mui/icons-material/Close";
 import SegmentCustomers from "./SegmentCustomers";
+import SearchAutoSuggest from "@/components/columnSearch/SearchAutoSuggest";
 
 const fetchSegment = async (id: any) => {
   const response = await GET(`/customer-segments/view-customers/${id}`);
@@ -80,10 +81,23 @@ const CustomerSegmentEditPage = ({
 }: any) => {
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
-  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [userSecret, setUserSecret] = useState<string>("");
   const router = useRouter();
+
+  const clientInfo = localStorage.getItem("client-info");
+  const parsed = JSON.parse(clientInfo!);
+  const tenantId = parsed?.id || 1;
+
+  /** States For Auto suggest dropdown Start */
+  const [options, setOptions] = useState<{ label: string; id: number }[]>([]);
+  const [selectedValues, setSelectedValues] = useState<
+    { label: string; id: number }[]
+  >([]);
+  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
+  let debounceTimer: NodeJS.Timeout;
+  /** States For Auto suggest dropdown End */
 
   useEffect(() => {
     const secret = localStorage.getItem("token");
@@ -124,6 +138,7 @@ const CustomerSegmentEditPage = ({
       const updated = await fetchSegment(segmentId);
       setSegment(updated);
       setSelectedCustomerIds([]); // Reset selection
+      setSelectedValues([]);
       toast.success("Customers added to segment");
     } catch (error) {
       toast.error("Failed to add customers to segment");
@@ -140,6 +155,42 @@ const CustomerSegmentEditPage = ({
   };
 
   const segmentCustomers = segment?.members?.map((m: any) => m.customer) || [];
+
+  /**Auto Suggest Dropdown */
+  const handleAddCustomerInputChange = (inputString: string) => {
+    if (inputString.trim() === "") {
+      setOptions([]);
+      return undefined;
+    }
+
+    // clear previous timer
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    // ⏳ Debounce delay
+    debounceTimer = setTimeout(async () => {
+      setAutoSuggestLoading(true);
+      try {
+        const allCustomers = await fetchAllCustomers(tenantId);
+        setOptions(
+          allCustomers.data.map((item: any) => ({
+            id: item.id,
+            label: item.name,
+          }))
+        );
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setAutoSuggestLoading(false);
+      }
+    }, 400);
+  };
+
+  useEffect(() => {
+    const selectedIds = selectedValues.map((item) => item.id);
+    setSelectedCustomerIds(selectedIds);
+  }, [selectedValues]);
 
   return (
     <>
@@ -307,50 +358,13 @@ const CustomerSegmentEditPage = ({
                       (c) => !segmentCustomers.some((sc: any) => sc.id === c.id)
                     ).length > 0 ? (
                       <Grid item xs={12}>
-                        <Autocomplete
-                          multiple
-                          fullWidth
-                          options={customers.filter(
-                            (c) =>
-                              !segmentCustomers.some(
-                                (sc: any) => sc.id === c.id
-                              )
-                          )}
-                          value={customers.filter((c) =>
-                            selectedCustomerIds.includes(c.id)
-                          )}
-                          getOptionLabel={(option) =>
-                            `${option.name} (${option.email.trim()})`
-                          }
-                          onChange={(_, newValue) =>
-                            setSelectedCustomerIds(newValue.map((c) => c.id))
-                          }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Add Customers"
-                              placeholder="Select customers"
-                            />
-                          )}
-                          renderOption={(props, option) => {
-                            const { key, ...rest } = props; // ✅ take key out
-                            return (
-                              <li key={key} {...rest}>
-                                {option.name} (
-                                <span
-                                  style={{
-                                    maxWidth: 150,
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  {option.email.trim()}
-                                </span>
-                                )
-                              </li>
-                            );
-                          }}
+                        <SearchAutoSuggest
+                          label="Add Customers"
+                          inputTextChange={handleAddCustomerInputChange}
+                          options={options}
+                          selectedValues={selectedValues}
+                          setSelectedValues={setSelectedValues}
+                          loading={autoSuggestLoading}
                         />
                       </Grid>
                     ) : (

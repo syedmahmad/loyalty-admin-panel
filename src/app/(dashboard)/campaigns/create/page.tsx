@@ -97,8 +97,8 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
 
     setAllBus(buRes?.data || []);
     setAllTiers(tierRes?.data?.tiers || []);
-    setAllCoupons(couponsRes?.data?.coupons || []);
-    setAllSegments(segmentsRes?.data || []);
+    setAllCoupons(couponsRes?.data?.data || []);
+    setAllSegments(segmentsRes?.data.data || []);
     const groupedRules = (rulesRes?.data || []).reduce(
       (acc: any, rule: any) => {
         acc[rule.rule_type] = acc[rule.rule_type] || [];

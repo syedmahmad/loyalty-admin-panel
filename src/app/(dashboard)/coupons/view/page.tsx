@@ -43,6 +43,7 @@ import { htmlToPlainText } from "@/utils/Index";
 import { COUPON_TYPE } from "@/constants/constants";
 import SearchIcon from "@mui/icons-material/Search";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
+import { BusinessUnit } from "../types";
 
 type Coupon = {
   discount_type: string;
@@ -66,6 +67,13 @@ const CouponList = () => {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [drawerWidth, setDrawerWidth] = useState(1100);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [selectedBU, setSelectedBU] = useState<number>(0);
+
+  const [totalNumberOfPages, setTotalNumberOfPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 10;
+
   const count = coupons.length;
   const totalPages = Math.ceil(count / rowsPerPage);
   const router = useRouter();
@@ -80,15 +88,41 @@ const CouponList = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const fetchCoupons = async (name = "") => {
+  const fetchCoupons = async (
+    name = "",
+    selectedBU: number = 0,
+    pageNumber: number,
+    pageSize: number
+  ) => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const res = await GET(
-      `/coupons/${clientInfo.id}?name=${encodeURIComponent(name)}`
-    );
-    setCoupons(res?.data.coupons || []);
+    // Build query params cleanly
+    const params = new URLSearchParams();
+    if (name) params.append("name", name);
+    if (selectedBU && selectedBU !== 0)
+      params.append("bu", selectedBU.toString());
+    params.append("page", pageNumber.toString());
+    params.append("pageSize", pageSize.toString());
+
+    const res = await GET(`/coupons/${clientInfo.id}?${params.toString()}`);
+
+    setCoupons(res?.data.data || []);
+    setPageNumber(res?.data?.page);
+    setTotalNumberOfPages(res?.data?.totalPages);
     setLoading(false);
   };
+
+  const fetchBusinessUnits = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const response = await GET(`/business-units/${clientInfo.id}`);
+    if (response?.data) {
+      setBusinessUnits(response.data);
+    } else {
+      console.warn("No business units found");
+      setBusinessUnits([]);
+    }
+  };
+
   const handleClose = () => {
     setAnchorEl(null);
     setSelectedCoupon(null);
@@ -127,12 +161,17 @@ const CouponList = () => {
     const value = e.target.value;
     setSearch(value);
     setTimeout(() => {
-      fetchCoupons(value);
+      fetchCoupons(value, selectedBU, pageNumber, pageSize);
     }, 300);
   };
 
   useEffect(() => {
-    fetchCoupons();
+    fetchCoupons(search, selectedBU, pageNumber, pageSize);
+  }, [selectedBU]);
+
+  useEffect(() => {
+    fetchCoupons(search, selectedBU, pageNumber, pageSize);
+    fetchBusinessUnits();
   }, []);
 
   if (loading) {
@@ -156,6 +195,7 @@ const CouponList = () => {
 
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
+      {/* Title and create button */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -199,7 +239,9 @@ const CouponList = () => {
           </Button>
         </Box>
       </Box>
-      <Box mb={2}>
+
+      {/* Filters */}
+      <Box mb={2} gap={2} display="flex">
         <TextField
           size="small"
           placeholder="Search by code"
@@ -234,7 +276,38 @@ const CouponList = () => {
             },
           }}
         />
+        <Select
+          size="small"
+          value={selectedBU}
+          onChange={(e) => setSelectedBU(Number(e.target.value))}
+          displayEmpty
+          sx={{
+            backgroundColor: "#fff",
+            fontFamily: "Outfit",
+            fontWeight: 400,
+            fontStyle: "normal",
+            fontSize: "15px",
+            lineHeight: "22px",
+            borderBottom: "1px solid #e0e0e0",
+            borderRadius: 2,
+            minWidth: 250,
+            "& .MuiInputBase-input": {
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontSize: "15px",
+              lineHeight: "22px",
+            },
+          }}
+        >
+          <MenuItem value={0}>Select Business Unit</MenuItem>
+          {businessUnits.map((bu) => (
+            <MenuItem key={bu.id} value={bu.id}>
+              {bu.name}
+            </MenuItem>
+          ))}
+        </Select>
       </Box>
+
       <Paper
         elevation={3}
         sx={{
@@ -409,132 +482,126 @@ const CouponList = () => {
                 </TableHead>
 
                 <TableBody>
-                  {coupons
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((coupon) => (
-                      <TableRow key={coupon.id}>
-                        <TableCell>{coupon.coupon_title}</TableCell>
-                        <TableCell
-                          sx={{
-                            maxWidth: 200,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
+                  {coupons.map((coupon) => (
+                    <TableRow key={coupon.id}>
+                      <TableCell>{coupon.coupon_title}</TableCell>
+                      <TableCell
+                        sx={{
+                          maxWidth: 200,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        <Tooltip title={coupon.code}>
+                          <span>{coupon.code}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
+                        {coupon.discount_type === "fixed_discount"
+                          ? "Fixed"
+                          : "Percentage"}
+                      </TableCell>
+                      <TableCell>{coupon.discount_price}</TableCell>
+                      <TableCell
+                        sx={{
+                          maxWidth: 200,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        <Tooltip title={coupon.business_unit?.name || "-"}>
+                          <span>{coupon.business_unit?.name || "-"}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>{coupon.usage_limit}</TableCell>
+                      <TableCell>{coupon.number_of_times_used}</TableCell>
+                      <TableCell
+                        sx={{
+                          maxWidth: 200,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <Tooltip
+                          placement="top-start"
+                          title={
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(
+                                  marked.parse(coupon.benefits || "-") as string
+                                ),
+                              }}
+                            />
+                          }
                         >
-                          <Tooltip title={coupon.code}>
-                            <span>{coupon.code}</span>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          {coupon.discount_type === "fixed_discount"
-                            ? "Fixed"
-                            : "Percentage"}
-                        </TableCell>
-                        <TableCell>{coupon.discount_price}</TableCell>
-                        <TableCell
-                          sx={{
-                            maxWidth: 200,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
+                          <span>{htmlToPlainText(coupon.benefits || "-")}</span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell sx={{ display: "flex" }}>
+                        <IconButton
+                          onClick={(event) => handleMenuClick(event, coupon)}
                         >
-                          <Tooltip title={coupon.business_unit?.name || "-"}>
-                            <span>{coupon.business_unit?.name || "-"}</span>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>{coupon.usage_limit}</TableCell>
-                        <TableCell>{coupon.number_of_times_used}</TableCell>
-                        <TableCell
-                          sx={{
-                            maxWidth: 200,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={open}
+                          onClose={handleClose}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "right",
                           }}
-                        >
-                          <Tooltip
-                            placement="top-start"
-                            title={
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: DOMPurify.sanitize(
-                                    marked.parse(
-                                      coupon.benefits || "-"
-                                    ) as string
-                                  ),
-                                }}
-                              />
-                            }
-                          >
-                            <span>
-                              {htmlToPlainText(coupon.benefits || "-")}
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell sx={{ display: "flex" }}>
-                          <IconButton
-                            onClick={(event) => handleMenuClick(event, coupon)}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={open}
-                            onClose={handleClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "right",
-                            }}
-                            transformOrigin={{
-                              vertical: "top",
-                              horizontal: "right",
-                            }}
-                            slotProps={{
-                              paper: {
-                                sx: {
-                                  boxShadow: "none",
-                                  border: "1px solid #e0e0e0",
-                                  mt: 1,
-                                },
+                          transformOrigin={{
+                            vertical: "top",
+                            horizontal: "right",
+                          }}
+                          slotProps={{
+                            paper: {
+                              sx: {
+                                boxShadow: "none",
+                                border: "1px solid #e0e0e0",
+                                mt: 1,
                               },
+                            },
+                          }}
+                        >
+                          <MenuItem
+                            onClick={() => {
+                              handleClose();
+                              if (selectedCoupon) {
+                                router.push(
+                                  `/coupons/view?drawer=edit&id=${selectedCoupon.id}`
+                                );
+                              }
                             }}
                           >
-                            <MenuItem
-                              onClick={() => {
-                                handleClose();
-                                if (selectedCoupon) {
-                                  router.push(
-                                    `/coupons/view?drawer=edit&id=${selectedCoupon.id}`
-                                  );
-                                }
-                              }}
-                            >
-                              <EditIcon
-                                fontSize="small"
-                                style={{ marginRight: 8 }}
-                              />
-                              Edit
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                handleClose();
-                                if (selectedCoupon) {
-                                  setDeleteId(selectedCoupon.id);
-                                }
-                              }}
-                            >
-                              <DeleteIcon
-                                fontSize="small"
-                                style={{ marginRight: 8 }}
-                              />
-                              Delete
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            <EditIcon
+                              fontSize="small"
+                              style={{ marginRight: 8 }}
+                            />
+                            Edit
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              handleClose();
+                              if (selectedCoupon) {
+                                setDeleteId(selectedCoupon.id);
+                              }
+                            }}
+                          >
+                            <DeleteIcon
+                              fontSize="small"
+                              style={{ marginRight: 8 }}
+                            />
+                            Delete
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -553,8 +620,15 @@ const CouponList = () => {
               {/* Previous Button */}
               <Button
                 variant="outlined"
-                onClick={() => setPage((prev) => prev - 1)}
-                disabled={page === 0}
+                onClick={() =>
+                  fetchCoupons(
+                    search,
+                    selectedBU,
+                    Number(pageNumber) - 1,
+                    pageSize
+                  )
+                }
+                disabled={Number(pageNumber) === 1}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
@@ -567,9 +641,12 @@ const CouponList = () => {
 
               {/* Pagination */}
               <Pagination
-                count={totalPages}
-                page={page + 1}
-                onChange={handleChangePage}
+                count={Number(totalNumberOfPages)}
+                page={Number(pageNumber)}
+                onChange={(_, value) => {
+                  setPageNumber(value);
+                  fetchCoupons(search, selectedBU, value, pageSize);
+                }}
                 shape="rounded"
                 siblingCount={1}
                 boundaryCount={1}
@@ -588,8 +665,15 @@ const CouponList = () => {
               {/* Next Button */}
               <Button
                 variant="outlined"
-                onClick={() => setPage((prev) => prev + 1)}
-                disabled={page === totalPages - 1}
+                onClick={() =>
+                  fetchCoupons(
+                    search,
+                    selectedBU,
+                    Number(pageNumber) + 1,
+                    pageSize
+                  )
+                }
+                disabled={Number(pageNumber) === Number(totalNumberOfPages)}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
@@ -622,7 +706,7 @@ const CouponList = () => {
           <CouponCreate
             onSuccess={() => {
               handleCloseDrawer();
-              fetchCoupons();
+              fetchCoupons(search, selectedBU, pageNumber, pageSize);
             }}
             handleDrawerWidth={handleDrawerWidth}
           />
@@ -639,7 +723,7 @@ const CouponList = () => {
             <CouponEdit
               onSuccess={() => {
                 handleCloseDrawer();
-                fetchCoupons();
+                fetchCoupons(search, selectedBU, pageNumber, pageSize);
               }}
               handleDrawerWidth={handleDrawerWidth}
             />

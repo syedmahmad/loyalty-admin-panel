@@ -109,7 +109,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     const newSelectedSegments = campaign.customerSegments.map(
       (item: any) => item.segment
     );
-    setAllSegments(segmentsRes?.data || []);
+    setAllSegments(segmentsRes?.data?.data || []);
     setSelectedSegments(newSelectedSegments || []);
 
     const coupon = campaign?.coupons.map((item: any) => item.coupon)[0];
@@ -143,7 +143,7 @@ const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
     // setRuleTypes((prev) => [""]);
 
     setAvailableRuleTypes(available);
-    setAllCoupons(couponsRes?.data?.coupons || []);
+    setAllCoupons(couponsRes?.data?.data || []);
 
     setAllBus(buRes?.data || []);
     setAllTiers(tierRes?.data?.tiers || []);

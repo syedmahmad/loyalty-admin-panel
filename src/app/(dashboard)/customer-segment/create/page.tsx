@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
+import SearchAutoSuggest from "@/components/columnSearch/SearchAutoSuggest";
 
 const fetchAllCustomers = async (tenantId: number) => {
   const response = await GET(`/customers/${tenantId}`);
@@ -38,12 +39,21 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
   const clientInfo = localStorage.getItem("client-info");
   const parsed = JSON.parse(clientInfo!);
   const tenantId = parsed?.id || 1;
-  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<number[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
   const [searchText, setSearchText] = useState("");
+
+  /** States For Auto suggest dropdown Start */
+  const [options, setOptions] = useState<{ label: string; id: number }[]>([]);
+  const [selectedValues, setSelectedValues] = useState<
+    { label: string; id: number }[]
+  >([]);
+  const [autoSuggestLoading, setAutoSuggestLoading] = useState(false);
+  let debounceTimer: NodeJS.Timeout;
+  /** States For Auto suggest dropdown End */
 
   const InfoLabel = ({
     label,
@@ -143,6 +153,42 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
     }
   };
 
+  /**Auto Suggest Dropdown */
+  const handleAddCustomerInputChange = (inputString: string) => {
+    if (inputString.trim() === "") {
+      setOptions([]);
+      return undefined;
+    }
+
+    // clear previous timer
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    // ⏳ Debounce delay
+    debounceTimer = setTimeout(async () => {
+      setAutoSuggestLoading(true);
+      try {
+        const allCustomers = await fetchAllCustomers(tenantId);
+        setOptions(
+          allCustomers.data.map((item: any) => ({
+            id: item.id,
+            label: item.name,
+          }))
+        );
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setAutoSuggestLoading(false);
+      }
+    }, 400);
+  };
+
+  useEffect(() => {
+    const selectedIds = selectedValues.map((item) => item.id);
+    setSelectedCustomerIds(selectedIds);
+  }, [selectedValues]);
+
   return (
     <>
       <Grid container spacing={2}>
@@ -230,39 +276,13 @@ const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
 
         {customers.length > 0 ? (
           <Grid item xs={12}>
-            <Autocomplete
-              multiple
-              options={customers}
-              value={customers.filter((c) =>
-                selectedCustomerIds.includes(c.id)
-              )}
-              onChange={(_, newValue) =>
-                setSelectedCustomerIds(newValue.map((c) => c.id))
-              }
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              getOptionLabel={(option) => option.name}
-              renderInput={(params) => (
-                <TextField {...params} label="Add Customers" fullWidth />
-              )}
-              renderOption={(props, option) => {
-                const { key, ...rest } = props; // ✅ take key out
-                return (
-                  <li key={key} {...rest}>
-                    {option.name} (
-                    <span
-                      style={{
-                        maxWidth: 150,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {option.email.trim()}
-                    </span>
-                    )
-                  </li>
-                );
-              }}
+            <SearchAutoSuggest
+              label="Add Customers"
+              inputTextChange={handleAddCustomerInputChange}
+              options={options}
+              selectedValues={selectedValues}
+              setSelectedValues={setSelectedValues}
+              loading={autoSuggestLoading}
             />
           </Grid>
         ) : (
