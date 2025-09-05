@@ -63,6 +63,10 @@ const CampaignsList = () => {
   const open = Boolean(anchorEl);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  const [totalNumberOfPages, setTotalNumberOfPages] = useState(1);
+  const [pageNumber, setPageNumber] = useState(1);
+  const pageSize = 10;
+
   const handleClose = () => {
     setAnchorEl(null);
     setSelectedCampaign(null);
@@ -75,13 +79,20 @@ const CampaignsList = () => {
     setSelectedCampaign(campaign);
   };
 
-  const fetchCampaigns = async (name = "") => {
+  const fetchCampaigns = async (name = "", pageNumber = 1, pageSize = 10) => {
     setLoading(true);
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const query = name ? `?name=${encodeURIComponent(name)}` : "";
-    const res = await GET(`/campaigns/${clientInfo.id}${query}`);
+
+    const params = new URLSearchParams();
+    if (name) params.append("name", name);
+    params.append("page", pageNumber.toString());
+    params.append("pageSize", pageSize.toString());
+
+    const res = await GET(`/campaigns/${clientInfo.id}?${params.toString()}`);
     if (res?.data) {
-      setCampaigns(res.data);
+      setCampaigns(res?.data?.data);
+      setTotalNumberOfPages(res?.data.totalPages);
+      setPageNumber(res?.data.page);
     }
     setLoading(false);
   };
@@ -91,10 +102,8 @@ const CampaignsList = () => {
   }, []);
   const handleChangePage = (_: unknown, newPage: number) =>
     setPage(newPage - 1);
-  const campaignss =
-    viewMode === "card"
-      ? campaigns
-      : campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const campaignss = viewMode === "card" ? campaigns : campaigns;
+  // : campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleDelete = async (deleteId: number) => {
     try {
@@ -498,8 +507,10 @@ const CampaignsList = () => {
               {/* Previous Button */}
               <Button
                 variant="outlined"
-                onClick={() => setPage((prev) => prev - 1)}
-                disabled={page === 0}
+                onClick={() =>
+                  fetchCampaigns(searchName, Number(pageNumber) - 1, pageSize)
+                }
+                disabled={Number(pageNumber) === 1}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
@@ -512,9 +523,12 @@ const CampaignsList = () => {
 
               {/* Pagination */}
               <Pagination
-                count={totalPages}
-                page={page + 1}
-                onChange={handleChangePage}
+                count={Number(totalNumberOfPages)}
+                page={Number(pageNumber)}
+                onChange={(_, value) => {
+                  setPageNumber(value);
+                  fetchCampaigns(searchName, value, pageSize);
+                }}
                 shape="rounded"
                 siblingCount={1}
                 boundaryCount={1}
@@ -533,7 +547,10 @@ const CampaignsList = () => {
               {/* Next Button */}
               <Button
                 variant="outlined"
-                disabled={page === totalPages - 1}
+                onClick={() =>
+                  fetchCampaigns(searchName, Number(pageNumber) + 1, pageSize)
+                }
+                disabled={Number(pageNumber) === totalNumberOfPages}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,
