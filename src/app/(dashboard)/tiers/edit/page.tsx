@@ -59,6 +59,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
     { name_en: "", name_ar: "", icon: "" },
   ]);
   const [file, setFile] = useState<File | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   // const fetchRules = async () => {
   //   const res = await GET('/rules');
@@ -181,6 +182,7 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
     const formData = new FormData();
     formData.append("file", selectedFile);
     try {
+      setUploadingIndex(index);
       const res = await POST("/tiers/file", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -193,6 +195,8 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
       }
     } catch (err) {
       console.error("Upload failed", err);
+    } finally {
+      setUploadingIndex(null); // stop loader
     }
   };
 
@@ -364,8 +368,16 @@ const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
                             fullWidth
                             size="small"
                             sx={{ width: 150, height: 35 }}
+                            disabled={uploadingIndex === index}
                           >
-                            {input.icon ? "Change Icon" : "Upload Icon"}
+                            {/* {input.icon ? "Change Icon" : "Upload Icon"} */}
+                            {uploadingIndex === index ? (
+                              <CircularProgress size={18} />
+                            ) : input.icon ? (
+                              "Change Icon"
+                            ) : (
+                              "Upload Icon"
+                            )}
                             <input
                               type="file"
                               hidden
