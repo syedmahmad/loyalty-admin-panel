@@ -282,7 +282,8 @@ const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
     if (couponsRes?.status !== 200) {
       throw new Error("Failed to fetch coupons");
     }
-    setAllCoupons(couponsRes?.data?.coupons || []);
+
+    setAllCoupons(couponsRes?.data?.data || []);
   };
 
   return (

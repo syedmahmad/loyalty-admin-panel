@@ -207,7 +207,7 @@ const CustomerList = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginated.map((c) => (
+                  {customers.map((c) => (
                     <TableRow key={c.id} onClick={() => handleRowClick(c.id)}>
                       <TableCell>{c.name}</TableCell>
                       <TableCell
