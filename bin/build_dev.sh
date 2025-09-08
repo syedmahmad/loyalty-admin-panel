@@ -10,7 +10,8 @@ echo "📦 Installing dependencies..."
 npm install --legacy-peer-deps
 
 echo "🔧 Building for development..."
-npx dotenv -e .env -- next build
+# npx dotenv -e .env -- next build
+dotenv -e .env -- npm run build
 
 echo "🚀 Restarting PM2 process..."
 pm2 delete loyalty_admin || true
