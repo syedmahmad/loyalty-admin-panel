@@ -73,7 +73,7 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
   return response.data;
 };
 
-const RuleEdit = ({ onSuccess }: { onSuccess: () => void }) => {
+const RuleEdit = ({ onSuccess }: any) => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get("uuid");
   const router = useRouter();

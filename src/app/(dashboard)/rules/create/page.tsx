@@ -63,7 +63,7 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
   return response.data;
 };
 
-const RuleCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
+const RuleCreateForm = ({ onSuccess }: any) => {
   const router = useRouter();
   const userInfo = JSON.parse(localStorage.getItem("client-info") || "{}");
   const created_by = userInfo?.id;

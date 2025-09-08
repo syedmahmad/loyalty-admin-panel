@@ -41,7 +41,7 @@ type Benefit = {
   icon: string;
 };
 
-const EditTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
+const EditTierForm = ({ onSuccess }: any) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");

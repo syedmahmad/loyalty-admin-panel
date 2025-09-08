@@ -50,10 +50,7 @@ const selectAllVariants = { TrimId: "all", Trim: "Select All" };
 const EditCouponForm = ({
   onSuccess,
   handleDrawerWidth,
-}: {
-  onSuccess: () => void;
-  handleDrawerWidth: (selectedCouponType: string) => void;
-}) => {
+}: any) => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");
   const [tiers, setTiers] = useState<Tier[]>([]);

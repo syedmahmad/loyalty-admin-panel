@@ -546,7 +546,7 @@ const DeleteSegment = ({
   setSelectedSegmentId,
 }: {
   segmentId: number;
-  onSuccess: () => void;
+  onSuccess: any;
   setSelectedSegmentId: Dispatch<SetStateAction<number | null>>;
 }) => {
   const [loading, setLoading] = useState(false);

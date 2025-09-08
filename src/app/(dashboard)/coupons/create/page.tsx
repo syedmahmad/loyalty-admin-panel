@@ -63,10 +63,7 @@ const selectAllVariants = { TrimId: "all", Trim: "Select All" };
 const CreateCouponForm = ({
   onSuccess,
   handleDrawerWidth,
-}: {
-  onSuccess: () => void;
-  handleDrawerWidth: (selectedCouponType: string) => void;
-}) => {
+}: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
@@ -428,6 +425,7 @@ const CreateCouponForm = ({
                   }: any) => {
                     const make_name =
                       (makes as Make[])?.find(
+                        // @ts-ignore
                         (singleMake) => singleMake.MakeCode === make
                       )?.Make ?? "";
 

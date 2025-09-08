@@ -31,7 +31,7 @@ const BusinessUnitSchema = Yup.object().shape({
   location: Yup.string(),
 });
 
-const BusinessUnitCreateForm = ({ onSuccess }: { onSuccess: () => void }) => {
+const BusinessUnitCreateForm = ({ onSuccess } : any) => {
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();

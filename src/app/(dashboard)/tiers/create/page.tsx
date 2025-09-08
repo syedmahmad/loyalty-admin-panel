@@ -53,7 +53,7 @@ type Benefit = {
   icon: string;
 };
 
-const CreateTierForm = ({ onSuccess }: { onSuccess: () => void }) => {
+const CreateTierForm = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [description, setDescription] = useState<string>("");
