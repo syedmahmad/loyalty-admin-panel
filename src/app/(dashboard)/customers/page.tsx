@@ -80,7 +80,7 @@ const CustomerList = () => {
 
   const [totalPages, setTotalPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
-  const pageSize = 20;
+  const pageSize = 10;
 
   const router = useRouter();
 
