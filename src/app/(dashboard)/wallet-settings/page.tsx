@@ -100,7 +100,6 @@ export default function WalletSettingsPage() {
   };
 
   const updateSettingClick = (selectedSetting: any) => {
-    console.log("AAAAA", selectedSetting?.business_unit?.id);
     setSelectedBU(selectedSetting?.business_unit?.id);
     setSettings(selectedSetting);
     setDrawerOpen(true);

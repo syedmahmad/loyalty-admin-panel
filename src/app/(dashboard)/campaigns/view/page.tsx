@@ -102,7 +102,7 @@ const CampaignsList = () => {
   }, []);
   const handleChangePage = (_: unknown, newPage: number) =>
     setPage(newPage - 1);
-  const campaignss = viewMode === "card" ? campaigns : campaigns;
+  const campaignsArr = viewMode === "card" ? campaigns : campaigns;
   // : campaigns.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleDelete = async (deleteId: number) => {
@@ -232,7 +232,7 @@ const CampaignsList = () => {
           </Box>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {campaigns.map((campaign) => {
+            {campaignsArr.map((campaign) => {
               const ruleNames =
                 campaign.rules?.map((r: any) => r.rule?.name).join(", ") ||
                 "No Rules";
@@ -386,7 +386,7 @@ const CampaignsList = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {campaignss.map((campaign) => {
+                  {campaignsArr.map((campaign) => {
                     const ruleNames =
                       campaign.rules
                         ?.map((r: any) => r.rule?.name)
