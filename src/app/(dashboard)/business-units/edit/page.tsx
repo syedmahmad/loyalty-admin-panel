@@ -51,7 +51,7 @@ const updateBusinessUnit = async (id: string, payload: any) => {
   return response.data;
 };
 
-const BusinessUnitEditForm =  ({ onSuccess }: { onSuccess: () => void }) => {
+const BusinessUnitEditForm =  ({ onSuccess }: any) => {
   const params = useSearchParams();
   const paramId =  params.get('id') || null;
   const router = useRouter();

@@ -17,7 +17,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   walletId: number;
-  onSuccess: () => void;
+  onSuccess: any;
   selectedBU: number | null;
   fetchWallets: () => void;
 }

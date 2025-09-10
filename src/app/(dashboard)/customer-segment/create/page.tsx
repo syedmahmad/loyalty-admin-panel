@@ -26,7 +26,7 @@ const fetchAllCustomers = async (tenantId: number) => {
   return response.data;
 };
 
-const CreateCustomerSegment = ({ onSuccess }: { onSuccess: () => void }) => {
+const CreateCustomerSegment = ({ onSuccess }: any) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [nameAr, setNameAr] = useState("");

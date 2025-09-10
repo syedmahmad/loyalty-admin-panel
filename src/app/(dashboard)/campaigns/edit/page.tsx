@@ -45,7 +45,7 @@ interface CampaignTypeOption {
   value: string;
 }
 
-const CampaignEdit = ({ onSuccess }: { onSuccess: () => void }) => {
+const CampaignEdit = ({ onSuccess }: any) => {
   const router = useRouter();
   const params = useSearchParams();
   const paramId = params.get("id") || null;

@@ -140,7 +140,7 @@ const CouponList = () => {
     const res = await DELETE(`/coupons/${deleteId}`);
     if (res?.status === 200) {
       toast.success("Coupon deleted!");
-      fetchCoupons(search);
+      fetchCoupons(search, selectedBU, pageNumber, pageSize);
     } else {
       toast.error("Failed to delete coupon");
     }

@@ -31,7 +31,6 @@ import * as Yup from "yup";
 import { GET, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import CloseIcon from "@mui/icons-material/Close";
-import SegmentCustomers from "./SegmentCustomers";
 import SearchAutoSuggest from "@/components/columnSearch/SearchAutoSuggest";
 
 const fetchSegment = async (id: any) => {

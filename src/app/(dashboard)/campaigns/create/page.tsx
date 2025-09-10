@@ -45,7 +45,7 @@ interface CampaignTypeOption {
   value: string;
 }
 
-const CampaignCreate = ({ onSuccess }: { onSuccess: () => void }) => {
+const CampaignCreate = ({ onSuccess }: any) => {
   const router = useRouter();
   const theme = useTheme();
   const [name, setName] = useState("");
