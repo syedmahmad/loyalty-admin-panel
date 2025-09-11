@@ -47,10 +47,7 @@ import {
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 const selectAllVariants = { TrimId: "all", Trim: "Select All" };
 
-const EditCouponForm = ({
-  onSuccess,
-  handleDrawerWidth,
-}: any) => {
+const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -421,6 +418,7 @@ const EditCouponForm = ({
         couponData?.customerSegments.map((ls: any) => ls.segment.id) || [],
       description_en: couponData?.description_en || "",
       description_ar: couponData?.description_ar || "",
+      all_users: couponData?.all_users,
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
@@ -611,6 +609,7 @@ const EditCouponForm = ({
       description_ar: values.description_ar || "",
       terms_and_conditions_en: termsAndConditionsEn || "",
       terms_and_conditions_ar: termsAndConditionsAr || "",
+      all_users: values.all_users,
     }));
 
     const responses = await Promise.all(
@@ -1438,41 +1437,6 @@ const EditCouponForm = ({
               </TextField>
             </Grid>
 
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={segments.filter(
-                  (s: any) => !values.customer_segment_ids.includes(s.id)
-                )}
-                getOptionLabel={(option: any) => option.name}
-                value={segments.filter((s: any) =>
-                  values.customer_segment_ids.includes(s.id)
-                )}
-                onChange={(event, newValue) => {
-                  setFieldValue(
-                    "customer_segment_ids",
-                    newValue.map((item: any) => item.id)
-                  );
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Customer Segments"
-                    error={Boolean(
-                      touched.customer_segment_ids &&
-                        errors.customer_segment_ids
-                    )}
-                    helperText={
-                      touched.customer_segment_ids &&
-                      errors.customer_segment_ids
-                        ? errors.customer_segment_ids
-                        : ""
-                    }
-                  />
-                )}
-              />
-            </Grid>
-
             {/* Max Usage Per User */}
             <Grid item xs={12}>
               <TextField
@@ -1682,6 +1646,101 @@ const EditCouponForm = ({
               />
             </Grid>
 
+            {/* Apply to all users */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="subtitle1">
+                    Apply to all users
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="all_users"
+                    color="primary"
+                    checked={values.all_users === 1}
+                    onChange={(e) =>
+                      setFieldValue("all_users", e.target.checked ? 1 : 0)
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Customer Segments */}
+            {values.all_users === 0 && (
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  options={segments.filter(
+                    (s: any) => !values.customer_segment_ids.includes(s.id)
+                  )}
+                  getOptionLabel={(option: any) => option.name}
+                  value={segments.filter((s: any) =>
+                    values.customer_segment_ids.includes(s.id)
+                  )}
+                  onChange={(event, newValue) => {
+                    setFieldValue(
+                      "customer_segment_ids",
+                      newValue.map((item: any) => item.id)
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Customer Segments"
+                      error={Boolean(
+                        touched.customer_segment_ids &&
+                          errors.customer_segment_ids
+                      )}
+                      helperText={
+                        touched.customer_segment_ids &&
+                        errors.customer_segment_ids
+                          ? errors.customer_segment_ids
+                          : ""
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+            )}
+
+            {/* is_point_earning_disabled */}
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={<Checkbox />}
+                label="Customers cannot earn points when using this coupon."
+                labelPlacement="end"
+                name="is_point_earning_disabled"
+                onChange={(e: any) =>
+                  formik.setFieldValue(
+                    "is_point_earning_disabled",
+                    e.target.checked ? 1 : 0
+                  )
+                }
+                checked={formik.values.is_point_earning_disabled === 1}
+              />
+            </Grid>
+
+            {/* Is Active */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="subtitle1">Is Active</Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="isActive"
+                    color="primary"
+                    checked={values.status === 1}
+                    onChange={(e) =>
+                      setFieldValue("status", e.target.checked ? 1 : 0)
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
             {/* Benefits */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>
@@ -1724,42 +1783,6 @@ const EditCouponForm = ({
                 setValue={setBenefits}
                 language="en"
               /> */}
-            </Grid>
-
-            {/* is_point_earning_disabled */}
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Customers cannot earn points when using this coupon."
-                labelPlacement="end"
-                name="is_point_earning_disabled"
-                onChange={(e: any) =>
-                  formik.setFieldValue(
-                    "is_point_earning_disabled",
-                    e.target.checked ? 1 : 0
-                  )
-                }
-                checked={formik.values.is_point_earning_disabled === 1}
-              />
-            </Grid>
-
-            {/* Is Active */}
-            <Grid item xs={12}>
-              <Grid container alignItems="center" spacing={2}>
-                <Grid item>
-                  <Typography variant="subtitle1">Is Active</Typography>
-                </Grid>
-                <Grid item>
-                  <Switch
-                    name="isActive"
-                    color="primary"
-                    checked={values.status === 1}
-                    onChange={(e) =>
-                      setFieldValue("status", e.target.checked ? 1 : 0)
-                    }
-                  />
-                </Grid>
-              </Grid>
             </Grid>
 
             {/* Description English */}

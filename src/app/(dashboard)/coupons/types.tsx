@@ -36,6 +36,7 @@ export type CouponFormValues = {
   };
   description_en: string;
   description_ar: string;
+  all_users: number;
 };
 
 export type BusinessUnit = {
