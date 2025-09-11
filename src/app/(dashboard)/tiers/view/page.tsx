@@ -620,7 +620,7 @@ const TierList = () => {
           <TierCreate
             onSuccess={() => {
               handleCloseDrawer();
-              fetchTiers();
+              fetchTiers(search, selectedBU);
             }}
           />
         </BaseDrawer>
@@ -636,7 +636,7 @@ const TierList = () => {
             <TierEdit
               onSuccess={() => {
                 handleCloseDrawer();
-                fetchTiers();
+                fetchTiers(search, selectedBU);
               }}
             />
           </BaseDrawer>

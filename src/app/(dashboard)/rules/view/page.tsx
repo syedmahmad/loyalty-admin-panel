@@ -685,7 +685,7 @@ const RuleList = () => {
           <RuleCreateForm
             onSuccess={() => {
               handleCloseDrawer();
-              fetchRules();
+              fetchRules(searchName, selectedBU);
             }}
           />
         </BaseDrawer>
@@ -701,7 +701,7 @@ const RuleList = () => {
             <RuleEdit
               onSuccess={() => {
                 handleCloseDrawer();
-                fetchRules();
+                fetchRules(searchName, selectedBU);
               }}
             />
           </BaseDrawer>
