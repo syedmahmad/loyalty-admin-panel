@@ -86,11 +86,11 @@ const RuleEdit = ({ onSuccess }: any) => {
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
-  const [selectedBurnType, setSelectedBurnType] =
-    useState<BurnTypeOption | null>({
-      label: "FIXED",
-      value: "FIXED",
-    });
+  // const [selectedBurnType, setSelectedBurnType] =
+  //   useState<BurnTypeOption | null>({
+  //     label: "FIXED",
+  //     value: "FIXED",
+  //   });
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -129,7 +129,7 @@ const RuleEdit = ({ onSuccess }: any) => {
       const burnType: any = BURN_TYPES.find(
         (singleBurnType) => singleBurnType.value === rule.burn_type
       );
-      setSelectedBurnType(burnType);
+      // setSelectedBurnType(burnType);
     }
     setLoading(false);
   };
@@ -176,11 +176,13 @@ const RuleEdit = ({ onSuccess }: any) => {
         (!form.min_amount_spent || !form.reward_points)) ||
       (form.rule_type === "burn" &&
         (!form.min_amount_spent ||
-          !form.max_redeemption_points_limit ||
-          (selectedBurnType?.value === "FIXED" &&
-            !form.points_conversion_factor) ||
-          (selectedBurnType?.value === "PERCENTAGE" &&
-            !form.max_burn_percent_on_invoice)))
+          !form.max_redeemption_points_limit
+          // ||
+          // (selectedBurnType?.value === "FIXED" &&
+          //   !form.points_conversion_factor) ||
+          // (selectedBurnType?.value === "PERCENTAGE" &&
+          //   !form.max_burn_percent_on_invoice)
+          ))
     ) {
       toast.error("Please fill all required fields for this rule type");
       return;
@@ -188,7 +190,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
     setLoading(true);
 
-    const burnType = form.rule_type === "burn" ? selectedBurnType?.value : null;
+    // const burnType = form.rule_type === "burn" ? selectedBurnType?.value : null;
 
     const payload = {
       name: form.name,
@@ -221,7 +223,7 @@ const RuleEdit = ({ onSuccess }: any) => {
       frequency: form.frequency || "once",
       description,
       updated_by,
-      burn_type: burnType,
+      // burn_type: burnType,
       reward_condition: form.reward_condition,
       dynamic_conditions: ["dynamic rule", "burn"].includes(form.rule_type)
         ? form.conditions
@@ -577,7 +579,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
           {form.rule_type === "burn" && (
             <>
-              <Grid item xs={12}>
+              {/* <Grid item xs={12}>
                 <Autocomplete
                   options={BURN_TYPES}
                   getOptionLabel={(option) => option.label}
@@ -595,7 +597,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                     />
                   )}
                 />
-              </Grid>
+              </Grid> */}
 
               <Grid item xs={12}>
                 <InfoLabel
@@ -612,7 +614,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                 />
               </Grid>
 
-              {selectedBurnType?.value === "FIXED" && (
+              {/* {selectedBurnType?.value === "FIXED" && ( */}
                 <Grid item xs={12}>
                   <InfoLabel
                     label="Points Conversion Factor"
@@ -627,9 +629,9 @@ const RuleEdit = ({ onSuccess }: any) => {
                     }
                   />
                 </Grid>
-              )}
+              {/* )} */}
 
-              {selectedBurnType?.value === "PERCENTAGE" && (
+              {/* {selectedBurnType?.value === "PERCENTAGE" && ( */}
                 <Grid item xs={12}>
                   <InfoLabel
                     label="Max Burn % on Invoice"
@@ -647,7 +649,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                     }
                   />
                 </Grid>
-              )}
+              {/* )} */}
             </>
           )}
 
