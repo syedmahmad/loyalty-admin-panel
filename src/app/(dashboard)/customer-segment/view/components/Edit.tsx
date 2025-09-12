@@ -78,11 +78,16 @@ const CustomerSegmentEditPage = ({
   setSelectedSegmentId,
   onClose,
 }: any) => {
+  const [name, setName] = useState("");
+  const [nameAr, setNameAr] = useState("");
+  const [description, setDescription] = useState("");
+  const [descriptionAr, setDescriptionAr] = useState("");
   const [segment, setSegment] = useState<any>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [userSecret, setUserSecret] = useState<string>("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const clientInfo = localStorage.getItem("client-info");
@@ -113,6 +118,12 @@ const CustomerSegmentEditPage = ({
       const tenantId = parsed?.id || 1;
       const allCustomers = await fetchAllCustomers(tenantId);
       setSegment(segment);
+
+      setName(segment.name);
+      setNameAr(segment.name_ar);
+      setDescription(segment.description);
+      setDescriptionAr(segment.description_ar);
+
       setCustomers(allCustomers.data);
       setLoading(false);
     };
@@ -191,6 +202,49 @@ const CustomerSegmentEditPage = ({
     setSelectedCustomerIds(selectedIds);
   }, [selectedValues]);
 
+  const handleSubmit = async () => {
+    if (!name) {
+      toast.error("Name is required");
+      return;
+    }
+
+    try {
+      const clientInfo = localStorage.getItem("client-info");
+      if (!clientInfo)
+        throw new Error("Client info not found in localStorage.");
+
+      const parsed = JSON.parse(clientInfo);
+      const payload = {
+        name,
+        description,
+        name_ar: nameAr,
+        description_ar: descriptionAr,
+        tenant_id: parsed.id,
+        selected_customer_ids: selectedCustomerIds,
+      };
+
+      console.log("Creating customer segment with payload:", payload);
+
+      const res = await PUT(`/customer-segments/${segmentId}`, payload);
+      if (res?.status === 201 || res?.status === 200) {
+        toast.success("Customer segment updated successfully!");
+        setSelectedSegmentId(null);
+        onClose();
+      } else {
+        setError("Failed to update customer segment");
+      }
+    } catch (err: any) {
+      console.error("Error:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err.message ||
+          "Unexpected error occurred"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Drawer
@@ -233,164 +287,124 @@ const CustomerSegmentEditPage = ({
           </Box>
         ) : (
           <CardContent>
-            <Formik
-              enableReinitialize
-              initialValues={{
-                name: segment.name || "",
-                description: segment.description || "",
-                name_ar: segment.name_ar || "",
-                description_ar: segment.description_ar || "",
-              }}
-              validationSchema={Yup.object().shape({
-                name: Yup.string().required("Name is required"),
-                description: Yup.string(),
-              })}
-              onSubmit={() => {}}
-            >
-              {({ values, errors, touched, handleChange }) => (
-                <Form noValidate>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        name="name"
-                        label="Segment Name"
-                        value={values.name}
-                        onChange={handleChange}
-                        error={touched.name && Boolean(errors.name)}
-                        helperText={
-                          touched.name && typeof errors.name === "string"
-                            ? errors.name
-                            : undefined
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <GroupIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                        disabled
-                      />
-                    </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="name"
+                  label="Segment Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <GroupIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
 
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        name="name_ar"
-                        label="Segment Name Arabic"
-                        value={values.name_ar}
-                        onChange={handleChange}
-                        error={touched.name_ar && Boolean(errors.name_ar)}
-                        helperText={
-                          touched.name_ar && typeof errors.name_ar === "string"
-                            ? errors.name_ar
-                            : undefined
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <GroupIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                        disabled
-                      />
-                    </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="name_ar"
+                  label="Segment Name Arabic"
+                  value={nameAr}
+                  onChange={(e) => setNameAr(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <GroupIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
 
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        name="description"
-                        label="Description"
-                        value={values.description}
-                        onChange={handleChange}
-                        error={
-                          touched.description && Boolean(errors.description)
-                        }
-                        helperText={
-                          touched.description &&
-                          typeof errors.description === "string"
-                            ? errors.description
-                            : undefined
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <DescriptionIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                        disabled
-                      />
-                    </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="description"
+                  label="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <DescriptionIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
 
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        name="description_ar"
-                        label="Description Arabic"
-                        value={values.description_ar}
-                        onChange={handleChange}
-                        error={
-                          touched.description_ar &&
-                          Boolean(errors.description_ar)
-                        }
-                        helperText={
-                          touched.description_ar &&
-                          typeof errors.description_ar === "string"
-                            ? errors.description_ar
-                            : undefined
-                        }
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <DescriptionIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                        disabled
-                      />
-                    </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="description_ar"
+                  label="Description Arabic"
+                  value={descriptionAr}
+                  onChange={(e) => setDescriptionAr(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <DescriptionIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
 
-                    {customers.filter(
-                      (c) => !segmentCustomers.some((sc: any) => sc.id === c.id)
-                    ).length > 0 ? (
-                      <Grid item xs={12}>
-                        <SearchAutoSuggest
-                          label="Add Customers"
-                          inputTextChange={handleAddCustomerInputChange}
-                          options={options}
-                          selectedValues={selectedValues}
-                          setSelectedValues={setSelectedValues}
-                          loading={autoSuggestLoading}
-                        />
-                      </Grid>
-                    ) : (
-                      <Grid item xs={12}>
-                        <Typography
-                          variant="h5"
-                          textAlign="center"
-                          sx={{ mt: 2 }}
-                        >
-                          No customers available to add.
-                        </Typography>
-                      </Grid>
-                    )}
-
-                    <Grid item xs={12}>
-                      <Button
-                        variant="outlined"
-                        onClick={() => handleAddCustomer()}
-                        disabled={!selectedCustomerIds.length}
-                      >
-                        Add
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Form>
+              {customers.filter(
+                (c) => !segmentCustomers.some((sc: any) => sc.id === c.id)
+              ).length > 0 ? (
+                <Grid item xs={12}>
+                  <SearchAutoSuggest
+                    label="Add Customers"
+                    inputTextChange={handleAddCustomerInputChange}
+                    options={options}
+                    selectedValues={selectedValues}
+                    setSelectedValues={setSelectedValues}
+                    loading={autoSuggestLoading}
+                  />
+                </Grid>
+              ) : (
+                <Grid item xs={12}>
+                  <Typography variant="h5" textAlign="center" sx={{ mt: 2 }}>
+                    No customers available to add.
+                  </Typography>
+                </Grid>
               )}
-            </Formik>
+
+              <Grid item xs={12}>
+                <Box display="flex" justifyContent="space-between" gap={2}>
+                  {/* Add Customer Button */}
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleAddCustomer()}
+                    disabled={!selectedCustomerIds.length}
+                  >
+                    Add
+                  </Button>
+
+                  {/* Update customer segment Button */}
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleSubmit}
+                    // disabled={loading || submitted}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 550,
+                    }}
+                  >
+                    {loading ? <CircularProgress size={24} /> : "Update"}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
 
             {segmentCustomers.length ? (
               <Box sx={{ maxWidth: 500, mx: "auto", mt: 2 }}>

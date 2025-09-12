@@ -531,7 +531,10 @@ const CustomerSegmentList = () => {
         <CustomerSegmentEditPage
           segmentId={selectedSegmentId}
           setSelectedSegmentId={setSelectedSegmentId}
-          onClose={handleCloseDrawer}
+          onClose={() => {
+            loadSegments(searchName.trim(), pageSize, pageNumber);
+            handleCloseDrawer();
+          }}
         />
       ) : null}
     </Box>

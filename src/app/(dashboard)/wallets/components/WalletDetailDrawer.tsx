@@ -39,6 +39,7 @@ interface WalletTransaction {
   id: number;
   type: "earn" | "burn" | "expire" | "adjustment";
   amount: number;
+  point_balance: number;
   status: "pending" | "active" | "expired";
   created_at: string;
   description?: string;
@@ -290,10 +291,11 @@ export default function WalletDetailDrawer({
                   <TableCell>ID</TableCell>
                   <TableCell>Type</TableCell>
                   <TableCell>Amount</TableCell>
+                  <TableCell>Point</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Reason</TableCell>
                   <TableCell>Date</TableCell>
-                  <TableCell>Order</TableCell>
+                  {/* <TableCell>Order</TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -302,12 +304,13 @@ export default function WalletDetailDrawer({
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{tx.type}</TableCell>
                     <TableCell>{tx.amount}</TableCell>
+                    <TableCell>{tx?.point_balance}</TableCell>
                     <TableCell>{tx.status}</TableCell>
                     <TableCell>{tx.description}</TableCell>
                     <TableCell>
                       {new Date(tx.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       {tx?.orders && (
                         <IconButton
                           onClick={() => {
@@ -321,7 +324,7 @@ export default function WalletDetailDrawer({
                           />
                         </IconButton>
                       )}
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))}
               </TableBody>

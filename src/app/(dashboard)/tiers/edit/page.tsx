@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Grid,
   IconButton,
+  InputAdornment,
   MenuItem,
   TextField,
   Tooltip,
@@ -55,6 +56,9 @@ const EditTierForm = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [description, setDescription] = useState<string>("");
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
     { name_en: "", name_ar: "", icon: "" },
   ]);
@@ -171,6 +175,29 @@ const EditTierForm = ({ onSuccess }: any) => {
       </Box>
     );
   }
+
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        return res?.data?.data;
+      }
+      return "";
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -408,6 +435,29 @@ const EditTierForm = ({ onSuccess }: any) => {
                             const newInputs = [...benefitsInputs];
                             newInputs[index].name_en = e.target.value;
                             setBenefitsInputs(newInputs);
+                          }}
+                          onBlur={async (e) => {
+                            if (e.target.value.trim()) {
+                              const translated = await handleArabictranslate(
+                                `benefit_${index}`,
+                                e.target.value
+                              );
+
+                              if (translated?.success !== false) {
+                                const newInputs = [...benefitsInputs];
+                                newInputs[index].name_ar = translated || "";
+                                setBenefitsInputs(newInputs);
+                              }
+                            }
+                          }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                {translationLoading[`benefit_${index}`] && (
+                                  <CircularProgress size={20} />
+                                )}
+                              </InputAdornment>
+                            ),
                           }}
                         />
                         <TextField

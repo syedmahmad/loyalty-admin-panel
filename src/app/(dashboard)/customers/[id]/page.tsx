@@ -85,11 +85,7 @@ export default function CustomerDetail() {
         couponSearchValue,
       });
     }
-  }, [
-    customerId,
-    pointSearchValue,
-    couponSearchValue,
-  ]);
+  }, [customerId, pointSearchValue, couponSearchValue]);
 
   if (loading) {
     return (
@@ -231,6 +227,7 @@ export default function CustomerDetail() {
             <TableHead>
               <TableRow>
                 <TableCell>Description</TableCell>
+                <TableCell>Amount</TableCell>
                 <TableCell>Points</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell>Date</TableCell>
@@ -241,6 +238,7 @@ export default function CustomerDetail() {
                 <TableRow key={idx}>
                   <TableCell>{point.description}</TableCell>
                   <TableCell>{point.amount}</TableCell>
+                  <TableCell>{point?.point_balance}</TableCell>
                   <TableCell>
                     <Chip
                       label={point.type}
