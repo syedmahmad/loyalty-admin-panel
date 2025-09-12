@@ -522,7 +522,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
             <Grid item xs={12}>
               <InfoLabel
-                label="Max Redeemable Points"
+                label="Max Redeemable Points in single transaction"
                 tooltip="Max points a user can burn in a transaction."
               />
               <TextField
