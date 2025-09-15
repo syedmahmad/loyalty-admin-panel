@@ -80,6 +80,7 @@ const CouponList = () => {
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get("drawer");
   const drawerId = searchParams.get("id");
+  const drawerType = searchParams.get("type");
   const handleCloseDrawer = () => {
     router.push("/coupons/view");
   };
@@ -236,6 +237,19 @@ const CouponList = () => {
             }}
           >
             Create
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() =>
+              router.push("/coupons/view?drawer=create&type=bulkupload")
+            }
+            sx={{
+              backgroundColor: "#fff",
+              fontFamily: "Outfit",
+              fontWeight: 600,
+            }}
+          >
+            Bulk Upload
           </Button>
         </Box>
       </Box>
@@ -700,8 +714,11 @@ const CouponList = () => {
         <BaseDrawer
           open={drawerOpen === "create"}
           onClose={handleCloseDrawer}
-          title="Create Coupon"
+          title={
+            drawerType == "bulkupload" ? "Upload Coupons" : "Create Coupon"
+          }
           width={drawerWidth}
+          drawerType={drawerType}
         >
           <CouponCreate
             onSuccess={() => {
@@ -709,6 +726,7 @@ const CouponList = () => {
               fetchCoupons(search, selectedBU, pageNumber, pageSize);
             }}
             handleDrawerWidth={handleDrawerWidth}
+            drawerType={drawerType}
           />
         </BaseDrawer>
 

@@ -147,3 +147,5 @@ export const REWARD_CONDITIONS = [
     value: "minimum",
   },
 ];
+
+export const DRAWER_TYPE_BULK_UPLOAD = "bulkupload";

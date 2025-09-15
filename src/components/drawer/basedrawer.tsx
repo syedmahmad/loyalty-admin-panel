@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Drawer,
@@ -6,8 +6,10 @@ import {
   Typography,
   Box,
   Divider,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+  Button,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { DRAWER_TYPE_BULK_UPLOAD } from "@/constants/constants";
 
 type BaseDrawerProps = {
   open: boolean;
@@ -15,12 +17,22 @@ type BaseDrawerProps = {
   title: string;
   children: React.ReactNode;
   width?: number;
+  drawerType?: string | null;
 };
 
-const BaseDrawer = ({ open, onClose, title, children, width = 400 }: BaseDrawerProps) => {
+const BaseDrawer = ({
+  open,
+  onClose,
+  title,
+  children,
+  width = 400,
+  drawerType,
+}: BaseDrawerProps) => {
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box sx={{ width, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box
+        sx={{ width, display: "flex", flexDirection: "column", height: "100%" }}
+      >
         {/* Header */}
         <Box
           display="flex"
@@ -31,6 +43,21 @@ const BaseDrawer = ({ open, onClose, title, children, width = 400 }: BaseDrawerP
           <Typography fontSize="20px" fontWeight={600}>
             {title}
           </Typography>
+
+          {drawerType === DRAWER_TYPE_BULK_UPLOAD && (
+            <Button
+              variant="outlined"
+              color="primary"
+              type="submit"
+              sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+              onClick={() => {
+                window.location.href = "/Coupons.csv";
+              }}
+            >
+              Download Template
+            </Button>
+          )}
+
           <IconButton onClick={onClose}>
             <CloseIcon />
           </IconButton>
@@ -39,7 +66,7 @@ const BaseDrawer = ({ open, onClose, title, children, width = 400 }: BaseDrawerP
         <Divider />
 
         {/* Content */}
-        <Box p={2} sx={{ overflowY: 'auto', flex: 1 }}>
+        <Box p={2} sx={{ overflowY: "auto", flex: 1 }}>
           {children}
         </Box>
       </Box>

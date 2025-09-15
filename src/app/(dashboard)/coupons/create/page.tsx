@@ -5,6 +5,8 @@ import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
   discountTypes,
+  DRAWER_TYPE,
+  DRAWER_TYPE_BULK_UPLOAD,
   tooltipMessages,
   tooltipMessagesValidityAfterAssignment,
 } from "@/constants/constants";
@@ -64,9 +66,14 @@ type Benefit = {
   name_en: string;
   name_ar: string;
   icon: string;
+  drawerType?: string;
 };
 
-const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
+const CreateCouponForm = ({
+  onSuccess,
+  handleDrawerWidth,
+  drawerType,
+}: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
@@ -87,6 +94,8 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
   ]);
   const [file, setFile] = useState<File | null>(null);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  const [selectedCouponCsv, setSelectedCouponCsv] = useState<File | null>(null);
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -151,7 +160,11 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     },
     validationSchema: Yup.object({
       coupon_title: Yup.string().required("Coupon title is required"),
-      code: Yup.string().required("Code is required"),
+      code: Yup.string().when([], {
+        is: () => drawerType !== "bulkupload",
+        then: (schema) => schema.required("Code is required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
       discount_price: Yup.number()
         .typeError("Discount price must be a number")
         .min(0, "Discount price cannot be negative"),
@@ -202,7 +215,12 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
   };
 
   const fetchCouponTypes = async () => {
-    const res = await GET("/coupon-types");
+    let query = "/coupon-types";
+    if (drawerType === DRAWER_TYPE_BULK_UPLOAD) {
+      query = "/coupon-types?id=10";
+    }
+
+    const res = await GET(query);
     setCouponTypes(res?.data.couponTypes || []);
   };
 
@@ -530,32 +548,79 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       terms_and_conditions_en: termsAndConditionsEn || "",
       terms_and_conditions_ar: termsAndConditionsAr || "",
       all_users: values.all_users,
+      ...(selectedCouponCsv ? { file: selectedCouponCsv } : {}),
     }));
 
-    const responses = await Promise.all(
-      payloads.map(async (payload) => {
-        try {
-          const res = await POST("/coupons", payload);
-          return { success: true, status: res?.status, data: res?.data };
-        } catch (error: any) {
-          return {
-            success: false,
-            status: error?.response?.status || 500,
-            message: error?.response?.data?.message || "Unknown error",
-          };
-        }
-      })
-    );
-    const anyFailed = responses.some((res) => res?.status !== 201);
-    if (anyFailed) {
-      setLoading(false);
-      toast.error("failed to create coupon");
+    if (drawerType === DRAWER_TYPE_BULK_UPLOAD) {
+      const responses = await Promise.all(
+        payloads.map(async (payload, i) => {
+          try {
+            const formData = new FormData();
+
+            // build FormData for this payload
+            Object.entries(payload).forEach(([key, value]) => {
+              if (value !== null && value !== undefined) {
+                if (key === "file") {
+                  formData.append("file", value as any); // 👈 file no index
+                } else if (typeof value === "object") {
+                  formData.append(key, JSON.stringify(value));
+                } else {
+                  formData.append(key, value as any); // no [i], since each request is per payload
+                }
+              }
+            });
+
+            const res = await POST("/coupons/upload", formData, {
+              headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            return { success: true, status: res?.status, data: res?.data };
+          } catch (error: any) {
+            return {
+              success: false,
+              status: error?.response?.status || 500,
+              message: error?.response?.data?.message || "Unknown error",
+            };
+          }
+        })
+      );
+      const anyFailed = responses.some((res) => res?.status !== 201);
+      if (anyFailed) {
+        setLoading(false);
+        toast.error("failed to create coupon");
+      } else {
+        toast.success("coupons created successfully!");
+        resetForm();
+        setBenefits("");
+        setLoading(false);
+        onSuccess();
+      }
     } else {
-      toast.success("coupons created successfully!");
-      resetForm();
-      setBenefits("");
-      setLoading(false);
-      onSuccess();
+      const responses = await Promise.all(
+        payloads.map(async (payload) => {
+          try {
+            const res = await POST("/coupons", payload);
+            return { success: true, status: res?.status, data: res?.data };
+          } catch (error: any) {
+            return {
+              success: false,
+              status: error?.response?.status || 500,
+              message: error?.response?.data?.message || "Unknown error",
+            };
+          }
+        })
+      );
+      const anyFailed = responses.some((res) => res?.status !== 201);
+      if (anyFailed) {
+        setLoading(false);
+        toast.error("failed to create coupon");
+      } else {
+        toast.success("coupons created successfully!");
+        resetForm();
+        setBenefits("");
+        setLoading(false);
+        onSuccess();
+      }
     }
   };
 
@@ -786,6 +851,23 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     }
   };
 
+  const handleUploadCsvFile = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    if (
+      selectedFile.type !== "text/csv" &&
+      !selectedFile.name.endsWith(".csv")
+    ) {
+      toast.error("Only CSV files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    setSelectedCouponCsv(selectedFile);
+  };
+
   return (
     <>
       <form onSubmit={formik.handleSubmit}>
@@ -830,53 +912,83 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
             />
           </Grid>
 
-          {/* Coupon Code */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Generate code"
-              value={values.code}
-              name="code"
-              onChange={handleChange}
-              disabled
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Button
-                      onClick={() => {
-                        const generatedCode = generateRandomCode();
-                        setFieldValue("code", generatedCode);
-                      }}
-                      variant="contained"
-                      sx={{
-                        height: "100%",
-                        borderRadius: 0,
-                        padding: "20px 16px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Generate
-                    </Button>
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: 2,
-                  paddingRight: 0,
-                  overflow: "hidden",
-                },
-              }}
-              error={!!touched.code && !!errors.code}
-              helperText={touched.code && errors.code}
-            />
-          </Grid>
+          {/* Bulk Upload coupon Upload csv */}
+          {drawerType == DRAWER_TYPE_BULK_UPLOAD ? (
+            <Grid item xs={12}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  Upload File
+                  <input
+                    type="file"
+                    hidden
+                    name="file"
+                    onChange={(e) => handleUploadCsvFile(e)}
+                    accept=".csv,text/csv"
+                  />
+                </Button>
+                {selectedCouponCsv && selectedCouponCsv?.name && (
+                  <Box>{selectedCouponCsv?.name}</Box>
+                )}
+              </Box>
+            </Grid>
+          ) : (
+            // Coupon Code
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Generate code"
+                value={values.code}
+                name="code"
+                onChange={handleChange}
+                disabled
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        onClick={() => {
+                          const generatedCode = generateRandomCode();
+                          setFieldValue("code", generatedCode);
+                        }}
+                        variant="contained"
+                        sx={{
+                          height: "100%",
+                          borderRadius: 0,
+                          padding: "20px 16px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Generate
+                      </Button>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: 2,
+                    paddingRight: 0,
+                    overflow: "hidden",
+                  },
+                }}
+                error={!!touched.code && !!errors.code}
+                helperText={touched.code && errors.code}
+              />
+            </Grid>
+          )}
 
           {/* Dynamic CouponType Rows */}
           {dynamicCouponTypesRows.map(
             (dynamicCouponTypesRow, couponTypesRowIndex) => (
               <Grid item xs={12} key={couponTypesRowIndex}>
                 <Grid container spacing={1}>
-                  <Grid item xs={11}>
+                  <Grid
+                    item
+                    xs={drawerType !== DRAWER_TYPE_BULK_UPLOAD ? 11 : 12}
+                  >
                     <Box
                       border={1}
                       borderColor="grey.400"
@@ -1234,23 +1346,26 @@ const CreateCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={1}>
-                    {couponTypesRowIndex === 0 && (
-                      <IconButton onClick={handleAddCouponTypeRows}>
-                        <AddIcon fontSize="small" color="primary" />
-                      </IconButton>
-                    )}
+                  {/* if drawer type is bulk upload then hide add or remove button */}
+                  {drawerType !== DRAWER_TYPE_BULK_UPLOAD && (
+                    <Grid item xs={1}>
+                      {couponTypesRowIndex === 0 && (
+                        <IconButton onClick={handleAddCouponTypeRows}>
+                          <AddIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      )}
 
-                    {couponTypesRowIndex >= 1 && (
-                      <IconButton
-                        onClick={() =>
-                          handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
-                        }
-                      >
-                        <DeleteIcon fontSize="small" color="error" />
-                      </IconButton>
-                    )}
-                  </Grid>
+                      {couponTypesRowIndex >= 1 && (
+                        <IconButton
+                          onClick={() =>
+                            handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
+                          }
+                        >
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      )}
+                    </Grid>
+                  )}
                 </Grid>
               </Grid>
             )
