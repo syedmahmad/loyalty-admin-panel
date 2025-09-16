@@ -5,10 +5,9 @@ import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
   discountTypes,
-  DRAWER_TYPE,
   DRAWER_TYPE_BULK_UPLOAD,
   tooltipMessages,
-  tooltipMessagesValidityAfterAssignment,
+  tooltipMessagesValidityAfterAssignment
 } from "@/constants/constants";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
@@ -32,7 +31,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import {
@@ -43,7 +42,6 @@ import {
   Model,
   Tier,
 } from "../types";
-import { debounce } from "lodash";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
