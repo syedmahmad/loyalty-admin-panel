@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build:prod": "sh bin/build_prod.sh",
-    "build:dev": "sh bin/build_dev.sh",
+    "build:app": "sh bin/build_app.sh",
     "dev": "node -r newrelic ./node_modules/.bin/next dev --turbopack",
     "build": "node -r newrelic ./node_modules/.bin/next build",
     "start": "node -r newrelic ./node_modules/.bin/next start",
