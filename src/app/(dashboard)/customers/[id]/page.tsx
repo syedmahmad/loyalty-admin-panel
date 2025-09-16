@@ -689,7 +689,7 @@ export default function CustomerDetail() {
                   bUId,
                   assignedCouponPage - 1,
                   pageSize,
-                  usageCouponSearchQuery
+                  assignedCouponSearchQuery
                 );
               }
             }}
@@ -715,7 +715,7 @@ export default function CustomerDetail() {
                   bUId,
                   value,
                   pageSize,
-                  usageCouponSearchQuery
+                  assignedCouponSearchQuery
                 );
               }
             }}
@@ -744,7 +744,7 @@ export default function CustomerDetail() {
                   bUId,
                   assignedCouponPage + 1,
                   pageSize,
-                  usageCouponSearchQuery
+                  assignedCouponSearchQuery
                 );
               }
             }}
