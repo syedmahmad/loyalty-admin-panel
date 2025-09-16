@@ -97,11 +97,11 @@ export default function CustomerDetail() {
     bUId: number,
     assignedCouponPage: number,
     pageSize: number,
-    setAssignedCouponSearchQuery: string
+    assignedCouponSearchQuery: string
   ) => {
     try {
       const response: any = await POST(
-        `/coupons/assigned-coupons?search=${setAssignedCouponSearchQuery}`,
+        `/coupons/assigned-coupons?search=${assignedCouponSearchQuery}`,
         {
           customerId,
           bUId,
@@ -688,7 +688,8 @@ export default function CustomerDetail() {
                   customerUuid,
                   bUId,
                   assignedCouponPage - 1,
-                  pageSize
+                  pageSize,
+                  usageCouponSearchQuery
                 );
               }
             }}
@@ -709,7 +710,13 @@ export default function CustomerDetail() {
             page={assignedCouponPage}
             onChange={(_, value) => {
               if (bUId !== undefined) {
-                fetchAssignedCoupon(customerUuid, bUId, value, pageSize);
+                fetchAssignedCoupon(
+                  customerUuid,
+                  bUId,
+                  value,
+                  pageSize,
+                  usageCouponSearchQuery
+                );
               }
             }}
             shape="rounded"
@@ -736,7 +743,8 @@ export default function CustomerDetail() {
                   customerUuid,
                   bUId,
                   assignedCouponPage + 1,
-                  pageSize
+                  pageSize,
+                  usageCouponSearchQuery
                 );
               }
             }}
