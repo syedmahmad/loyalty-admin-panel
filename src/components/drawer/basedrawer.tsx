@@ -18,6 +18,7 @@ type BaseDrawerProps = {
   children: React.ReactNode;
   width?: number;
   drawerType?: string | null;
+  drawerFor?: string | null;
 };
 
 const BaseDrawer = ({
@@ -27,6 +28,7 @@ const BaseDrawer = ({
   children,
   width = 400,
   drawerType,
+  drawerFor,
 }: BaseDrawerProps) => {
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -51,7 +53,10 @@ const BaseDrawer = ({
               type="submit"
               sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
               onClick={() => {
-                window.location.href = "/Coupons.csv";
+                window.location.href =
+                  drawerFor == "customerSegment"
+                    ? "/Customer_Segment_Example.csv"
+                    : "/Coupons.csv";
               }}
             >
               Download Template

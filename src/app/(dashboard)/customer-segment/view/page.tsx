@@ -513,6 +513,8 @@ const CustomerSegmentList = () => {
                 : "Create Customer Segment"
             }
             width={drawerType ? 800 : undefined}
+            drawerType={drawerType}
+            drawerFor="customerSegment"
           >
             <CreateCustomerSegment
               onSuccess={() => {
