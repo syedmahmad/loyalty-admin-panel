@@ -39,6 +39,7 @@ import CustomerSegmentEditPage from "./components/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
+import { DRAWER_TYPE_BULK_UPLOAD } from "@/constants/constants";
 
 type CustomerSegment = {
   id: number;
@@ -69,6 +70,7 @@ const CustomerSegmentList = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get("drawer");
+  const drawerType = searchParams.get("type");
   const drawerId = searchParams.get("id");
   const [selectedSegment, setSelectedSegment] =
     useState<null | CustomerSegment>(null);
@@ -164,6 +166,22 @@ const CustomerSegmentList = () => {
             }}
           >
             Create
+          </Button>
+
+          <Button
+            variant="outlined"
+            onClick={() =>
+              router.push(
+                "/customer-segment/view?drawer=create&type=bulkupload"
+              )
+            }
+            sx={{
+              backgroundColor: "#fff",
+              fontFamily: "Outfit",
+              fontWeight: 600,
+            }}
+          >
+            Bulk Upload
           </Button>
         </Box>
       </Box>
@@ -489,13 +507,19 @@ const CustomerSegmentList = () => {
           <BaseDrawer
             open={drawerOpen === "create"}
             onClose={handleCloseDrawer}
-            title="Create Customer Segment"
+            title={
+              drawerType == DRAWER_TYPE_BULK_UPLOAD
+                ? "Upload Customer Segment"
+                : "Create Customer Segment"
+            }
+            width={drawerType ? 800 : undefined}
           >
             <CreateCustomerSegment
               onSuccess={() => {
                 loadSegments(searchName.trim(), pageSize, pageNumber);
                 handleCloseDrawer();
               }}
+              drawerType={drawerType}
             />
           </BaseDrawer>
         }

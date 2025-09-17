@@ -7,7 +7,7 @@ import {
   discountTypes,
   DRAWER_TYPE_BULK_UPLOAD,
   tooltipMessages,
-  tooltipMessagesValidityAfterAssignment
+  tooltipMessagesValidityAfterAssignment,
 } from "@/constants/constants";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
@@ -135,6 +135,7 @@ const CreateCouponForm = ({
       coupon_type: "",
       discount_type: "fixed_discount",
       discount_price: 0,
+      upto_amount: 0,
       usage_limit: 1,
       business_unit_ids: [] as number[],
       once_per_customer: 0,
@@ -523,6 +524,7 @@ const CreateCouponForm = ({
       },
       discount_type: values.discount_type,
       discount_price: values.discount_price || 0,
+      upto_amount: values.upto_amount || 0,
       // once_per_customer: values.once_per_customer,
       max_usage_per_user: values.max_usage_per_user,
       reuse_interval: values.reuse_interval || 0,
@@ -1421,6 +1423,39 @@ const CreateCouponForm = ({
               helperText={touched.discount_price && errors.discount_price}
             />
           </Grid>
+
+          {/* Up to Amount */}
+          {values.discount_type === "percentage" && (
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="upto_amount"
+                label="Up to Amount"
+                type="number"
+                inputProps={{ min: 0 }}
+                value={values.upto_amount}
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: selectedCouponType ? (
+                    <InputAdornment position="end">
+                      <Tooltip
+                        title={
+                          tooltipMessages.discountPrice[selectedCouponType] ||
+                          ""
+                        }
+                      >
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ) : null,
+                }}
+                error={!!touched.upto_amount && !!errors.upto_amount}
+                helperText={touched.upto_amount && errors.upto_amount}
+              />
+            </Grid>
+          )}
 
           {/* Usage Limit */}
           <Grid item xs={12}>

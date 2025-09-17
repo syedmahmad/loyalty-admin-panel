@@ -13,6 +13,7 @@ export type CouponFormValues = {
   general_error_message_ar: string;
   general_error_message_en: string;
   discount_price: number;
+  upto_amount: number;
   code: string;
   coupon_type: string;
   discount_type: string;

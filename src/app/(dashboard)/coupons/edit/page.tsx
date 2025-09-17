@@ -5,8 +5,10 @@ import {
   COUPON_TYPE,
   COUPON_TYPE_ARRAY,
   discountTypes,
+  MAX_USAGE_PER_USER,
   tooltipMessages,
   tooltipMessagesValidityAfterAssignment,
+  USAGE_LIMIT,
 } from "@/constants/constants";
 import { GET, POST, PUT } from "@/utils/AxiosUtility";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
@@ -234,6 +236,43 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
       fetchPrefilledRows();
     }
+
+    // if this coupon imported from external system
+    if (couponData?.external_system_id) {
+      console.log("external_system_id", dynamicCouponTypesRows, couponData);
+      setSelectedCouponTypeId(10); // value 10 FOR couponTypes = DISCOUNT
+      const selectedCouponTypeInfo: any = couponTypes.find(
+        (singleCouponType: any) => {
+          if (singleCouponType.id === 10) {
+            return singleCouponType;
+          }
+        }
+      );
+
+      setDynamicCouponTypesRows((prev) =>
+        prev.map((row) => {
+          return {
+            ...row,
+            coupon_type: "10", // value 10 FOR couponTypes = DISCOUNT
+            conditionOfCouponTypes: selectedCouponTypeInfo?.conditions || [],
+            dynamicRows: [
+              {
+                id: generateId(),
+                type: "Total Purchase Amount",
+                operator: ">=",
+                value: couponData?.min_transaction_amount || 0,
+                model_name: "",
+                make_name: "",
+                variant_names: [],
+                models: [],
+                variants: [],
+              },
+            ],
+            selectedCouponType: COUPON_TYPE.DISCOUNT,
+          };
+        })
+      );
+    }
   }, [couponData]);
 
   useEffect(() => {
@@ -405,6 +444,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       coupon_type: couponData?.coupon_type_id || "",
       discount_type: couponData?.discount_type || "fixed_discount",
       discount_price: couponData?.discount_price || 0,
+      upto_amount: couponData?.upto_amount || 0,
       usage_limit: couponData?.usage_limit || 1,
       business_unit_ids: couponData?.business_unit_id
         ? [couponData.business_unit_id]
@@ -602,6 +642,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       },
       discount_type: values.discount_type,
       discount_price: values.discount_price || 0,
+      upto_amount: values.upto_amount || 0,
       // once_per_customer: values.once_per_customer,
       max_usage_per_user: values.max_usage_per_user || 0,
       reuse_interval: values.reuse_interval,
@@ -1388,39 +1429,70 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
               )
             )}
 
-            <>
-              {/* Discount Type */}
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  name="discount_type"
-                  label="Discount Type"
-                  value={values?.discount_type}
-                  onChange={handleChange}
-                  error={!!touched.discount_type && !!errors.discount_type}
-                  helperText={touched.discount_type && errors.discount_type}
-                >
-                  {discountTypes?.map((eachDiscountType) => (
-                    <MenuItem
-                      key={eachDiscountType.value}
-                      value={eachDiscountType.value}
-                    >
-                      {eachDiscountType.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+            {/* Discount Type */}
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                name="discount_type"
+                label="Discount Type"
+                value={values?.discount_type}
+                onChange={handleChange}
+                error={!!touched.discount_type && !!errors.discount_type}
+                helperText={touched.discount_type && errors.discount_type}
+              >
+                {discountTypes?.map((eachDiscountType) => (
+                  <MenuItem
+                    key={eachDiscountType.value}
+                    value={eachDiscountType.value}
+                  >
+                    {eachDiscountType.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
 
-              {/*  Discount Amount */}
+            {/*  Discount Amount */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="discount_price"
+                label="Discount Amount"
+                type="number"
+                inputProps={{ min: 0 }}
+                value={values.discount_price}
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: selectedCouponType ? (
+                    <InputAdornment position="end">
+                      <Tooltip
+                        title={
+                          tooltipMessages.discountPrice[selectedCouponType] ||
+                          ""
+                        }
+                      >
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ) : null,
+                }}
+                error={!!touched.discount_price && !!errors.discount_price}
+                helperText={touched.discount_price && errors.discount_price}
+              />
+            </Grid>
+
+            {/* Up to Amount */}
+            {values.discount_type === "percentage" && (
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="discount_price"
-                  label="Discount Amount"
+                  name="upto_amount"
+                  label="Up to Amount"
                   type="number"
                   inputProps={{ min: 0 }}
-                  value={values.discount_price}
+                  value={values.upto_amount}
                   onChange={handleChange}
                   InputProps={{
                     endAdornment: selectedCouponType ? (
@@ -1438,11 +1510,11 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       </InputAdornment>
                     ) : null,
                   }}
-                  error={!!touched.discount_price && !!errors.discount_price}
-                  helperText={touched.discount_price && errors.discount_price}
+                  error={!!touched.upto_amount && !!errors.upto_amount}
+                  helperText={touched.upto_amount && errors.upto_amount}
                 />
               </Grid>
-            </>
+            )}
 
             {/* Usage Limit */}
             <Grid item xs={12}>
@@ -1455,6 +1527,17 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 inputProps={{ min: 1 }}
                 value={values.usage_limit}
                 onChange={handleChange}
+                InputProps={{
+                  endAdornment: selectedCouponType ? (
+                    <InputAdornment position="end">
+                      <Tooltip title={USAGE_LIMIT || ""}>
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ) : null,
+                }}
                 error={!!touched.usage_limit && !!errors.usage_limit}
                 helperText={touched.usage_limit && errors.usage_limit}
               />
@@ -1496,6 +1579,17 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 inputProps={{ min: 0 }}
                 name="max_usage_per_user"
                 onChange={handleChange}
+                InputProps={{
+                  endAdornment: selectedCouponType ? (
+                    <InputAdornment position="end">
+                      <Tooltip title={MAX_USAGE_PER_USER || ""}>
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ) : null,
+                }}
                 error={
                   !!touched.max_usage_per_user && !!errors.max_usage_per_user
                 }
