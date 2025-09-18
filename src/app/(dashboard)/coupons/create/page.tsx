@@ -215,10 +215,6 @@ const CreateCouponForm = ({
 
   const fetchCouponTypes = async () => {
     let query = "/coupon-types";
-    if (drawerType === DRAWER_TYPE_BULK_UPLOAD) {
-      query = "/coupon-types?id=10";
-    }
-
     const res = await GET(query);
     setCouponTypes(res?.data.couponTypes || []);
   };
@@ -985,10 +981,7 @@ const CreateCouponForm = ({
             (dynamicCouponTypesRow, couponTypesRowIndex) => (
               <Grid item xs={12} key={couponTypesRowIndex}>
                 <Grid container spacing={1}>
-                  <Grid
-                    item
-                    xs={drawerType !== DRAWER_TYPE_BULK_UPLOAD ? 11 : 12}
-                  >
+                  <Grid item xs={11}>
                     <Box
                       border={1}
                       borderColor="grey.400"
@@ -1346,26 +1339,23 @@ const CreateCouponForm = ({
                     </Box>
                   </Grid>
 
-                  {/* if drawer type is bulk upload then hide add or remove button */}
-                  {drawerType !== DRAWER_TYPE_BULK_UPLOAD && (
-                    <Grid item xs={1}>
-                      {couponTypesRowIndex === 0 && (
-                        <IconButton onClick={handleAddCouponTypeRows}>
-                          <AddIcon fontSize="small" color="primary" />
-                        </IconButton>
-                      )}
+                  <Grid item xs={1}>
+                    {couponTypesRowIndex === 0 && (
+                      <IconButton onClick={handleAddCouponTypeRows}>
+                        <AddIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    )}
 
-                      {couponTypesRowIndex >= 1 && (
-                        <IconButton
-                          onClick={() =>
-                            handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
-                          }
-                        >
-                          <DeleteIcon fontSize="small" color="error" />
-                        </IconButton>
-                      )}
-                    </Grid>
-                  )}
+                    {couponTypesRowIndex >= 1 && (
+                      <IconButton
+                        onClick={() =>
+                          handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
+                        }
+                      >
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    )}
+                  </Grid>
                 </Grid>
               </Grid>
             )
