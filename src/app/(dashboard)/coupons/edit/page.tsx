@@ -84,6 +84,21 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
+  /** images for Desktop and mobile start */
+  const [images, setImages] = useState({
+    desktop: { en: "", ar: "" },
+    mobile: { en: "", ar: "" },
+  });
+
+  const [uploading, setUploading] = useState<{
+    desktop: { en: boolean; ar: boolean };
+    mobile: { en: boolean; ar: boolean };
+  }>({
+    desktop: { en: false, ar: false },
+    mobile: { en: false, ar: false },
+  });
+  /** images for Desktop and mobile end*/
+
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
     const res = await GET(`/customer-segments/${clientInfo.id}`);
@@ -386,6 +401,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     );
     setTermsAndConditionsEn(res.data.terms_and_conditions_en || "");
     setTermsAndConditionsAr(res.data.terms_and_conditions_ar || "");
+    setImages(res?.data?.images);
     setLoading(false);
   };
 
@@ -666,6 +682,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       terms_and_conditions_en: termsAndConditionsEn || "",
       terms_and_conditions_ar: termsAndConditionsAr || "",
       all_users: values.all_users,
+      images: images,
     }));
 
     const responses = await Promise.all(
@@ -925,6 +942,49 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       console.error("Upload failed", err);
     } finally {
       setUploadingIndex(null); // stop loader
+    }
+  };
+
+  const uploadImageToBucket = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    device: "desktop" | "mobile",
+    lang: "en" | "ar"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_SIZE) {
+      toast.error("File size should not exceed 5 MB");
+      return;
+    }
+
+    setUploading((prev) => ({
+      ...prev,
+      [device]: { ...prev[device], [lang]: true },
+    }));
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await POST("/coupons/upload-image-to-bucket", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res?.data.success) {
+        setImages((prev) => ({
+          ...prev,
+          [device]: { ...prev[device], [lang]: res.data.uploaded_url },
+        }));
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading((prev) => ({
+        ...prev,
+        [device]: { ...prev[device], [lang]: false },
+      }));
     }
   };
 
@@ -2002,6 +2062,164 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 language="en"
               /> */}
             </Grid>
+
+            {/* Desktop and mobile image start*/}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Desktop image (English)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading.desktop.en ? (
+                    <CircularProgress size={18} />
+                  ) : images.desktop.en ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "desktop", "en")}
+                  />
+                </Button>
+
+                {images.desktop.en && (
+                  <Box mt={1}>
+                    <img
+                      src={images.desktop.en}
+                      alt="Desktop English Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Desktop image (Arabic)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading.desktop.ar ? (
+                    <CircularProgress size={18} />
+                  ) : images.desktop.ar ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "desktop", "ar")}
+                  />
+                </Button>
+
+                {images.desktop.ar && (
+                  <Box mt={1}>
+                    <img
+                      src={images.desktop.ar}
+                      alt="Desktop Arabic Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Mobile image (English)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading.mobile.en ? (
+                    <CircularProgress size={18} />
+                  ) : images.mobile.en ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "mobile", "en")}
+                  />
+                </Button>
+
+                {images.mobile.en && (
+                  <Box mt={1}>
+                    <img
+                      src={images.mobile.en}
+                      alt="Mobile English Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Mobile image (Arabic)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading.mobile.ar ? (
+                    <CircularProgress size={18} />
+                  ) : images.mobile.ar ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "mobile", "ar")}
+                  />
+                </Button>
+
+                {images.mobile.ar && (
+                  <Box mt={1}>
+                    <img
+                      src={images.mobile.ar}
+                      alt="Mobile Arabic Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+            {/* Desktop and mobile image end */}
 
             {/* Description English */}
             <Grid item xs={12}>
