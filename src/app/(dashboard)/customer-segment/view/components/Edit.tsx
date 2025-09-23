@@ -32,6 +32,7 @@ import { GET, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchAutoSuggest from "@/components/columnSearch/SearchAutoSuggest";
+import { BusinessUnit } from "@/app/(dashboard)/coupons/types";
 
 const fetchSegment = async (id: any) => {
   const response = await GET(`/customer-segments/view-customers/${id}`);
@@ -73,6 +74,15 @@ const removeCustomerFromSegment = async (
   );
 };
 
+const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
+  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+  const response = await GET(`/business-units/${clientInfo.id}`);
+  if (response?.status !== 200) {
+    throw new Error("Failed to fetch business units");
+  }
+  return response.data;
+};
+
 const CustomerSegmentEditPage = ({
   segmentId,
   setSelectedSegmentId,
@@ -87,6 +97,9 @@ const CustomerSegmentEditPage = ({
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [userSecret, setUserSecret] = useState<string>("");
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [selectedBusinessUnitId, setSelectedBusinessUnitId] =
+    useState<string>("");
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -123,7 +136,7 @@ const CustomerSegmentEditPage = ({
       setNameAr(segment.name_ar);
       setDescription(segment.description);
       setDescriptionAr(segment.description_ar);
-
+      setSelectedBusinessUnitId(segment.business_unit_id);
       setCustomers(allCustomers.data);
       setLoading(false);
     };
@@ -220,6 +233,7 @@ const CustomerSegmentEditPage = ({
         name_ar: nameAr,
         description_ar: descriptionAr,
         tenant_id: parsed.id,
+        business_unit_id: selectedBusinessUnitId,
         selected_customer_ids: selectedCustomerIds,
       };
 
@@ -244,6 +258,21 @@ const CustomerSegmentEditPage = ({
       setLoading(false);
     }
   };
+
+  const fetchBusinessUnitInfo = async () => {
+    setLoading(true);
+    try {
+      const [buData] = await Promise.all([fetchBusinessUnits()]);
+      setBusinessUnits(buData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get all businessunits
+  useEffect(() => {
+    fetchBusinessUnitInfo();
+  }, []);
 
   return (
     <>
@@ -288,6 +317,7 @@ const CustomerSegmentEditPage = ({
         ) : (
           <CardContent>
             <Grid container spacing={2}>
+              {/* Segment Name */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -305,6 +335,7 @@ const CustomerSegmentEditPage = ({
                 />
               </Grid>
 
+              {/* Segment Name Arabic */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -322,6 +353,7 @@ const CustomerSegmentEditPage = ({
                 />
               </Grid>
 
+              {/* Description */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -339,6 +371,7 @@ const CustomerSegmentEditPage = ({
                 />
               </Grid>
 
+              {/* Description Arabic */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -354,6 +387,25 @@ const CustomerSegmentEditPage = ({
                     ),
                   }}
                 />
+              </Grid>
+
+              {/* Business Unit */}
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  name="business_unit_id"
+                  label="Business Unit"
+                  SelectProps={{ multiple: false }}
+                  value={selectedBusinessUnitId}
+                  onChange={(e) => setSelectedBusinessUnitId(e.target.value)}
+                >
+                  {businessUnits.map((bu) => (
+                    <MenuItem key={bu.id} value={bu.id}>
+                      {bu.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
               {customers.filter(

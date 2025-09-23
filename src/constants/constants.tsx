@@ -149,3 +149,9 @@ export const REWARD_CONDITIONS = [
 ];
 
 export const DRAWER_TYPE_BULK_UPLOAD = "bulkupload";
+
+export const USAGE_LIMIT =
+  "Defines the maximum number of times a coupon can be redeemed.";
+
+export const MAX_USAGE_PER_USER =
+  "Maximum times a single user can use this coupon. Set to 0 for unlimited usage.";

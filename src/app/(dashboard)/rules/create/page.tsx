@@ -3,7 +3,7 @@
 import {
   Box,
   Button,
-  Card,
+  Alert,
   CircularProgress,
   MenuItem,
   TextField,
@@ -94,6 +94,8 @@ const RuleCreateForm = ({ onSuccess }: any) => {
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [allTiers, setAllTiers] = useState<any[]>([]);
+  const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate?: number }[]>([]);
   // const [selectedBurnType, setSelectedBurnType] =
   //   useState<BurnTypeOption | null>({
   //     label: "FIXED",
@@ -134,7 +136,32 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
 
+    for (const t of tiers) {
+      const tierInfo = allTiers.find(
+        (singleTier) => singleTier.id === t.tier_id
+      );
+
+      const rate = Number(t.point_conversion_rate);
+      if (isNaN(rate)) {
+        toast.error(
+          `The point conversion rate for the ${tierInfo.name} tier is required.`
+        );
+        return;
+      }
+
+      if (rate < 0) {
+        toast.error(
+          `The point conversion rate for the ${tierInfo.name} tier cannot be negative`
+        );
+        return;
+      }
+    }
+
     // const burnType = form.rule_type === "burn" ? selectedBurnType?.value : null;
+    const tiersPayload = tiers.map((t) => ({
+      tier_id: t.tier_id,
+      point_conversion_rate: Number(t.point_conversion_rate) || 1,
+    }));
 
     const payload = {
       name: form.name,
@@ -167,6 +194,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
           ? undefined
           : form.validity_after_assignment,
       frequency: form.frequency || "once",
+      tiers: tiersPayload,
       description,
       created_by,
       // burn_type: burnType,
@@ -213,6 +241,44 @@ const RuleCreateForm = ({ onSuccess }: any) => {
   useEffect(() => {
     fetchBusinessUnitInfo();
   }, []);
+
+  const isTierSelected = (id: number) => tiers.some((t) => t.tier_id === id);
+
+  const handleTierToggle = (tierId: number) => {
+    if (isTierSelected(tierId)) {
+      setTiers(tiers.filter((t) => t.tier_id !== tierId));
+    } else {
+      setTiers([...tiers, { tier_id: tierId, point_conversion_rate: 1 }]);
+    }
+  };
+
+  const handleConversionRateChange = (tierId: number, value?: number) => {
+    setTiers((prev) =>
+      prev.map((t) =>
+        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
+      )
+    );
+  };
+
+  useEffect(() => {
+    const fetchTiers = async () => {
+      try {
+        const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+        const response = await GET(`/tiers/${clientInfo.id}?bu=${form.business_unit_id}`);
+        if (response?.status === 200) {
+          setAllTiers(response.data.tiers || []);
+        } else {
+          toast.error("Failed to fetch tiers");
+        }
+      } catch (error) {
+        toast.error("An error occurred while fetching tiers");
+      }
+    };
+
+    if (form.business_unit_id) {
+      fetchTiers();
+    }
+  }, [form.business_unit_id]);
 
 
   return (
@@ -643,6 +709,72 @@ const RuleCreateForm = ({ onSuccess }: any) => {
             />
           </Grid>
         )}
+
+        <Grid
+          item
+          xs={12}
+          marginLeft="16px"
+          marginTop="16px"
+          border={`1px solid ${theme.palette.secondary.light}`}
+          borderRadius={2}
+          paddingRight={2}
+        >
+          <Typography variant="h4" color="primary">
+            Tiers
+          </Typography>
+          <Alert>
+            <Typography variant="body1">
+              You can select multiple tiers, once you select one you will see
+              point conversion factor, you can change that point conversion
+              fatcor for each tier customers so they get different benefits
+              according to there tier
+            </Typography>
+          </Alert>
+          <br />
+
+          <Grid container>
+            {allTiers.map((tier, index) => {
+              const selected = isTierSelected(tier.id);
+              const current = tiers.find((t) => t.tier_id === tier.id);
+              return (
+                <React.Fragment key={index}>
+                  <Grid item xs={4}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={selected}
+                          onChange={() => handleTierToggle(tier.id)}
+                        />
+                      }
+                      sx={{ mb: 2 }}
+                      label={tier.name}
+                    />
+                  </Grid>
+
+                  <Grid item xs={8}>
+                    {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Point Conversion Rate"
+                        value={current?.point_conversion_rate ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleConversionRateChange(
+                            tier.id,
+                            val === "" ? undefined : Number(val)
+                          );
+                        }}
+                        sx={{ mb: 2 }}
+                        inputProps={{ step: 0.01, min: 0 }}
+                      />
+                    {/* )} */}
+                  </Grid>
+                </React.Fragment>
+              );
+            })}
+          </Grid>
+        </Grid>
 
         {/* Description */}
         <Grid item xs={12}>

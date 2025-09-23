@@ -7,7 +7,7 @@ import {
   discountTypes,
   DRAWER_TYPE_BULK_UPLOAD,
   tooltipMessages,
-  tooltipMessagesValidityAfterAssignment
+  tooltipMessagesValidityAfterAssignment,
 } from "@/constants/constants";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
@@ -64,6 +64,7 @@ type Benefit = {
   name_en: string;
   name_ar: string;
   icon: string;
+  // icon_ar: string;
   drawerType?: string;
 };
 
@@ -94,6 +95,21 @@ const CreateCouponForm = ({
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   const [selectedCouponCsv, setSelectedCouponCsv] = useState<File | null>(null);
+
+  /** images for Desktop and mobile start */
+  const [images, setImages] = useState({
+    desktop: { en: "", ar: "" },
+    mobile: { en: "", ar: "" },
+  });
+
+  const [uploading, setUploading] = useState<{
+    desktop: { en: boolean; ar: boolean };
+    mobile: { en: boolean; ar: boolean };
+  }>({
+    desktop: { en: false, ar: false },
+    mobile: { en: false, ar: false },
+  });
+  /** images for Desktop and mobile end*/
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -135,6 +151,7 @@ const CreateCouponForm = ({
       coupon_type: "",
       discount_type: "fixed_discount",
       discount_price: 0,
+      upto_amount: 0,
       usage_limit: 1,
       business_unit_ids: [] as number[],
       once_per_customer: 0,
@@ -214,10 +231,6 @@ const CreateCouponForm = ({
 
   const fetchCouponTypes = async () => {
     let query = "/coupon-types";
-    if (drawerType === DRAWER_TYPE_BULK_UPLOAD) {
-      query = "/coupon-types?id=10";
-    }
-
     const res = await GET(query);
     setCouponTypes(res?.data.couponTypes || []);
   };
@@ -523,6 +536,7 @@ const CreateCouponForm = ({
       },
       discount_type: values.discount_type,
       discount_price: values.discount_price || 0,
+      upto_amount: values.upto_amount || 0,
       // once_per_customer: values.once_per_customer,
       max_usage_per_user: values.max_usage_per_user,
       reuse_interval: values.reuse_interval || 0,
@@ -547,6 +561,7 @@ const CreateCouponForm = ({
       terms_and_conditions_ar: termsAndConditionsAr || "",
       all_users: values.all_users,
       ...(selectedCouponCsv ? { file: selectedCouponCsv } : {}),
+      images: images,
     }));
 
     if (drawerType === DRAWER_TYPE_BULK_UPLOAD) {
@@ -820,7 +835,8 @@ const CreateCouponForm = ({
 
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    index: number
+    index: number,
+    iconType: string
   ) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
@@ -837,8 +853,10 @@ const CreateCouponForm = ({
       });
       if (res?.data.success) {
         setBenefitsInputs((prev) =>
-          prev.map((item, i) =>
-            i === index ? { ...item, icon: res?.data.uploaded_url } : item
+          prev.map(
+            (item, i) =>
+              i === index ? { ...item, icon: res?.data.uploaded_url } : item
+            // i === index ? { ...item, [iconType]: res?.data.uploaded_url } : item
           )
         );
       }
@@ -864,6 +882,49 @@ const CreateCouponForm = ({
       return;
     }
     setSelectedCouponCsv(selectedFile);
+  };
+
+  const uploadImageToBucket = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    device: "desktop" | "mobile",
+    lang: "en" | "ar"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_SIZE) {
+      toast.error("File size should not exceed 5 MB");
+      return;
+    }
+
+    setUploading((prev) => ({
+      ...prev,
+      [device]: { ...prev[device], [lang]: true },
+    }));
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await POST("/coupons/upload-image-to-bucket", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res?.data.success) {
+        setImages((prev) => ({
+          ...prev,
+          [device]: { ...prev[device], [lang]: res.data.uploaded_url },
+        }));
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading((prev) => ({
+        ...prev,
+        [device]: { ...prev[device], [lang]: false },
+      }));
+    }
   };
 
   return (
@@ -983,10 +1044,7 @@ const CreateCouponForm = ({
             (dynamicCouponTypesRow, couponTypesRowIndex) => (
               <Grid item xs={12} key={couponTypesRowIndex}>
                 <Grid container spacing={1}>
-                  <Grid
-                    item
-                    xs={drawerType !== DRAWER_TYPE_BULK_UPLOAD ? 11 : 12}
-                  >
+                  <Grid item xs={11}>
                     <Box
                       border={1}
                       borderColor="grey.400"
@@ -1344,26 +1402,23 @@ const CreateCouponForm = ({
                     </Box>
                   </Grid>
 
-                  {/* if drawer type is bulk upload then hide add or remove button */}
-                  {drawerType !== DRAWER_TYPE_BULK_UPLOAD && (
-                    <Grid item xs={1}>
-                      {couponTypesRowIndex === 0 && (
-                        <IconButton onClick={handleAddCouponTypeRows}>
-                          <AddIcon fontSize="small" color="primary" />
-                        </IconButton>
-                      )}
+                  <Grid item xs={1}>
+                    {couponTypesRowIndex === 0 && (
+                      <IconButton onClick={handleAddCouponTypeRows}>
+                        <AddIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    )}
 
-                      {couponTypesRowIndex >= 1 && (
-                        <IconButton
-                          onClick={() =>
-                            handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
-                          }
-                        >
-                          <DeleteIcon fontSize="small" color="error" />
-                        </IconButton>
-                      )}
-                    </Grid>
-                  )}
+                    {couponTypesRowIndex >= 1 && (
+                      <IconButton
+                        onClick={() =>
+                          handleDeleteCouponTypeRows(dynamicCouponTypesRow.id)
+                        }
+                      >
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    )}
+                  </Grid>
                 </Grid>
               </Grid>
             )
@@ -1421,6 +1476,39 @@ const CreateCouponForm = ({
               helperText={touched.discount_price && errors.discount_price}
             />
           </Grid>
+
+          {/* Up to Amount */}
+          {values.discount_type === "percentage" && (
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="upto_amount"
+                label="Up to Amount"
+                type="number"
+                inputProps={{ min: 0 }}
+                value={values.upto_amount}
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: selectedCouponType ? (
+                    <InputAdornment position="end">
+                      <Tooltip
+                        title={
+                          tooltipMessages.discountPrice[selectedCouponType] ||
+                          ""
+                        }
+                      >
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ) : null,
+                }}
+                error={!!touched.upto_amount && !!errors.upto_amount}
+                helperText={touched.upto_amount && errors.upto_amount}
+              />
+            </Grid>
+          )}
 
           {/* Usage Limit */}
           <Grid item xs={12}>
@@ -1778,6 +1866,8 @@ const CreateCouponForm = ({
               >
                 <Box display="flex" gap={2} flex={1} flexDirection="column">
                   <Box display="flex" alignItems="center" gap={2}>
+                    {/* English Image */}
+
                     <Button
                       variant="outlined"
                       component="label"
@@ -1790,15 +1880,15 @@ const CreateCouponForm = ({
                       {uploadingIndex === index ? (
                         <CircularProgress size={18} />
                       ) : input.icon ? (
-                        "Change Icon"
+                        "Change English Icon"
                       ) : (
-                        "Upload Icon"
+                        "Upload English Icon"
                       )}
                       <input
                         type="file"
                         hidden
                         accept="image/*"
-                        onChange={(e) => handleFileChange(e, index)}
+                        onChange={(e) => handleFileChange(e, index, "icon")}
                       />
                     </Button>
                     {input.icon && (
@@ -1810,6 +1900,43 @@ const CreateCouponForm = ({
                         />
                       </Box>
                     )}
+
+                    {/* Arabic Image */}
+                    {/* <div>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        size="small"
+                        sx={{ width: 150, height: 35 }}
+                        disabled={uploadingIndex === index}
+                      >
+                        {uploadingIndex === index ? (
+                          <CircularProgress size={18} />
+                        ) : input.icon_ar ? (
+                          "Change Arabic Icon"
+                        ) : (
+                          "Upload Arabic Icon "
+                        )}
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleFileChange(e, index, "icon_ar")
+                          }
+                        />
+                      </Button>
+                      {input.icon_ar && (
+                        <Box mt={1}>
+                          <img
+                            src={input.icon}
+                            alt="Benefit Icon"
+                            style={{ width: 33, height: 33, borderRadius: 2 }}
+                          />
+                        </Box>
+                      )}
+                    </div> */}
                   </Box>
 
                   <TextField
@@ -1885,6 +2012,164 @@ const CreateCouponForm = ({
               language="en"
             /> */}
           </Grid>
+
+          {/* Desktop and mobile image start*/}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Desktop image (English)
+            </Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                size="small"
+                sx={{ width: 150, height: 35 }}
+              >
+                {uploading.desktop.en ? (
+                  <CircularProgress size={18} />
+                ) : images.desktop.en ? (
+                  "Change Image"
+                ) : (
+                  "Upload Image"
+                )}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => uploadImageToBucket(e, "desktop", "en")}
+                />
+              </Button>
+
+              {images.desktop.en && (
+                <Box mt={1}>
+                  <img
+                    src={images.desktop.en}
+                    alt="Desktop English Image"
+                    style={{ width: 33, height: 33, borderRadius: 2 }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Desktop image (Arabic)
+            </Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                size="small"
+                sx={{ width: 150, height: 35 }}
+              >
+                {uploading.desktop.ar ? (
+                  <CircularProgress size={18} />
+                ) : images.desktop.ar ? (
+                  "Change Image"
+                ) : (
+                  "Upload Image"
+                )}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => uploadImageToBucket(e, "desktop", "ar")}
+                />
+              </Button>
+
+              {images.desktop.ar && (
+                <Box mt={1}>
+                  <img
+                    src={images.desktop.ar}
+                    alt="Desktop Arabic Image"
+                    style={{ width: 33, height: 33, borderRadius: 2 }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Mobile image (English)
+            </Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                size="small"
+                sx={{ width: 150, height: 35 }}
+              >
+                {uploading.mobile.en ? (
+                  <CircularProgress size={18} />
+                ) : images.mobile.en ? (
+                  "Change Image"
+                ) : (
+                  "Upload Image"
+                )}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => uploadImageToBucket(e, "mobile", "en")}
+                />
+              </Button>
+
+              {images.mobile.en && (
+                <Box mt={1}>
+                  <img
+                    src={images.mobile.en}
+                    alt="Mobile English Image"
+                    style={{ width: 33, height: 33, borderRadius: 2 }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Mobile image (Arabic)
+            </Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                size="small"
+                sx={{ width: 150, height: 35 }}
+              >
+                {uploading.mobile.ar ? (
+                  <CircularProgress size={18} />
+                ) : images.mobile.ar ? (
+                  "Change Image"
+                ) : (
+                  "Upload Image"
+                )}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => uploadImageToBucket(e, "mobile", "ar")}
+                />
+              </Button>
+
+              {images.mobile.ar && (
+                <Box mt={1}>
+                  <img
+                    src={images.mobile.ar}
+                    alt="Mobile Arabic Image"
+                    style={{ width: 33, height: 33, borderRadius: 2 }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Grid>
+          {/* Desktop and mobile image end */}
 
           {/* Description English */}
           <Grid item xs={12}>
