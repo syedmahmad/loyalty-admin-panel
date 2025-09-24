@@ -939,6 +939,7 @@ const RuleEdit = ({ onSuccess }: any) => {
               value={description}
               setValue={setDescription}
               language="en"
+              onBlur={(e: any) => {handleArabictranslate("description_ar", description, true)}}
             />
           </Grid>
           
