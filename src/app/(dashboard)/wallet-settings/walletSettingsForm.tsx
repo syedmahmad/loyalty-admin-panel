@@ -30,7 +30,7 @@ export default function WalletSettingsForm({
 }: any) {
   const [form, setForm] = useState({
     pending_method: 'none',
-    pending_days: '',
+    pending_days: 0,
     expiration_method: 'none',
     expiration_value: '',
   });
@@ -39,14 +39,14 @@ export default function WalletSettingsForm({
     if (existingData) {
       setForm({
         pending_method: existingData.pending_method || 'none',
-        pending_days: existingData.pending_days || '',
+        pending_days: existingData.pending_days || 0,
         expiration_method: existingData.expiration_method || 'none',
         expiration_value: existingData.expiration_value || '',
       });
     } else {
       setForm({
         pending_method: 'none',
-        pending_days: '',
+        pending_days: 0,
         expiration_method: 'none',
         expiration_value: '',
       });
