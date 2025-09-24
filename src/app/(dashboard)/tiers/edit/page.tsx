@@ -56,6 +56,8 @@ const EditTierForm = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [description, setDescription] = useState<string>("");
+  const [descriptionAr, setDescriptionAr] = useState<string>("");
+  const [nameAr, setNameAr] = useState<string>("");
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
@@ -123,6 +125,8 @@ const EditTierForm = ({ onSuccess }: any) => {
       business_unit_id: res.data.business_unit_id.toString(),
     });
     setDescription(res.data.description || "");
+    setNameAr(res.data.name_ar || "");
+    setDescriptionAr(res.data.description_ar || "");
     setBenefitsInputs(
       Array.isArray(res.data.benefits)
         ? res.data.benefits.map((item: any) =>
@@ -150,6 +154,8 @@ const EditTierForm = ({ onSuccess }: any) => {
     setLoading(true);
     const payload = {
       ...values,
+      name_ar: nameAr,
+      description_ar: descriptionAr,
       description: description || "",
       benefits: benefitsInputs || [],
       business_unit_id: values.business_unit_id,
@@ -179,13 +185,20 @@ const EditTierForm = ({ onSuccess }: any) => {
   const handleArabictranslate = async (
     key: string,
     value: string,
-    richEditor: boolean = false
+    richEditor: boolean = false,
+    notBenefits: boolean = false,
   ) => {
     try {
       setTranslationLoading((prev) => ({ ...prev, [key]: true }));
       const res = await POST("/openai/translate-to-arabic", { value });
-      if (res?.data.status) {
+      if (res?.data.status && !notBenefits) {
         return res?.data?.data;
+      } else {
+        if (richEditor) {
+          setDescriptionAr(res?.data?.data || "");
+        } else {
+          setNameAr(res?.data?.data)
+        }
       }
       return "";
     } catch (error: any) {
@@ -285,6 +298,27 @@ const EditTierForm = ({ onSuccess }: any) => {
                         ? errors.name
                         : undefined
                     }
+                    onBlur={(e) => handleArabictranslate("name_ar", e.target.value, false, true)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading["name_ar"] && (
+                            <CircularProgress size={20} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                {/* Rule Name Ar */}
+                <Grid item xs={12}>
+                  <TextField
+                    name="name_ar"
+                    label="Arabic Tier Name"
+                    fullWidth
+                    value={nameAr}
+                    onChange={(e) => setNameAr(e.target.value)}
                   />
                 </Grid>
 
@@ -508,6 +542,19 @@ const EditTierForm = ({ onSuccess }: any) => {
                     value={description}
                     setValue={setDescription}
                     language="en"
+                     onBlur={(e: any) => {handleArabictranslate("description_ar", description, true, true)}}
+                  />
+                </Grid>
+
+                {/* Description */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Description Arabic(optional)
+                  </Typography>
+                  <RichTextEditor
+                    value={descriptionAr}
+                    setValue={setDescriptionAr}
+                    language="ar"
                   />
                 </Grid>
 

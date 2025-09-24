@@ -58,6 +58,8 @@ const CreateTierForm = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [description, setDescription] = useState<string>("");
+  const [descriptionAr, setDescriptionAr] = useState<string>("");
+  const [nameAr, setNameAr] = useState<string>("");
   // const [rules, setRules] = useState<any[]>([]);
   // const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const theme = useTheme();
@@ -129,8 +131,10 @@ const CreateTierForm = ({ onSuccess }: any) => {
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId) => ({
       name: values.name,
+      name_ar: nameAr,
       min_points: +values.min_points,
       description: description || "",
+      description_ar: descriptionAr || "",
       business_unit_id: buId,
       tenant_id: created_by,
       created_by,
@@ -160,13 +164,20 @@ const CreateTierForm = ({ onSuccess }: any) => {
   const handleArabictranslate = async (
     key: string,
     value: string,
-    richEditor: boolean = false
+    richEditor: boolean = false,
+    notBenefits: boolean = false,
   ) => {
     try {
       setTranslationLoading((prev) => ({ ...prev, [key]: true }));
       const res = await POST("/openai/translate-to-arabic", { value });
-      if (res?.data.status) {
+      if (res?.data.status && !notBenefits) {
         return res?.data?.data;
+      } else {
+        if (richEditor) {
+          setDescriptionAr(res?.data?.data || "");
+        } else {
+          setNameAr(res?.data?.data)
+        }
       }
       return "";
     } catch (error: any) {
@@ -242,6 +253,27 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   onChange={handleChange}
                   error={!!touched.name && !!errors.name}
                   helperText={touched.name && errors.name}
+                  onBlur={(e) => handleArabictranslate("name_ar", e.target.value, false, true)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        {translationLoading["name_ar"] && (
+                          <CircularProgress size={20} />
+                        )}
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+
+              {/* Rule Name Ar */}
+              <Grid item xs={12}>
+                <TextField
+                  name="name_ar"
+                  label="Arabic Tier Name"
+                  fullWidth
+                  value={nameAr}
+                  onChange={(e) => setNameAr(e.target.value)}
                 />
               </Grid>
               {/* <Grid item xs={6}>
@@ -455,6 +487,19 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   value={description}
                   setValue={setDescription}
                   language="en"
+                  onBlur={(e: any) => {handleArabictranslate("description_ar", description, true, true)}}
+                />
+              </Grid>
+
+              {/* Description */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Description Arabic(optional)
+                </Typography>
+                <RichTextEditor
+                  value={descriptionAr}
+                  setValue={setDescriptionAr}
+                  language="ar"
                 />
               </Grid>
 
