@@ -70,6 +70,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
   const initialForm = {
     name: "",
+    name_ar: "",
     rule_type: "event based earn",
     reward_condition: "minimum",
     min_amount_spent: "",
@@ -92,10 +93,14 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
   const [form, setForm] = useState(initialForm);
   const [description, setDescription] = useState<string>("");
+  const [descriptionAr, setDescriptionAr] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
   const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate?: number }[]>([]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
   // const [selectedBurnType, setSelectedBurnType] =
   //   useState<BurnTypeOption | null>({
   //     label: "FIXED",
@@ -165,6 +170,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
     const payload = {
       name: form.name,
+      name_ar: form.name_ar,
       slug: slugify(form.name, {
         replacement: "_",
         lower: true,
@@ -196,6 +202,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
       frequency: form.frequency || "once",
       tiers: tiersPayload,
       description,
+      description_ar: descriptionAr,
       created_by,
       // burn_type: burnType,
       dynamic_conditions: ["dynamic rule", "burn"].includes(form.rule_type)
@@ -211,6 +218,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
       toast.success("Rule created successfully!");
       setForm(initialForm);
       setDescription("");
+      setDescriptionAr("");
       onSuccess();
     } else {
       toast.error("Failed to create rule");
@@ -280,6 +288,36 @@ const RuleCreateForm = ({ onSuccess }: any) => {
     }
   }, [form.business_unit_id]);
 
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        if (richEditor) {
+          setDescriptionAr(res?.data?.data);
+        } else {
+          console.log("Translating", key, res?.data?.data);
+          
+          handleChange(key, res?.data?.data);
+        }
+        return res?.data?.data;
+      }
+      return "";
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
 
   return (
     <>
@@ -306,6 +344,29 @@ const RuleCreateForm = ({ onSuccess }: any) => {
             fullWidth
             value={form.name}
             onChange={(e) => handleChange("name", e.target.value)}
+            onBlur={(e) => {handleArabictranslate("name_ar", e.target.value)}}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {translationLoading["name_ar"] && (
+                    <CircularProgress size={20} />
+                  )}
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Rule Name Ar */}
+        <Grid item xs={12}>
+          <InfoLabel
+            label="Rule Name Ar"
+            tooltip="Name of the rule to identify it easily."
+          />
+          <TextField
+            fullWidth
+            value={form.name_ar}
+            onChange={(e) => handleChange("name_ar", e.target.value)}
           />
         </Grid>
 
@@ -785,6 +846,19 @@ const RuleCreateForm = ({ onSuccess }: any) => {
             value={description}
             setValue={setDescription}
             language="en"
+            onBlur={(e: any) => {handleArabictranslate("description_ar", description, true)}}
+          />
+        </Grid>
+
+        {/* Description Ar*/}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom>
+            Description Ar (optional)
+          </Typography>
+          <RichTextEditor
+            value={descriptionAr}
+            setValue={setDescriptionAr}
+            language="ar"
           />
         </Grid>
       </Grid>

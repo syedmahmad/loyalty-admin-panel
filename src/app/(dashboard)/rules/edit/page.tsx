@@ -24,7 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { GET, PUT } from "@/utils/AxiosUtility";
+import { GET, POST, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { RichTextEditor } from "@/components/TextEditor";
@@ -40,6 +40,7 @@ import { BusinessUnit } from "../../coupons/types";
 
 const initialForm = {
   name: "",
+  name_ar: "",
   rule_type: "event based earn",
   reward_condition: "minimum",
   min_amount_spent: "",
@@ -85,10 +86,14 @@ const RuleEdit = ({ onSuccess }: any) => {
   const [rules, setRules] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState(paramId || "");
   const [description, setDescription] = useState<string>("");
+  const [descriptionAr, setDescriptionAr] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
   const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate?: number }[]>([]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
   // const [selectedBurnType, setSelectedBurnType] =
   //   useState<BurnTypeOption | null>({
   //     label: "FIXED",
@@ -107,6 +112,7 @@ const RuleEdit = ({ onSuccess }: any) => {
     if (rule) {
       setForm({
         name: rule.name,
+        name_ar: rule.name_ar || "",
         rule_type: rule.rule_type,
         min_amount_spent: rule.min_amount_spent?.toString() || "",
         reward_points: rule.reward_points?.toString() || "",
@@ -134,6 +140,7 @@ const RuleEdit = ({ onSuccess }: any) => {
       }))
     );
       setDescription(rule.description || "");
+      setDescriptionAr(rule.description_ar || "");
 
       const burnType: any = BURN_TYPES.find(
         (singleBurnType) => singleBurnType.value === rule.burn_type
@@ -229,6 +236,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
     const payload = {
       name: form.name,
+      name_ar: form.name_ar,
       slug: slugify(form.name, {
         replacement: "_",
         lower: true,
@@ -257,6 +265,7 @@ const RuleEdit = ({ onSuccess }: any) => {
           : form.validity_after_assignment,
       frequency: form.frequency || "once",
       description,
+      description_ar: descriptionAr,
       updated_by,
       // burn_type: burnType,
       reward_condition: form.reward_condition,
@@ -326,6 +335,36 @@ const RuleEdit = ({ onSuccess }: any) => {
         fetchTiers();
       }
     }, [form.business_unit_id]);
+
+    const handleArabictranslate = async (
+      key: string,
+      value: string,
+      richEditor: boolean = false
+    ) => {
+      try {
+        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+        const res = await POST("/openai/translate-to-arabic", { value });
+        if (res?.data.status) {
+          if (richEditor) {
+            setDescriptionAr(res?.data?.data);
+          } else {
+            console.log("Translating", key, res?.data?.data);
+            
+            handleChange(key, res?.data?.data);
+          }
+          return res?.data?.data;
+        }
+        return "";
+      } catch (error: any) {
+        return {
+          success: false,
+          status: error?.response?.status || 500,
+          message: error?.response?.data?.message || "Unknown error",
+        };
+      } finally {
+        setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+      }
+    };
   
   
 
@@ -380,6 +419,29 @@ const RuleEdit = ({ onSuccess }: any) => {
               fullWidth
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
+              onBlur={(e) => {handleArabictranslate("name_ar", e.target.value)}}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    {translationLoading["name_ar"] && (
+                      <CircularProgress size={20} />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          {/* Rule Name Ar */}
+          <Grid item xs={12}>
+            <InfoLabel
+              label="Rule Name Ar"
+              tooltip="Name of the rule to identify it easily."
+            />
+            <TextField
+              fullWidth
+              value={form.name_ar}
+              onChange={(e) => handleChange("name_ar", e.target.value)}
             />
           </Grid>
 
@@ -879,6 +941,19 @@ const RuleEdit = ({ onSuccess }: any) => {
               language="en"
             />
           </Grid>
+          
+          {/* Description Ar*/}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom>
+              Description Ar (optional)
+            </Typography>
+            <RichTextEditor
+              value={descriptionAr}
+              setValue={setDescriptionAr}
+              language="ar"
+            />
+          </Grid>
+          
         </Grid>
       )}
 
