@@ -449,7 +449,7 @@ const CouponList = () => {
 
                     <Typography variant="body2" color="text.secondary" mt={1}>
                       Discount Type:{" "}
-                      {coupon?.discount_type === "fixed_discount"
+                      {coupon?.discount_type === "fixed"
                         ? "Fixed"
                         : "Percentage"}
                     </Typography>

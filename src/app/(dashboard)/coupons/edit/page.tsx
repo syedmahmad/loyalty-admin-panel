@@ -1870,7 +1870,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
             </Grid>
 
             {/* Customer Segments */}
-            {values.all_users === 0 && (
+            {/* {values.all_users === 0 && (
               <Grid item xs={12}>
                 <Autocomplete
                   multiple
@@ -1905,7 +1905,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   )}
                 />
               </Grid>
-            )}
+            )} */}
 
             {/* is_point_earning_disabled */}
             <Grid item xs={12}>
@@ -2076,9 +2076,9 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   size="small"
                   sx={{ width: 150, height: 35 }}
                 >
-                  {uploading.desktop.en ? (
+                  {uploading?.desktop?.en ? (
                     <CircularProgress size={18} />
-                  ) : images.desktop.en ? (
+                  ) : images?.desktop?.en ? (
                     "Change Image"
                   ) : (
                     "Upload Image"
@@ -2091,10 +2091,10 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   />
                 </Button>
 
-                {images.desktop.en && (
+                {images?.desktop?.en && (
                   <Box mt={1}>
                     <img
-                      src={images.desktop.en}
+                      src={images?.desktop?.en}
                       alt="Desktop English Image"
                       style={{ width: 33, height: 33, borderRadius: 2 }}
                     />
@@ -2115,9 +2115,9 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   size="small"
                   sx={{ width: 150, height: 35 }}
                 >
-                  {uploading.desktop.ar ? (
+                  {uploading?.desktop?.ar ? (
                     <CircularProgress size={18} />
-                  ) : images.desktop.ar ? (
+                  ) : images?.desktop?.ar ? (
                     "Change Image"
                   ) : (
                     "Upload Image"
@@ -2130,7 +2130,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   />
                 </Button>
 
-                {images.desktop.ar && (
+                {images?.desktop?.ar && (
                   <Box mt={1}>
                     <img
                       src={images.desktop.ar}
@@ -2154,9 +2154,9 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   size="small"
                   sx={{ width: 150, height: 35 }}
                 >
-                  {uploading.mobile.en ? (
+                  {uploading?.mobile?.en ? (
                     <CircularProgress size={18} />
-                  ) : images.mobile.en ? (
+                  ) : images?.mobile?.en ? (
                     "Change Image"
                   ) : (
                     "Upload Image"
@@ -2169,10 +2169,10 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   />
                 </Button>
 
-                {images.mobile.en && (
+                {images?.mobile?.en && (
                   <Box mt={1}>
                     <img
-                      src={images.mobile.en}
+                      src={images?.mobile?.en}
                       alt="Mobile English Image"
                       style={{ width: 33, height: 33, borderRadius: 2 }}
                     />
@@ -2193,9 +2193,9 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   size="small"
                   sx={{ width: 150, height: 35 }}
                 >
-                  {uploading.mobile.ar ? (
+                  {uploading?.mobile?.ar ? (
                     <CircularProgress size={18} />
-                  ) : images.mobile.ar ? (
+                  ) : images?.mobile?.ar ? (
                     "Change Image"
                   ) : (
                     "Upload Image"
@@ -2208,10 +2208,10 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   />
                 </Button>
 
-                {images.mobile.ar && (
+                {images?.mobile?.ar && (
                   <Box mt={1}>
                     <img
-                      src={images.mobile.ar}
+                      src={images?.mobile?.ar}
                       alt="Mobile Arabic Image"
                       style={{ width: 33, height: 33, borderRadius: 2 }}
                     />
