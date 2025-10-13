@@ -226,7 +226,7 @@ const OfferList = () => {
       <Box mb={2} gap={2} display="flex">
         <TextField
           size="small"
-          placeholder="Search by code"
+          placeholder="Search ..."
           value={search}
           onChange={handleSearchChange}
           sx={{

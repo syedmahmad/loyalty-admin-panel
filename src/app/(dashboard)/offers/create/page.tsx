@@ -1,7 +1,7 @@
 "use client";
 
 import { RichTextEditor } from "@/components/TextEditor";
-import { GET, POST } from "@/utils/AxiosUtility";
+import { DELETE, GET, POST } from "@/utils/AxiosUtility";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
@@ -51,6 +51,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const [termsAndConditionsEn, setTermsAndConditionsEn] = useState<string>("");
   const [termsAndConditionsAr, setTermsAndConditionsAr] = useState<string>("");
   const [segments, setSegments] = useState([]);
+  const [removing, setRemoving] = useState(false);
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
@@ -171,8 +172,6 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       images: images,
     }));
 
-    console.log("payloads::::", payloads);
-
     const responses = await Promise.all(
       payloads.map(async (payload) => {
         try {
@@ -213,17 +212,19 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
     richEditor: boolean = false
   ) => {
     try {
-      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-      const res = await POST("/openai/translate-to-arabic", { value });
-      if (res?.data.status) {
-        if (richEditor) {
-          setTermsAndConditionsAr(res?.data?.data);
-        } else {
-          setFieldValue(key, res?.data?.data);
+      if (value) {
+        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+        const res = await POST("/openai/translate-to-arabic", { value });
+        if (res?.data.status) {
+          if (richEditor) {
+            setTermsAndConditionsAr(res?.data?.data);
+          } else {
+            setFieldValue(key, res?.data?.data);
+          }
+          return res?.data?.data;
         }
-        return res?.data?.data;
+        return "";
       }
-      return "";
     } catch (error: any) {
       return {
         success: false,
@@ -309,6 +310,57 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
         ...prev,
         [device]: { ...prev[device], [lang]: false },
       }));
+    }
+  };
+
+  const removeFileFromBucket = async (
+    url: string,
+    device: "desktop" | "mobile",
+    lang: "en" | "ar"
+  ) => {
+    setRemoving(true);
+    try {
+      if (url) {
+        const response = await DELETE(`/offers/remove-file`, {
+          params: { url },
+        });
+        if (response?.status == 200 && response?.data.url) {
+          setImages((prev) => ({
+            ...prev,
+            [device]: { ...prev[device], [lang]: "" },
+          }));
+          toast.success("File removed successfully!");
+        }
+      }
+    } catch (error) {
+      console.error("Error removing file:", error);
+      toast.error("Failed to remove file");
+    } finally {
+      setRemoving(false);
+    }
+  };
+
+  const removeBenefitIconFromBucket = async (index: number, url: string) => {
+    setRemoving(true);
+    try {
+      if (url) {
+        const response = await DELETE(`/offers/remove-file`, {
+          params: { url },
+        });
+        if (response?.status == 200 && response?.data.url) {
+          setBenefitsInputs((prev) =>
+            prev.map((benefit, i) =>
+              i === index ? { ...benefit, icon: "" } : benefit
+            )
+          );
+          toast.success("File removed successfully!");
+        }
+      }
+    } catch (error) {
+      console.error("Error removing file:", error);
+      toast.error("Failed to remove file");
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -529,12 +581,22 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                       />
                     </Button>
                     {input.icon && (
-                      <Box mt={1}>
+                      <Box mt={1} display="flex" alignItems="center" gap={3}>
                         <img
                           src={input.icon}
                           alt="Benefit Icon"
                           style={{ width: 33, height: 33, borderRadius: 2 }}
                         />
+
+                        <Button
+                          variant="text"
+                          color="error"
+                          onClick={() =>
+                            removeBenefitIconFromBucket(index, input.icon)
+                          }
+                        >
+                          Remove
+                        </Button>
                       </Box>
                     )}
 
@@ -673,12 +735,22 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               </Button>
 
               {images.desktop.en && (
-                <Box mt={1}>
+                <Box mt={1} display="flex" alignItems="center" gap={3}>
                   <img
                     src={images.desktop.en}
                     alt="Desktop English Image"
                     style={{ width: 33, height: 33, borderRadius: 2 }}
                   />
+
+                  <Button
+                    variant="text"
+                    color="error"
+                    onClick={() =>
+                      removeFileFromBucket(images?.desktop?.en, "desktop", "en")
+                    }
+                  >
+                    Remove
+                  </Button>
                 </Box>
               )}
             </Box>
@@ -712,12 +784,21 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               </Button>
 
               {images.desktop.ar && (
-                <Box mt={1}>
+                <Box mt={1} display="flex" alignItems="center" gap={3}>
                   <img
                     src={images.desktop.ar}
                     alt="Desktop Arabic Image"
                     style={{ width: 33, height: 33, borderRadius: 2 }}
                   />
+                  <Button
+                    variant="text"
+                    color="error"
+                    onClick={() =>
+                      removeFileFromBucket(images?.desktop?.ar, "desktop", "ar")
+                    }
+                  >
+                    Remove
+                  </Button>
                 </Box>
               )}
             </Box>
@@ -751,12 +832,21 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               </Button>
 
               {images.mobile.en && (
-                <Box mt={1}>
+                <Box mt={1} display="flex" alignItems="center" gap={3}>
                   <img
                     src={images.mobile.en}
                     alt="Mobile English Image"
                     style={{ width: 33, height: 33, borderRadius: 2 }}
                   />
+                  <Button
+                    variant="text"
+                    color="error"
+                    onClick={() =>
+                      removeFileFromBucket(images?.mobile?.en, "mobile", "en")
+                    }
+                  >
+                    Remove
+                  </Button>
                 </Box>
               )}
             </Box>
@@ -790,12 +880,21 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               </Button>
 
               {images.mobile.ar && (
-                <Box mt={1}>
+                <Box mt={1} display="flex" alignItems="center" gap={3}>
                   <img
                     src={images.mobile.ar}
                     alt="Mobile Arabic Image"
                     style={{ width: 33, height: 33, borderRadius: 2 }}
                   />
+                  <Button
+                    variant="text"
+                    color="error"
+                    onClick={() =>
+                      removeFileFromBucket(images?.mobile?.ar, "mobile", "ar")
+                    }
+                  >
+                    Remove
+                  </Button>
                 </Box>
               )}
             </Box>
