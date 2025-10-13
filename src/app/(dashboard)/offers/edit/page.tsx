@@ -1,0 +1,900 @@
+"use client";
+
+import { RichTextEditor } from "@/components/TextEditor";
+import { GET, POST, PUT } from "@/utils/AxiosUtility";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  Autocomplete,
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Switch,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useFormik } from "formik";
+import { DateTime } from "luxon";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import * as Yup from "yup";
+import { BusinessUnit, OfferFormValues } from "../types";
+
+type Benefit = {
+  name_en: string;
+  name_ar: string;
+  icon: string;
+};
+
+const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
+  const searchParams = useSearchParams();
+  const paramId = searchParams.get("id");
+  const [selectedId, setSelectedId] = useState<string>(paramId || "");
+  const [offerData, setOfferData] = useState<any>(null);
+  const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [termsAndConditionsEn, setTermsAndConditionsEn] = useState<string>("");
+  const [termsAndConditionsAr, setTermsAndConditionsAr] = useState<string>("");
+  const [segments, setSegments] = useState([]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  /** multiple benefits with icon */
+  const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
+    { name_en: "", name_ar: "", icon: "" },
+  ]);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  /** images for Desktop and mobile start */
+  const [images, setImages] = useState({
+    desktop: { en: "", ar: "" },
+    mobile: { en: "", ar: "" },
+  });
+
+  const [uploading, setUploading] = useState<{
+    desktop: { en: boolean; ar: boolean };
+    mobile: { en: boolean; ar: boolean };
+  }>({
+    desktop: { en: false, ar: false },
+    mobile: { en: false, ar: false },
+  });
+  /** images for Desktop and mobile end*/
+
+  const fetchCustomerSegments = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const res = await GET(`/customer-segments/${clientInfo.id}`);
+    setSegments(res?.data.data || []);
+  };
+
+  const userId =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0
+      : 0;
+
+  useEffect(() => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const resolveAllPromises = async () => {
+      const fetchTiersAndBUs = async (name: string = "") => {
+        const [buRes] = await Promise.all([
+          GET(
+            `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
+          ),
+        ]);
+        setBusinessUnits(buRes?.data || []);
+        fetchCustomerSegments();
+
+        if (paramId) {
+          await fetchOfferById(paramId);
+        }
+
+        setInitializing(false);
+      };
+
+      await Promise.all([fetchTiersAndBUs()]);
+    };
+
+    resolveAllPromises();
+  }, [paramId]);
+
+  const fetchOfferById = async (id: string) => {
+    setLoading(true);
+    const res = await GET(`/offers/edit/${id}`);
+    if (!res?.data) {
+      toast.error("Offer not found");
+      return;
+    }
+    setSelectedId(id);
+    setOfferData(res.data);
+    setBenefitsInputs(
+      Array.isArray(res.data.benefits)
+        ? res.data.benefits.map((item: any) =>
+            typeof item === "string"
+              ? { name_en: item, name_ar: "", icon: "" }
+              : item
+          )
+        : []
+    );
+    setTermsAndConditionsEn(res.data.terms_and_conditions_en || "");
+    setTermsAndConditionsAr(res.data.terms_and_conditions_ar || "");
+    setImages(res?.data?.images);
+    setLoading(false);
+  };
+
+  const formik = useFormik<OfferFormValues>({
+    initialValues: {
+      offer_title: offerData?.offer_title || "",
+      offer_title_ar: offerData?.offer_title_ar || "",
+      business_unit_ids: offerData?.business_unit_id
+        ? [offerData.business_unit_id]
+        : [],
+      benefits: "",
+      date_from:
+        DateTime.fromISO(offerData?.date_from).toFormat("yyyy-MM-dd") || "",
+      date_to:
+        DateTime.fromISO(offerData?.date_to).toFormat("yyyy-MM-dd") || "",
+      status: offerData?.status,
+      customer_segment_ids:
+        offerData?.customerSegments.map((ls: any) => ls.segment.id) || [],
+      description_en: offerData?.description_en || "",
+      description_ar: offerData?.description_ar || "",
+      all_users: offerData?.all_users,
+    },
+    validationSchema: Yup.object({
+      offer_title: Yup.string().required("Offer title is required"),
+      business_unit_ids: Yup.array().min(
+        1,
+        "Select at least one business unit"
+      ),
+      date_from: Yup.date().required("Start date is required"),
+      date_to: Yup.date()
+        .min(Yup.ref("date_from"), "End date must be after start date")
+        .required("End date is required"),
+      status: Yup.boolean().required(),
+    }),
+    enableReinitialize: true,
+    onSubmit: async (values, { resetForm }) => {
+      await handleSubmit(values);
+    },
+  });
+
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleSubmit: onFormSubmit,
+    setFieldValue,
+    setFieldTouched,
+  } = formik;
+
+  const handleSubmit = async (values: OfferFormValues) => {
+    const payloads = values.business_unit_ids.map((buId: number) => ({
+      offer_title: values.offer_title,
+      offer_title_ar: values.offer_title_ar,
+      business_unit_id: buId,
+      date_from: values.date_from,
+      date_to: values.date_to,
+      status: values.status,
+      benefits: benefitsInputs || [],
+      updated_by: userId,
+      tenant_id: userId,
+      created_by: userId,
+      customer_segment_ids: values.customer_segment_ids,
+      description_en: values.description_en || "",
+      description_ar: values.description_ar || "",
+      terms_and_conditions_en: termsAndConditionsEn || "",
+      terms_and_conditions_ar: termsAndConditionsAr || "",
+      all_users: values.all_users,
+      images: images,
+    }));
+
+    const responses = await Promise.all(
+      payloads.map(async (payload) => {
+        if (payload.business_unit_id === offerData.business_unit_id) {
+          const res = await PUT(`/offers/${selectedId}`, payload);
+          return { success: true, status: res?.status };
+        } else {
+          const res = await POST(`/offers`, payload);
+          return { success: true, status: res?.status };
+        }
+      })
+    );
+
+    const anyFailed = !responses.some(
+      (res) => res.status === 201 || res.status === 200
+    );
+
+    if (anyFailed) {
+      setLoading(false);
+      toast.error("failed to update offer");
+    } else {
+      toast.success("offer updated successfully!");
+      setLoading(false);
+      onSuccess();
+    }
+
+    setLoading(false);
+  };
+
+  if (initializing) {
+    return (
+      <Box mt={6} textAlign="center">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  const addBenefitInput = () => {
+    setBenefitsInputs([
+      ...benefitsInputs,
+      { name_en: "", name_ar: "", icon: "" },
+    ]);
+  };
+
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        if (richEditor) {
+          setTermsAndConditionsAr(res?.data?.data);
+        } else {
+          setFieldValue(key, res?.data?.data);
+        }
+        return res?.data?.data;
+      }
+      return "";
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    setFile(selectedFile);
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    try {
+      setUploadingIndex(index);
+      const res = await POST("/tiers/file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (res?.data.success) {
+        setBenefitsInputs((prev) =>
+          prev.map((item, i) =>
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploadingIndex(null); // stop loader
+    }
+  };
+
+  const uploadImageToBucket = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    device: "desktop" | "mobile",
+    lang: "en" | "ar"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_SIZE) {
+      toast.error("File size should not exceed 5 MB");
+      return;
+    }
+
+    setUploading((prev) => ({
+      ...prev,
+      [device]: { ...prev[device], [lang]: true },
+    }));
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await POST("/offers/upload-image-to-bucket", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res?.data.success) {
+        setImages((prev) => ({
+          ...prev,
+          [device]: { ...prev[device], [lang]: res.data.uploaded_url },
+        }));
+      }
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading((prev) => ({
+        ...prev,
+        [device]: { ...prev[device], [lang]: false },
+      }));
+    }
+  };
+
+  return (
+    <>
+      {offerData && (
+        <form onSubmit={formik.handleSubmit}>
+          <Grid container spacing={2}>
+            {/* Offer Title */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Offer Title"
+                value={values.offer_title}
+                name="offer_title"
+                onChange={handleChange}
+                onBlur={(e) =>
+                  handleArabictranslate("offer_title_ar", e.target.value)
+                }
+                error={!!touched.offer_title && !!errors.offer_title}
+                helperText={touched.offer_title && errors.offer_title}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["offer_title_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Offer Title Arabic */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Offer Title Arabic"
+                value={values.offer_title_ar}
+                name="offer_title_ar"
+                onChange={handleChange}
+                error={!!touched.offer_title_ar && !!errors.offer_title_ar}
+                helperText={touched.offer_title_ar && errors.offer_title_ar}
+              />
+            </Grid>
+
+            {/* Business Units */}
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                name="business_unit_ids"
+                label="Business Units"
+                SelectProps={{ multiple: true }}
+                value={values.business_unit_ids}
+                onChange={handleChange}
+                error={
+                  !!touched.business_unit_ids && !!errors.business_unit_ids
+                }
+                helperText={
+                  touched.business_unit_ids && errors.business_unit_ids
+                }
+              >
+                {businessUnits?.map((bu) => (
+                  <MenuItem key={bu.id} value={bu.id}>
+                    {bu.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            {/* Expiry Date */}
+            <Grid item xs={12}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="date"
+                    fullWidth
+                    label="Date From"
+                    name="date_from"
+                    InputLabelProps={{ shrink: true }}
+                    value={values.date_from}
+                    onChange={handleChange}
+                    error={!!touched.date_from && !!errors.date_from}
+                    helperText={touched.date_from && errors.date_from}
+                  />
+                </Grid>
+
+                <Grid item xs={6}>
+                  <TextField
+                    type="date"
+                    fullWidth
+                    label="Date To"
+                    name="date_to"
+                    InputLabelProps={{ shrink: true }}
+                    value={values.date_to}
+                    onChange={handleChange}
+                    error={!!touched.date_to && !!errors.date_to}
+                    helperText={touched.date_to && errors.date_to}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Apply to all users */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="subtitle1">
+                    Apply to all users
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="all_users"
+                    color="primary"
+                    checked={values.all_users === 1}
+                    onChange={(e) =>
+                      setFieldValue("all_users", e.target.checked ? 1 : 0)
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Customer Segments */}
+            {values.all_users === 0 && (
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  options={segments.filter(
+                    (s: any) => !values.customer_segment_ids.includes(s.id)
+                  )}
+                  getOptionLabel={(option: any) => option.name}
+                  value={segments.filter((s: any) =>
+                    values.customer_segment_ids.includes(s.id)
+                  )}
+                  onChange={(event, newValue) => {
+                    setFieldValue(
+                      "customer_segment_ids",
+                      newValue.map((item: any) => item.id)
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Customer Segments"
+                      error={Boolean(
+                        touched.customer_segment_ids &&
+                          errors.customer_segment_ids
+                      )}
+                      helperText={
+                        touched.customer_segment_ids &&
+                        errors.customer_segment_ids
+                          ? errors.customer_segment_ids
+                          : ""
+                      }
+                    />
+                  )}
+                />
+              </Grid>
+            )}
+
+            {/* Is Active */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="subtitle1">Is Active</Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="isActive"
+                    color="primary"
+                    checked={values.status === 1}
+                    onChange={(e) =>
+                      setFieldValue("status", e.target.checked ? 1 : 0)
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Benefits */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Benefits (optional)
+              </Typography>
+              {benefitsInputs.map((input, index) => (
+                <Box
+                  display="flex"
+                  alignItems="flex-start"
+                  gap={1}
+                  key={index + 1}
+                  mb={2}
+                  p={2}
+                  border="1px solid #ddd"
+                  borderRadius="12px"
+                  boxShadow="0 2px 5px rgba(0,0,0,0.05)"
+                >
+                  <Box display="flex" gap={2} flex={1} flexDirection="column">
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        size="small"
+                        sx={{ width: 150, height: 35 }}
+                        disabled={uploadingIndex === index}
+                      >
+                        {uploadingIndex === index ? (
+                          <CircularProgress size={18} />
+                        ) : input.icon ? (
+                          "Change Icon"
+                        ) : (
+                          "Upload Icon"
+                        )}
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(e, index)}
+                        />
+                      </Button>
+                      {input.icon && (
+                        <Box mt={1}>
+                          <img
+                            src={input.icon}
+                            alt="Benefit Icon"
+                            style={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 2,
+                            }}
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                    <TextField
+                      fullWidth
+                      name="benefits"
+                      label={`Benefit ${index + 1}`}
+                      value={input.name_en}
+                      onChange={(e) => {
+                        const newInputs = [...benefitsInputs];
+                        newInputs[index].name_en = e.target.value;
+                        setBenefitsInputs(newInputs);
+                      }}
+                      onBlur={async (e) => {
+                        if (e.target.value.trim()) {
+                          const translated = await handleArabictranslate(
+                            `benefit_${index}`,
+                            e.target.value
+                          );
+
+                          if (translated?.success !== false) {
+                            const newInputs = [...benefitsInputs];
+                            newInputs[index].name_ar = translated || "";
+                            setBenefitsInputs(newInputs);
+                          }
+                        }
+                      }}
+                    />
+                    <TextField
+                      fullWidth
+                      name="benefits"
+                      label={`Arabic Benefit ${index + 1}`}
+                      value={input.name_ar}
+                      onChange={(e) => {
+                        const newInputs = [...benefitsInputs];
+                        newInputs[index].name_ar = e.target.value;
+                        setBenefitsInputs(newInputs);
+                      }}
+                    />
+                  </Box>
+
+                  {index === 0 ? (
+                    <IconButton onClick={addBenefitInput}>
+                      <AddIcon fontSize="small" color="primary" />
+                    </IconButton>
+                  ) : (
+                    <IconButton>
+                      <DeleteIcon
+                        fontSize="small"
+                        color="error"
+                        onClick={() => {
+                          setBenefitsInputs(
+                            benefitsInputs.filter((_, i) => i !== index)
+                          );
+                        }}
+                      />
+                    </IconButton>
+                  )}
+                </Box>
+              ))}
+            </Grid>
+
+            {/* Desktop and mobile image start*/}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Desktop image (English)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading?.desktop?.en ? (
+                    <CircularProgress size={18} />
+                  ) : images?.desktop?.en ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "desktop", "en")}
+                  />
+                </Button>
+
+                {images?.desktop?.en && (
+                  <Box mt={1}>
+                    <img
+                      src={images?.desktop?.en}
+                      alt="Desktop English Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Desktop image (Arabic)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading?.desktop?.ar ? (
+                    <CircularProgress size={18} />
+                  ) : images?.desktop?.ar ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "desktop", "ar")}
+                  />
+                </Button>
+
+                {images?.desktop?.ar && (
+                  <Box mt={1}>
+                    <img
+                      src={images.desktop.ar}
+                      alt="Desktop Arabic Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Mobile image (English)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading?.mobile?.en ? (
+                    <CircularProgress size={18} />
+                  ) : images?.mobile?.en ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "mobile", "en")}
+                  />
+                </Button>
+
+                {images?.mobile?.en && (
+                  <Box mt={1}>
+                    <img
+                      src={images?.mobile?.en}
+                      alt="Mobile English Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Mobile image (Arabic)
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  size="small"
+                  sx={{ width: 150, height: 35 }}
+                >
+                  {uploading?.mobile?.ar ? (
+                    <CircularProgress size={18} />
+                  ) : images?.mobile?.ar ? (
+                    "Change Image"
+                  ) : (
+                    "Upload Image"
+                  )}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => uploadImageToBucket(e, "mobile", "ar")}
+                  />
+                </Button>
+
+                {images?.mobile?.ar && (
+                  <Box mt={1}>
+                    <img
+                      src={images?.mobile?.ar}
+                      alt="Mobile Arabic Image"
+                      style={{ width: 33, height: 33, borderRadius: 2 }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Grid>
+            {/* Desktop and mobile image end */}
+
+            {/* Description English */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Description (English)
+              </Typography>
+              <TextField
+                label="Description English"
+                variant="outlined"
+                name="description_en"
+                value={values.description_en}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={4}
+                onBlur={(e) =>
+                  handleArabictranslate("description_ar", e.target.value)
+                }
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["description_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Description Arabic */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Description (Arabic)
+              </Typography>
+              <TextField
+                label="Description Arabic"
+                variant="outlined"
+                name="description_ar"
+                value={values.description_ar}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={4}
+              />
+            </Grid>
+
+            {/* Terms And Conditions English*/}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Terms And Conditions (English)
+              </Typography>
+              <RichTextEditor
+                value={termsAndConditionsEn}
+                setValue={setTermsAndConditionsEn}
+                language="en"
+                height={250}
+                onBlur={() =>
+                  handleArabictranslate(
+                    "termsAndConditionsAr",
+                    termsAndConditionsEn,
+                    true
+                  )
+                }
+                translationLoading={translationLoading["termsAndConditionsAr"]}
+              />
+            </Grid>
+
+            {/* Terms And Conditions Arabic*/}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Terms And Conditions (Arabic)
+              </Typography>
+              <RichTextEditor
+                value={termsAndConditionsAr}
+                setValue={setTermsAndConditionsAr}
+                language="en"
+                height={250}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                <Button
+                  type="submit"
+                  variant="outlined"
+                  disabled={loading}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                  }}
+                >
+                  {loading ? <CircularProgress size={24} /> : "Update Offer"}
+                </Button>
+              </Box>
+
+              <br />
+              <br />
+            </Grid>
+          </Grid>
+        </form>
+      )}
+    </>
+  );
+};
+
+export default EditOfferForm;
