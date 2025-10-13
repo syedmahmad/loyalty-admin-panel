@@ -1,15 +1,16 @@
 // assets
-import AddBusinessIcon from '@mui/icons-material/AddBusiness';
-import ExtensionIcon from '@mui/icons-material/Extension';
-import CrisisAlertIcon from '@mui/icons-material/CrisisAlert';
-import CampaignIcon from '@mui/icons-material/Campaign';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import LoyaltyIcon from '@mui/icons-material/Loyalty';
-import GroupIcon from '@mui/icons-material/Group';
-import SettingsIcon from '@mui/icons-material/Settings';
-import WalletIcon from '@mui/icons-material/Wallet';
-import Groups3Icon from '@mui/icons-material/Groups3';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
+import AddBusinessIcon from "@mui/icons-material/AddBusiness";
+import ExtensionIcon from "@mui/icons-material/Extension";
+import CrisisAlertIcon from "@mui/icons-material/CrisisAlert";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import LoyaltyIcon from "@mui/icons-material/Loyalty";
+import GroupIcon from "@mui/icons-material/Group";
+import SettingsIcon from "@mui/icons-material/Settings";
+import WalletIcon from "@mui/icons-material/Wallet";
+import Groups3Icon from "@mui/icons-material/Groups3";
+import AnalyticsIcon from "@mui/icons-material/Analytics";
+import NewReleasesIcon from '@mui/icons-material/NewReleases';
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -123,13 +124,21 @@ const menuItems: { items: NavItemType[] } = {
       privileges: [],
       icon: CrisisAlertIcon,
     },
-     {
+    {
       id: "coupons",
       title: "Coupons",
       type: "item",
       url: "/coupons/view",
       privileges: [],
       icon: LoyaltyIcon,
+    },
+    {
+      id: "offers",
+      title: "Offers",
+      type: "item",
+      url: "/offers/view",
+      privileges: [],
+      icon: NewReleasesIcon,
     },
     {
       id: "campaigns",
@@ -208,7 +217,7 @@ const menuItems: { items: NavItemType[] } = {
     {
       id: "analytics",
       title: " Analytics ",
-      type: "collapse", 
+      type: "collapse",
       icon: AnalyticsIcon,
       children: [
         {
@@ -232,10 +241,8 @@ const menuItems: { items: NavItemType[] } = {
         //   url: "/analytic/transaction",
         //   privileges: [],
         // }
-      ]
-    }
-
-
+      ],
+    },
   ],
 };
 
