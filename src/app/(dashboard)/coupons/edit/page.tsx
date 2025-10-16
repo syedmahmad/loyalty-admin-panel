@@ -174,10 +174,6 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       (option: { id: number }) => option.id === couponData?.coupon_type_id
     );
     setSelectedCouponType(selectedOption?.type || "");
-
-    // if (couponData?.conditions?.length > 0) {
-    //   prefillRows(couponData?.conditions);
-    // }
   }, [couponData?.coupon_type_id]);
 
   useEffect(() => {
@@ -228,12 +224,16 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       const fetchPrefilledRows = async () => {
         /** For Birthday check */
         // const prefillDynamicRows = await prefillRows(couponData?.conditions);
-
         const dbCouponConditions = couponData?.conditions
           ? couponData?.conditions
           : [];
-        const prefillDynamicRows = await prefillRows(dbCouponConditions);
 
+        const selectedOption: any = COUPON_TYPE_ARRAY.find(
+          (option: { id: number }) => option.id === couponData?.coupon_type_id
+        );
+        const selectedType = selectedOption?.type || "";
+
+        const prefillDynamicRows = await prefillRows(dbCouponConditions);
         setDynamicCouponTypesRows((prev) =>
           prev.map((row) => {
             return {
@@ -243,7 +243,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
               dynamicRows: prefillDynamicRows
                 ? prefillDynamicRows
                 : couponData?.conditions,
-              selectedCouponType: selectedCouponType,
+              selectedCouponType: selectedType,
             };
           })
         );
@@ -987,8 +987,6 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
       }));
     }
   };
-
-  console.log("DynamicCouponTypesRows:::", dynamicCouponTypesRows)
 
   return (
     <>
