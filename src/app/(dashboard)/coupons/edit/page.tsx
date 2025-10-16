@@ -988,6 +988,8 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     }
   };
 
+  console.log("DynamicCouponTypesRows:::", dynamicCouponTypesRows)
+
   return (
     <>
       {couponData && (
