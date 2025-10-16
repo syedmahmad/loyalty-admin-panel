@@ -155,3 +155,15 @@ export const USAGE_LIMIT =
 
 export const MAX_USAGE_PER_USER =
   "Maximum times a single user can use this coupon. Set to 0 for unlimited usage.";
+
+export const STATION_TYPES = [
+  { label: "Petromin Express", value: "Petromin Express" },
+  { label: "Petromin AutoCare", value: "Petromin AutoCare" },
+  { label: "Petromin Tristar", value: "Petromin Tristar" },
+  { label: "Petromin Body & Paint", value: "Petromin Body & Paint" },
+  { label: "Petromin EV AutoCare", value: "Petromin EV AutoCare" },
+  {
+    label: "Petromin EV & Premium AutoCare",
+    value: "Petromin EV & Premium AutoCare",
+  },
+];

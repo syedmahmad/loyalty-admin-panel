@@ -46,6 +46,7 @@ type Offer = {
   terms_and_conditions_en: string;
   business_unit?: { name: string };
   benefits?: string;
+  station_type?: string;
 };
 
 const OfferList = () => {
@@ -416,6 +417,10 @@ const OfferList = () => {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary" mt={1}>
+                      Station Type: {offer.station_type ?? "-"}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary" mt={1}>
                       Description: {offer.description_en}
                     </Typography>
                   </CardContent>
@@ -431,6 +436,7 @@ const OfferList = () => {
                   <TableRow>
                     <TableCell>Title</TableCell>
                     <TableCell>Business Unit</TableCell>
+                    <TableCell>Station Type</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell>Terms And Conditions</TableCell>
                     <TableCell>Actions</TableCell>
@@ -453,6 +459,7 @@ const OfferList = () => {
                           <span>{offer.business_unit?.name || "-"}</span>
                         </Tooltip>
                       </TableCell>
+                      <TableCell>{offer.station_type || ""}</TableCell>
                       <TableCell>{offer.description_en}</TableCell>
                       <TableCell>{offer.terms_and_conditions_en}</TableCell>
                       <TableCell sx={{ display: "flex" }}>
