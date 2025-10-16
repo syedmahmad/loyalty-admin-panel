@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import { BusinessUnit, OfferFormValues } from "../types";
+import { STATION_TYPES } from "@/constants/constants";
 
 type Benefit = {
   name_en: string;
@@ -134,6 +135,9 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
     initialValues: {
       offer_title: offerData?.offer_title || "",
       offer_title_ar: offerData?.offer_title_ar || "",
+      offer_subtitle: offerData?.offer_subtitle || "",
+      offer_subtitle_ar: offerData?.offer_subtitle_ar || "",
+      station_type: offerData?.station_type || "",
       business_unit_ids: offerData?.business_unit_id
         ? [offerData.business_unit_id]
         : [],
@@ -181,6 +185,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
     const payloads = values.business_unit_ids.map((buId: number) => ({
       offer_title: values.offer_title,
       offer_title_ar: values.offer_title_ar,
+      offer_subtitle: values.offer_subtitle,
+      offer_subtitle_ar: values.offer_subtitle_ar,
       business_unit_id: buId,
       date_from: values.date_from,
       date_to: values.date_to,
@@ -196,6 +202,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       terms_and_conditions_ar: termsAndConditionsAr || "",
       all_users: values.all_users,
       images: images,
+      station_type: values.station_type,
     }));
 
     const responses = await Promise.all(
@@ -438,6 +445,50 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
               />
             </Grid>
 
+            {/* Offer Subtitle */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Offer Subtitle"
+                value={values.offer_subtitle}
+                name="offer_subtitle"
+                onChange={handleChange}
+                onBlur={(e) =>
+                  handleArabictranslate("offer_subtitle_ar", e.target.value)
+                }
+                error={!!touched.offer_subtitle && !!errors.offer_subtitle}
+                helperText={touched.offer_subtitle && errors.offer_subtitle}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {translationLoading["offer_subtitle_ar"] && (
+                        <CircularProgress size={20} />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Offer Subtitle Arabic */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Offer Title Arabic"
+                value={values.offer_subtitle_ar}
+                name="offer_title_ar"
+                onChange={handleChange}
+                error={
+                  !!touched.offer_subtitle_ar && !!errors.offer_subtitle_ar
+                }
+                helperText={
+                  touched.offer_subtitle_ar && errors.offer_subtitle_ar
+                }
+              />
+            </Grid>
+
             {/* Business Units */}
             <Grid item xs={12}>
               <TextField
@@ -458,6 +509,29 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 {businessUnits?.map((bu) => (
                   <MenuItem key={bu.id} value={bu.id}>
                     {bu.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            {/* Station Type */}
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                name="station_type"
+                label="Station Type"
+                value={values.station_type}
+                onChange={handleChange}
+                error={!!touched.station_type && !!errors.station_type}
+                helperText={touched.station_type && errors.station_type}
+              >
+                {STATION_TYPES?.map((singleStation) => (
+                  <MenuItem
+                    key={singleStation.value}
+                    value={singleStation.value}
+                  >
+                    {singleStation.label}
                   </MenuItem>
                 ))}
               </TextField>
