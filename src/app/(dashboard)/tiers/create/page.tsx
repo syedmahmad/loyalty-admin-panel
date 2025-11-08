@@ -25,6 +25,8 @@ import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import { RichTextEditor } from "@/components/TextEditor";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { tenantService } from "@/services/tenantService";
 
 type BusinessUnit = {
   id: number;
@@ -48,6 +50,15 @@ const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
 //   return response.data;
 // };
 
+// const fetchLanguage = async () => {
+//   const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+//   const response = await GET(`/tenants/${clientInfo.id}`);
+//   if (response?.status !== 200) {
+//     throw new Error("Failed to fetch country langugage");
+//   }
+//   return response.data;
+// };
+
 type Benefit = {
   name_en: string;
   name_ar: string;
@@ -64,6 +75,8 @@ const CreateTierForm = ({ onSuccess }: any) => {
   // const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const theme = useTheme();
   const router = useRouter();
+
+  const [languages, setLanguages] = useState([]);
 
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
@@ -95,6 +108,28 @@ const CreateTierForm = ({ onSuccess }: any) => {
 
   useEffect(() => {
     loadData();
+
+    const getLanguages = async () => {
+      try {
+        const languageResponse = await tenantService.getTenantById();
+        const allLanguages =
+          languageResponse?.languages?.map((cl: any) => cl?.language) || [];
+
+        const english = allLanguages.find(
+          (lang: { code: string }) => lang.code === "en"
+        );
+
+        const others = allLanguages.filter(
+          (lang: { code: string }) => lang.code !== "en"
+        );
+        const englishFirst = english ? [english, ...others] : allLanguages;
+        setLanguages(englishFirst);
+      } catch (error) {
+        console.error("Error fetching country language:", error);
+      }
+    };
+
+    getLanguages();
   }, []);
 
   const addBenefitInput = () => {
@@ -165,7 +200,7 @@ const CreateTierForm = ({ onSuccess }: any) => {
     key: string,
     value: string,
     richEditor: boolean = false,
-    notBenefits: boolean = false,
+    notBenefits: boolean = false
   ) => {
     try {
       setTranslationLoading((prev) => ({ ...prev, [key]: true }));
@@ -176,7 +211,7 @@ const CreateTierForm = ({ onSuccess }: any) => {
         if (richEditor) {
           setDescriptionAr(res?.data?.data || "");
         } else {
-          setNameAr(res?.data?.data)
+          setNameAr(res?.data?.data);
         }
       }
       return "";
@@ -253,7 +288,14 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   onChange={handleChange}
                   error={!!touched.name && !!errors.name}
                   helperText={touched.name && errors.name}
-                  onBlur={(e) => handleArabictranslate("name_ar", e.target.value, false, true)}
+                  onBlur={(e) =>
+                    handleArabictranslate(
+                      "name_ar",
+                      e.target.value,
+                      false,
+                      true
+                    )
+                  }
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -276,6 +318,7 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   onChange={(e) => setNameAr(e.target.value)}
                 />
               </Grid>
+
               {/* <Grid item xs={6}>
                   <TextField
                     fullWidth
@@ -327,6 +370,7 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   ))}
                 </TextField>
               </Grid>
+              
               {/* <Grid item xs={12}>
                   <TextField
                     select
@@ -487,7 +531,14 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   value={description}
                   setValue={setDescription}
                   language="en"
-                  onBlur={(e: any) => {handleArabictranslate("description_ar", description, true, true)}}
+                  onBlur={(e: any) => {
+                    handleArabictranslate(
+                      "description_ar",
+                      description,
+                      true,
+                      true
+                    );
+                  }}
                 />
               </Grid>
 

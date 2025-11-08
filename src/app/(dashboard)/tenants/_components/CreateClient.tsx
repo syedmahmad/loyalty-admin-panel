@@ -7,17 +7,17 @@ import {
   TextField,
   MenuItem,
   Box,
+  Autocomplete,
+  Chip,
 } from "@mui/material";
 import { CustomTextfield } from "@/components/CustomTextField";
 import { POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import * as yup from "yup";
-
-const currencyOptions = [
-  { code: "SAR", label: "Saudi Riyal" },
-  { code: "PKR", label: "Pakistani Rupee" },
-  { code: "INR", label: "Indian Rupee" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { countryService, OnboardStatus } from "@/services/countryService";
+import { languageService } from "@/services/languageService";
+import { currencyService } from "@/services/currencyService";
 
 const CreateClient = ({ reFetch, setOpenModal }: any) => {
   const theme = useTheme();
@@ -28,6 +28,25 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
     currency: "",
     created_by: 1,
     updated_by: 1,
+    countryId: "",
+    languageIds: [],
+    currencyIds: [],
+  });
+
+  const { data: countriesData } = useQuery({
+    queryKey: ["countries"],
+    queryFn: () => countryService.getCountries(),
+  });
+
+  const { data: languagesData } = useQuery({
+    queryKey: ["languages"],
+    queryFn: () => languageService.getLanguages({ limit: 100 }),
+  });
+
+  const { data: currenciesData } = useQuery({
+    queryKey: ["currencies"],
+    queryFn: () =>
+      currencyService.getCurrencies({ onboardStatus: "ONBOARDED", limit: 100 }),
   });
 
   const handleChange = (e: any) => {
@@ -38,7 +57,18 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
   const schema = yup.object().shape({
     name: yup.string().required("Name is required"),
     domain: yup.string().required("Domain is required"),
-    currency: yup.string().required("Currency is required"),
+    // currency: yup.string().required("Currency is required"),
+    // countryId: yup.string().required("Country is required"),
+    // languageIds: yup
+    //   .array()
+    //   .of(yup.number())
+    //   .min(1, "At least one language is required")
+    //   .required("Language is required"),
+    // currencyIds: yup
+    //   .array()
+    //   .of(yup.number())
+    //   .min(1, "At least one currency is required")
+    //   .required("currency is required"),
   });
 
   const handleSubmit = async () => {
@@ -52,6 +82,9 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         currency: clientInfo.currency,
         created_by: clientInfo.created_by,
         updated_by: clientInfo.updated_by,
+        country_id: clientInfo?.countryId,
+        languageIds: clientInfo?.languageIds,
+        currencyIds: clientInfo?.currencyIds,
       };
 
       const response = await POST("/tenants", payload, {
@@ -122,23 +155,131 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         />
       </Grid2>
 
+      {/* Country */}
       <Grid2 xs={12} md={12}>
-        <TextField
-          select
+        <Autocomplete
           fullWidth
-          name="currency"
-          label="Currency"
-          value={clientInfo.currency}
-          onChange={handleChange}
-          error={!!formErrors.currency}
-          helperText={formErrors.currency}
-        >
-          {currencyOptions.map((currency) => (
-            <MenuItem key={currency.code} value={currency.code}>
-              {currency.label} ({currency.code})
-            </MenuItem>
-          ))}
-        </TextField>
+          options={countriesData?.countries || []}
+          getOptionLabel={(option: any) => option?.name || ""}
+          onChange={(_, newValue) => {
+            handleChange({
+              target: {
+                name: "countryId",
+                value: newValue ? newValue.id : "",
+              },
+            });
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              required
+              name="countryId"
+              label="Country"
+              error={!!formErrors.countryId}
+              helperText={formErrors.countryId}
+            />
+          )}
+        />
+      </Grid2>
+
+      {/* Language */}
+      <Grid2 xs={12} md={12}>
+        <Autocomplete
+          multiple
+          fullWidth
+          options={
+            Array.isArray(languagesData?.languages)
+              ? languagesData?.languages
+              : []
+          }
+          getOptionLabel={(option: any) => `${option.flag} ${option.name}`}
+          onChange={(_, newValue) => {
+            handleChange({
+              target: {
+                name: "languageIds",
+                value: newValue.map((lang: any) => lang.id),
+              },
+            });
+          }}
+          renderTags={(selected: any, getTagProps: any) =>
+            selected.map(
+              (
+                option: { id: number; flag: string; name: string },
+                index: number
+              ) => {
+                const { key, ...tagProps } = getTagProps({ index });
+                return (
+                  <Chip
+                    key={option.id}
+                    label={`${option.flag} ${option.name}`}
+                    {...tagProps}
+                  />
+                );
+              }
+            )
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              required
+              name="languageIds"
+              label="Languages"
+              placeholder="Select languages"
+              error={!!formErrors.languageIds}
+              helperText={formErrors.languageIds}
+            />
+          )}
+        />
+      </Grid2>
+
+      {/* Currency */}
+      <Grid2 xs={12} md={12}>
+        <Autocomplete
+          multiple
+          fullWidth
+          options={
+            Array.isArray(currenciesData?.currencies)
+              ? currenciesData?.currencies
+              : []
+          }
+          getOptionLabel={(option: any) => `${option.flag} ${option.name}`}
+          onChange={(_, newValue) => {
+            handleChange({
+              target: {
+                name: "currencyIds",
+                value: newValue.map((currency: any) => currency.id),
+              },
+            });
+          }}
+          renderTags={(selected: any, getTagProps: any) =>
+            selected.map(
+              (
+                option: { id: number; flag: string; name: string },
+                index: number
+              ) => {
+                const { key, ...tagProps } = getTagProps({ index });
+                return (
+                  <Chip
+                    key={option.id}
+                    label={`${option.flag} ${option.name}`}
+                    {...tagProps}
+                  />
+                );
+              }
+            )
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              required
+              name="currencyIds"
+              label="Currencies"
+              placeholder="Select Currencies"
+              error={!!formErrors.currencyIds}
+              helperText={formErrors.currencyIds}
+            />
+          )}
+        />
       </Grid2>
 
       <Grid2 xs={12} md={12}>
