@@ -1,87 +1,39 @@
 "use client";
 
+import { RichTextEditor } from "@/components/TextEditor";
+import { businessUnitService } from "@/services/businessUnitService";
+import { openAIService } from "@/services/openAiService";
+import { tenantService } from "@/services/tenantService";
+import { BusinessUnit } from "@/types/businessunit.type";
+import { Language } from "@/types/language.type";
+import { Benefit, TierBenefit, TierFormValues } from "@/types/tier.type";
+import { POST } from "@/utils/AxiosUtility";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
+  Box,
   Button,
-  Card,
-  CardContent,
+  CircularProgress,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   TextField,
   Typography,
-  CircularProgress,
-  Tooltip,
-  IconButton,
-  useTheme,
-  Box,
-  InputAdornment,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { Formik, Form } from "formik";
-import * as Yup from "yup";
+import { Form, Formik } from "formik";
 import { useEffect, useState } from "react";
-import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
-import { RichTextEditor } from "@/components/TextEditor";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { tenantService } from "@/services/tenantService";
-
-type BusinessUnit = {
-  id: number;
-  name: string;
-};
-
-const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
-  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const response = await GET(`/business-units/${clientInfo.id}`);
-  if (response?.status !== 200) {
-    throw new Error("Failed to fetch business units");
-  }
-  return response.data;
-};
-
-// const fetchRules = async (): Promise<any[]> => {
-//   const response = await GET('/rules');
-//   if (response?.status !== 200) {
-//     throw new Error('Failed to fetch rules');
-//   }
-//   return response.data;
-// };
-
-// const fetchLanguage = async () => {
-//   const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-//   const response = await GET(`/tenants/${clientInfo.id}`);
-//   if (response?.status !== 200) {
-//     throw new Error("Failed to fetch country langugage");
-//   }
-//   return response.data;
-// };
-
-type Benefit = {
-  name_en: string;
-  name_ar: string;
-  icon: string;
-};
+import * as Yup from "yup";
 
 const CreateTierForm = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
-  const [description, setDescription] = useState<string>("");
-  const [descriptionAr, setDescriptionAr] = useState<string>("");
-  const [nameAr, setNameAr] = useState<string>("");
-  // const [rules, setRules] = useState<any[]>([]);
-  // const [selectedRules, setSelectedRules] = useState<number[]>([]);
-  const theme = useTheme();
-  const router = useRouter();
-
-  const [languages, setLanguages] = useState([]);
-
+  const [languages, setLanguages] = useState<Language[]>([]);
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
-  const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
+  const [benefitsInputs, setBenefitsInputs] = useState<TierBenefit[]>([
     { name_en: "", name_ar: "", icon: "" },
   ]);
   const [file, setFile] = useState<File | null>(null);
@@ -96,11 +48,9 @@ const CreateTierForm = ({ onSuccess }: any) => {
     setLoading(true);
     try {
       const [buData] = await Promise.all([
-        fetchBusinessUnits(),
-        // fetchRules(),
+        businessUnitService.getBusinessUnit(),
       ]);
       setBusinessUnits(buData);
-      // setRules(ruleData);
     } finally {
       setLoading(false);
     }
@@ -108,7 +58,6 @@ const CreateTierForm = ({ onSuccess }: any) => {
 
   useEffect(() => {
     loadData();
-
     const getLanguages = async () => {
       try {
         const languageResponse = await tenantService.getTenantById();
@@ -128,7 +77,6 @@ const CreateTierForm = ({ onSuccess }: any) => {
         console.error("Error fetching country language:", error);
       }
     };
-
     getLanguages();
   }, []);
 
@@ -139,21 +87,30 @@ const CreateTierForm = ({ onSuccess }: any) => {
     ]);
   };
 
-  const initialValues = {
-    name: "",
+  const initialValues: TierFormValues = {
+    tierBasicInfo: { locales: {} },
     min_points: "",
     benefits: "",
     description: "",
     business_unit_ids: [] as number[],
-    // conversion_rate: 0,
   };
 
   const validationSchema = Yup.object({
-    name: Yup.string().required("Tier name is required"),
+    tierBasicInfo: Yup.object().shape({
+      locales: Yup.object().shape(
+        Object.fromEntries(
+          languages.map((lang) => [
+            lang.id,
+            Yup.object().shape({
+              name: Yup.string().required(
+                `Tier name (${lang.name}) is required`
+              ),
+            }),
+          ])
+        )
+      ),
+    }),
     min_points: Yup.number().required("Minimum points required"),
-    // conversion_rate: Yup.number()
-    //   .required('Conversion rate is required')
-    //   .min(0, 'Conversion rate must be a positive number'),
     business_unit_ids: Yup.array()
       .min(1, "At least one business unit is required")
       .of(Yup.number().required()),
@@ -165,16 +122,19 @@ const CreateTierForm = ({ onSuccess }: any) => {
   ) => {
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId) => ({
-      name: values.name,
-      name_ar: nameAr,
       min_points: +values.min_points,
-      description: description || "",
-      description_ar: descriptionAr || "",
       business_unit_id: buId,
       tenant_id: created_by,
       created_by,
       updated_by: created_by,
-      benefits: benefitsInputs || [],
+      locales: Object.entries(values.tierBasicInfo.locales).map(
+        ([languageId, localization]) => ({
+          languageId,
+          name: localization.name,
+          description: localization.description,
+          benefits: localization.benefits,
+        })
+      ),
     }));
 
     const responses = await Promise.all(
@@ -189,40 +149,8 @@ const CreateTierForm = ({ onSuccess }: any) => {
     } else {
       toast.success("All tiers created successfully!");
       resetForm();
-      // setBenefits("");
       setLoading(false);
-      // router.push('/tiers/view');
       onSuccess();
-    }
-  };
-
-  const handleArabictranslate = async (
-    key: string,
-    value: string,
-    richEditor: boolean = false,
-    notBenefits: boolean = false
-  ) => {
-    try {
-      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-      const res = await POST("/openai/translate-to-arabic", { value });
-      if (res?.data.status && !notBenefits) {
-        return res?.data?.data;
-      } else {
-        if (richEditor) {
-          setDescriptionAr(res?.data?.data || "");
-        } else {
-          setNameAr(res?.data?.data);
-        }
-      }
-      return "";
-    } catch (error: any) {
-      return {
-        success: false,
-        status: error?.response?.status || 500,
-        message: error?.response?.data?.message || "Unknown error",
-      };
-    } finally {
-      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -257,69 +185,119 @@ const CreateTierForm = ({ onSuccess }: any) => {
     }
   };
 
+  const handleTranslateText = async (
+    targetLang: string,
+    englishText: string
+  ): Promise<string> => {
+    try {
+      const payload = {
+        text: englishText,
+        targetLanguage: [targetLang],
+        sourceLanguage: "en",
+      };
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
+      const response = await openAIService.translateText(payload);
+      return response.translatedText?.[targetLang] || "";
+    } catch (error) {
+      console.error(`Translation failed for ${targetLang}:`, error);
+      return "";
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
+    }
+  };
+
   return (
     <>
-      {/* <Tooltip title="Go Back">
-        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
-          <ArrowBackIcon /> &nbsp; Go Back
-        </IconButton>
-      </Tooltip>
-      <Card sx={{ maxWidth: 700, mx: 'auto', mt: 4, p: 2, borderRadius: 3 }}>
-      <CardContent>
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          ➕ Create New Tier
-        </Typography> */}
-
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={(values, { resetForm }) => handleSubmit(values, resetForm)}
       >
-        {({ values, errors, touched, handleChange }) => (
-          <Form noValidate>
-            <Grid container spacing={2}>
-              {/* Tier Name */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="name"
-                  label="Tier Name"
-                  value={values.name}
-                  onChange={handleChange}
-                  error={!!touched.name && !!errors.name}
-                  helperText={touched.name && errors.name}
-                  onBlur={(e) =>
-                    handleArabictranslate(
-                      "name_ar",
-                      e.target.value,
-                      false,
-                      true
-                    )
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        {translationLoading["name_ar"] && (
-                          <CircularProgress size={20} />
-                        )}
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
+        {({ values, errors, touched, handleChange, setFieldValue }) => {
+          return (
+            <Form noValidate>
+              <Grid container spacing={2}>
+                {/* Tier Name */}
+                {languages.length > 0 &&
+                  languages.map((singleLanguage: Language, index) => {
+                    const langId = singleLanguage.id;
+                    const langCode = singleLanguage.code;
+                    const fieldName = `tierBasicInfo.locales.${langId}.name`;
 
-              {/* Rule Name Ar */}
-              <Grid item xs={12}>
-                <TextField
-                  name="name_ar"
-                  label="Arabic Tier Name"
-                  fullWidth
-                  value={nameAr}
-                  onChange={(e) => setNameAr(e.target.value)}
-                />
-              </Grid>
+                    return (
+                      <Grid item xs={12} key={index}>
+                        <TextField
+                          fullWidth
+                          name={fieldName}
+                          label={`Tier Name (${singleLanguage.name})`}
+                          value={
+                            values.tierBasicInfo.locales[langId]?.name || ""
+                          }
+                          onChange={handleChange}
+                          error={Boolean(
+                            errors.tierBasicInfo?.locales?.[langId]?.name
+                          )}
+                          helperText={
+                            errors.tierBasicInfo?.locales?.[langId]?.name
+                              ? String(
+                                  errors.tierBasicInfo.locales[langId].name
+                                )
+                              : ""
+                          }
+                          onBlur={async (e) => {
+                            if (langCode === "en") {
+                              const englishText = e.target.value;
+                              if (!englishText.trim()) return;
 
-              {/* <Grid item xs={6}>
+                              for (const lang of languages) {
+                                const targetLangId = lang?.id;
+                                const targetLang = lang?.code;
+                                if (targetLang !== "en") {
+                                  try {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`name_${targetLang}`]: true,
+                                    }));
+
+                                    const translatedText =
+                                      await handleTranslateText(
+                                        targetLang,
+                                        englishText
+                                      );
+                                    setFieldValue(
+                                      `tierBasicInfo.locales.${targetLangId}.name`,
+                                      translatedText
+                                    );
+                                  } catch (err) {
+                                    console.error(
+                                      `Translation failed for ${targetLang}`,
+                                      err
+                                    );
+                                  } finally {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`name_${targetLang}`]: false,
+                                    }));
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                {translationLoading[`name_${langCode}`] && (
+                                  <CircularProgress size={20} />
+                                )}
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid>
+                    );
+                  })}
+
+                {/* <Grid item xs={6}>
                   <TextField
                     fullWidth
                     name="conversion_rate"
@@ -332,46 +310,46 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   />
                 </Grid> */}
 
-              {/* Min Points */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="min_points"
-                  label="Min Points"
-                  type="number"
-                  value={values.min_points}
-                  onChange={handleChange}
-                  error={!!touched.min_points && !!errors.min_points}
-                  helperText={touched.min_points && errors.min_points}
-                />
-              </Grid>
+                {/* Min Points */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="min_points"
+                    label="Min Points"
+                    type="number"
+                    value={values.min_points}
+                    onChange={handleChange}
+                    error={!!touched.min_points && !!errors.min_points}
+                    helperText={touched.min_points && errors.min_points}
+                  />
+                </Grid>
 
-              {/* Business Units */}
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  fullWidth
-                  name="business_unit_ids"
-                  label="Business Units"
-                  SelectProps={{ multiple: true }}
-                  value={values.business_unit_ids}
-                  onChange={handleChange}
-                  error={
-                    !!touched.business_unit_ids && !!errors.business_unit_ids
-                  }
-                  helperText={
-                    touched.business_unit_ids && errors.business_unit_ids
-                  }
-                >
-                  {businessUnits.map((bu) => (
-                    <MenuItem key={bu.id} value={bu.id}>
-                      {bu.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              
-              {/* <Grid item xs={12}>
+                {/* Business Units */}
+                <Grid item xs={12}>
+                  <TextField
+                    select
+                    fullWidth
+                    name="business_unit_ids"
+                    label="Business Units"
+                    SelectProps={{ multiple: true }}
+                    value={values.business_unit_ids}
+                    onChange={handleChange}
+                    error={
+                      !!touched.business_unit_ids && !!errors.business_unit_ids
+                    }
+                    helperText={
+                      touched.business_unit_ids && errors.business_unit_ids
+                    }
+                  >
+                    {businessUnits.map((bu) => (
+                      <MenuItem key={bu.id} value={bu.id}>
+                        {bu.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                {/* <Grid item xs={12}>
                   <TextField
                     select
                     fullWidth
@@ -395,197 +373,278 @@ const CreateTierForm = ({ onSuccess }: any) => {
                   </TextField>
                 </Grid> */}
 
-              {/* Benefits */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Benefits (optional)
-                </Typography>
-
-                {benefitsInputs.map((input, index) => (
-                  <Box
-                    display="flex"
-                    alignItems="flex-start"
-                    gap={1}
-                    key={index + 1}
-                    mb={2}
-                    p={2}
-                    border="1px solid #ddd"
-                    borderRadius="12px"
-                    boxShadow="0 2px 5px rgba(0,0,0,0.05)"
-                  >
-                    <Box display="flex" gap={2} flex={1} flexDirection="column">
-                      <Box display="flex" alignItems="center" gap={2}>
-                        <Button
-                          variant="outlined"
-                          component="label"
-                          fullWidth
-                          size="small"
-                          sx={{ width: 150, height: 35 }}
-                          disabled={uploadingIndex === index}
-                        >
-                          {/* {input.icon ? "Change Icon" : "Upload Icon"} */}
-                          {uploadingIndex === index ? (
-                            <CircularProgress size={18} />
-                          ) : input.icon ? (
-                            "Change Icon"
-                          ) : (
-                            "Upload Icon"
-                          )}
-                          <input
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, index)}
-                          />
-                        </Button>
-                        {input.icon && (
-                          <Box mt={1}>
-                            <img
-                              src={input.icon}
-                              alt="Benefit Icon"
-                              style={{ width: 33, height: 33, borderRadius: 2 }}
-                            />
-                          </Box>
-                        )}
-                      </Box>
-
-                      <TextField
-                        fullWidth
-                        name="benefits"
-                        label={`Benefit ${index + 1}`}
-                        value={input.name_en}
-                        onChange={(e) => {
-                          const newInputs = [...benefitsInputs];
-                          newInputs[index].name_en = e.target.value;
-                          setBenefitsInputs(newInputs);
-                        }}
-                        onBlur={async (e) => {
-                          if (e.target.value.trim()) {
-                            const translated = await handleArabictranslate(
-                              `benefit_${index}`,
-                              e.target.value
-                            );
-
-                            if (translated?.success !== false) {
-                              const newInputs = [...benefitsInputs];
-                              newInputs[index].name_ar = translated || "";
-                              setBenefitsInputs(newInputs);
-                            }
-                          }
-                        }}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              {translationLoading[`benefit_${index}`] && (
-                                <CircularProgress size={20} />
-                              )}
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <TextField
-                        fullWidth
-                        name="benefits"
-                        label={`Arabic Benefit ${index + 1}`}
-                        value={input.name_ar}
-                        onChange={(e) => {
-                          const newInputs = [...benefitsInputs];
-                          newInputs[index].name_ar = e.target.value;
-                          setBenefitsInputs(newInputs);
-                        }}
-                      />
-                    </Box>
-
-                    {index === 0 ? (
-                      <IconButton onClick={addBenefitInput}>
-                        <AddIcon fontSize="small" color="primary" />
-                      </IconButton>
-                    ) : (
-                      <IconButton>
-                        <DeleteIcon
-                          fontSize="small"
-                          color="error"
-                          onClick={() => {
-                            setBenefitsInputs(
-                              benefitsInputs.filter((_, i) => i !== index)
-                            );
-                          }}
-                        />
-                      </IconButton>
-                    )}
-                  </Box>
-                ))}
-
-                {/* <Typography variant="subtitle1" gutterBottom>
+                {/* Benefits */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" gutterBottom>
                     Benefits (optional)
                   </Typography>
-                  <RichTextEditor value={benefits} setValue={setBenefits} language="en" /> */}
-              </Grid>
+                  {benefitsInputs.map((input, benefitIndex) => (
+                    <Box
+                      display="flex"
+                      alignItems="flex-start"
+                      gap={1}
+                      key={benefitIndex}
+                      mb={2}
+                      p={2}
+                      border="1px solid #ddd"
+                      borderRadius="12px"
+                      boxShadow="0 2px 5px rgba(0,0,0,0.05)"
+                    >
+                      <Box
+                        display="flex"
+                        gap={2}
+                        flex={1}
+                        flexDirection="column"
+                      >
+                        {/* Upload Icon */}
+                        <Box display="flex" alignItems="center" gap={2}>
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            fullWidth
+                            size="small"
+                            sx={{ width: 150, height: 35 }}
+                            disabled={uploadingIndex === benefitIndex}
+                          >
+                            {uploadingIndex === benefitIndex ? (
+                              <CircularProgress size={18} />
+                            ) : input.icon ? (
+                              "Change Icon"
+                            ) : (
+                              "Upload Icon"
+                            )}
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*"
+                              onChange={(e) =>
+                                handleFileChange(e, benefitIndex)
+                              }
+                            />
+                          </Button>
+                          {input.icon && (
+                            <Box mt={1}>
+                              <img
+                                src={input.icon}
+                                alt="Benefit Icon"
+                                style={{
+                                  width: 33,
+                                  height: 33,
+                                  borderRadius: 2,
+                                }}
+                              />
+                            </Box>
+                          )}
+                        </Box>
 
-              {/* Description */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Description (optional)
-                </Typography>
-                <RichTextEditor
-                  value={description}
-                  setValue={setDescription}
-                  language="en"
-                  onBlur={(e: any) => {
-                    handleArabictranslate(
-                      "description_ar",
-                      description,
-                      true,
-                      true
+                        {/* Loop for each language */}
+                        {languages.length > 0 &&
+                          languages.map(
+                            (singleLanguage: Language, langIndex) => {
+                              const langId = singleLanguage.id;
+                              const langCode = singleLanguage.code;
+                              const benefitName =
+                                input[
+                                  `name_${langCode}` as keyof typeof input
+                                ] || "";
+
+                              return (
+                                <TextField
+                                  key={`${benefitIndex}-${langId}`}
+                                  fullWidth
+                                  label={`Benefit ${benefitIndex + 1} (${
+                                    singleLanguage.name
+                                  })`}
+                                  value={benefitName}
+                                  onChange={(e) => {
+                                    const newInputs: any = [...benefitsInputs];
+                                    newInputs[benefitIndex][
+                                      `name_${langCode}`
+                                    ] = e.target.value;
+                                    setBenefitsInputs(newInputs);
+                                  }}
+                                  onBlur={async (e) => {
+                                    if (langCode === "en") {
+                                      const englishText = e.target.value;
+                                      if (!englishText.trim()) return;
+
+                                      for (const lang of languages) {
+                                        const targetLangId = lang?.id;
+                                        const targetLang = lang.code;
+                                        if (targetLang !== "en") {
+                                          try {
+                                            setTranslationLoading((prev) => ({
+                                              ...prev,
+                                              [`benefit_${targetLang}_${benefitIndex}`]:
+                                                true,
+                                            }));
+
+                                            const translatedText =
+                                              await handleTranslateText(
+                                                targetLang,
+                                                englishText
+                                              );
+
+                                            const newInputs: any = [
+                                              ...benefitsInputs,
+                                            ];
+                                            newInputs[benefitIndex][
+                                              `name_${targetLang}`
+                                            ] = translatedText || "";
+
+                                            setFieldValue(
+                                              `tierBasicInfo.locales.${targetLangId}.benefits`,
+                                              newInputs
+                                            );
+                                          } catch (err) {
+                                            console.error(
+                                              `Translation failed for ${targetLang}`,
+                                              err
+                                            );
+                                          } finally {
+                                            setTranslationLoading((prev) => ({
+                                              ...prev,
+                                              [`benefit_${targetLang}_${benefitIndex}`]:
+                                                false,
+                                            }));
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }}
+                                  InputProps={{
+                                    endAdornment: (
+                                      <InputAdornment position="end">
+                                        {translationLoading[
+                                          `benefit_${langCode}_${benefitIndex}`
+                                        ] && <CircularProgress size={20} />}
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
+                              );
+                            }
+                          )}
+                      </Box>
+
+                      {/* Add / Delete Buttons */}
+                      {benefitIndex === 0 ? (
+                        <IconButton onClick={addBenefitInput}>
+                          <AddIcon fontSize="small" color="primary" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          onClick={() => {
+                            setBenefitsInputs(
+                              benefitsInputs.filter(
+                                (_, i) => i !== benefitIndex
+                              )
+                            );
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
+                      )}
+                    </Box>
+                  ))}
+                </Grid>
+
+                {/* Description */}
+                {languages.length > 0 &&
+                  languages.map((singleLanguage: Language, index) => {
+                    const langId = singleLanguage.id;
+                    const langCode = singleLanguage.code;
+
+                    return (
+                      <Grid item xs={12} key={index}>
+                        <Typography variant="subtitle1" gutterBottom>
+                          {`Description (${singleLanguage.name})`}
+                        </Typography>
+
+                        <RichTextEditor
+                          value={
+                            values.tierBasicInfo.locales[langId]?.description ||
+                            ""
+                          }
+                          setValue={(value: string) => {
+                            setFieldValue(
+                              `tierBasicInfo.locales.${langId}.description`,
+                              value
+                            );
+                          }}
+                          language={langCode}
+                          onBlur={async () => {
+                            if (langCode === "en") {
+                              const englishText =
+                                values.tierBasicInfo.locales[langId]
+                                  ?.description || "";
+                              if (!englishText.trim()) return;
+
+                              for (const lang of languages) {
+                                const targetLang = lang.code;
+                                const targetLangId = lang.id;
+
+                                if (targetLang !== "en") {
+                                  try {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`description_${targetLang}`]: true,
+                                    }));
+
+                                    const translatedText =
+                                      await handleTranslateText(
+                                        targetLang,
+                                        englishText
+                                      );
+
+                                    setFieldValue(
+                                      `tierBasicInfo.locales.${targetLangId}.description`,
+                                      translatedText
+                                    );
+                                  } catch (err) {
+                                    console.error(
+                                      `Translation failed for ${targetLang}`,
+                                      err
+                                    );
+                                  } finally {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`description_${targetLang}`]: false,
+                                    }));
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                          translationLoading={
+                            translationLoading[`description_${langCode}`]
+                          }
+                        />
+                      </Grid>
                     );
-                  }}
-                />
-              </Grid>
+                  })}
 
-              {/* Description */}
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Description Arabic(optional)
-                </Typography>
-                <RichTextEditor
-                  value={descriptionAr}
-                  setValue={setDescriptionAr}
-                  language="ar"
-                />
+                <Grid item xs={12}>
+                  <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      type="submit"
+                      disabled={loading}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {loading ? <CircularProgress size={24} /> : "Create Tier"}
+                    </Button>
+                  </Box>
+                </Grid>
               </Grid>
-
-              <Grid item xs={12}>
-                <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    type="submit"
-                    disabled={loading}
-                    sx={{
-                      borderRadius: 2,
-                      textTransform: "none",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {loading ? <CircularProgress size={24} /> : "Create Tier"}
-                  </Button>
-                </Box>
-              </Grid>
-              <br />
-              <br />
-              {/* <Button
-                    variant="contained"
-                    color="secondary"
-                    fullWidth
-                    size="large"
-                    onClick={() => router.push('view')}
-                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-                  >
-                    Go Back
-                  </Button> */}
-            </Grid>
-          </Form>
-        )}
+            </Form>
+          );
+        }}
       </Formik>
     </>
   );

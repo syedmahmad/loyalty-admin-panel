@@ -165,6 +165,8 @@ const RuleList = () => {
       ? rules
       : rules.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  console.log("paginatedrule:::", paginatedrule);
+
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
       <Box
@@ -304,7 +306,7 @@ const RuleList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginatedrule.map((rule, index) => (
+            {paginatedrule.map((rule: any, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Card
                   sx={{
@@ -336,7 +338,7 @@ const RuleList = () => {
                           letterSpacing: "0%",
                         }}
                       >
-                        {rule.name}
+                        {rule?.locales[0]?.name}
                       </Typography>
                       <Box>
                         <IconButton
@@ -485,10 +487,10 @@ const RuleList = () => {
                 <TableBody>
                   {rules
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((rule, index) => (
+                    .map((rule: any, index) => (
                       <TableRow key={index}>
                         <TableCell>
-                          {rule.name}={rule.id}
+                          {rule?.locales[0]?.name}={rule.id}
                         </TableCell>
                         <TableCell sx={{ textTransform: "capitalize" }}>
                           {rule.rule_type}

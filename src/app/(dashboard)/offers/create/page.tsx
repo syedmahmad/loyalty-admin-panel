@@ -1,6 +1,12 @@
 "use client";
 
 import { RichTextEditor } from "@/components/TextEditor";
+import { STATION_TYPES } from "@/constants/constants";
+import { businessUnitService } from "@/services/businessUnitService";
+import { openAIService } from "@/services/openAiService";
+import { tenantService } from "@/services/tenantService";
+import { Language } from "@/types/language.type";
+import { Benefit, UploadingState } from "@/types/offer.type";
 import { DELETE, GET, POST } from "@/utils/AxiosUtility";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,40 +28,17 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import { BusinessUnit, OfferFormValues } from "../types";
-import { STATION_TYPES } from "@/constants/constants";
-
-const fetchBusinessUnits = async (
-  name: string = ""
-): Promise<BusinessUnit[]> => {
-  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const response = await GET(
-    `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
-  );
-  if (response?.status !== 200) {
-    throw new Error("Failed to fetch business units");
-  }
-  return response.data;
-};
-
-type Benefit = {
-  name_en: string;
-  name_ar: string;
-  icon: string;
-  // icon_ar: string;
-  drawerType?: string;
-};
 
 const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [benefits, setBenefits] = useState<string>("");
-  const [termsAndConditionsEn, setTermsAndConditionsEn] = useState<string>("");
-  const [termsAndConditionsAr, setTermsAndConditionsAr] = useState<string>("");
   const [segments, setSegments] = useState([]);
   const [removing, setRemoving] = useState(false);
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
+  const [languages, setLanguages] = useState<Language[]>([]);
 
   /** Multiple Benefits with icon */
   const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
@@ -70,12 +53,9 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
     mobile: { en: "", ar: "" },
   });
 
-  const [uploading, setUploading] = useState<{
-    desktop: { en: boolean; ar: boolean };
-    mobile: { en: boolean; ar: boolean };
-  }>({
-    desktop: { en: false, ar: false },
-    mobile: { en: false, ar: false },
+  const [uploading, setUploading] = useState<UploadingState>({
+    desktop: {},
+    mobile: {},
   });
   /** images for Desktop and mobile end*/
 
@@ -92,24 +72,34 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
   const formik = useFormik<OfferFormValues>({
     initialValues: {
-      offer_title: "",
-      offer_title_ar: "",
-      offer_subtitle: "",
-      offer_subtitle_ar: "",
+      offerBasicInfo: { locales: {} },
       business_unit_ids: [] as number[],
       benefits: "",
       date_from: "",
       date_to: "",
       status: 1,
       customer_segment_ids: [] as number[],
-      description_en: "",
-      description_ar: "",
       all_users: 0,
       station_type: "",
     },
     validationSchema: Yup.object({
-      offer_title: Yup.string().required("Offer title is required"),
-      offer_subtitle: Yup.string().required("Offer subtitle is required"),
+      offerBasicInfo: Yup.object().shape({
+        locales: Yup.object().shape(
+          Object.fromEntries(
+            languages.map((lang) => [
+              lang.id,
+              Yup.object().shape({
+                title: Yup.string().required(
+                  `Offer title (${lang.name}) is required`
+                ),
+                subtitle: Yup.string().required(
+                  `Offer subtitle (${lang.name}) is required`
+                ),
+              }),
+            ])
+          )
+        ),
+      }),
       business_unit_ids: Yup.array().min(
         1,
         "Select at least one business unit"
@@ -140,7 +130,9 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [buData] = await Promise.all([fetchBusinessUnits()]);
+      const [buData] = await Promise.all([
+        businessUnitService.getBusinessUnit(),
+      ]);
       setBusinessUnits(buData);
     } finally {
       setLoading(false);
@@ -150,18 +142,34 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   useEffect(() => {
     loadData();
     fetchCustomerSegments();
+    const getLanguages = async () => {
+      try {
+        const languageResponse = await tenantService.getTenantById();
+        const allLanguages =
+          languageResponse?.languages?.map((cl: any) => cl?.language) || [];
+
+        const english = allLanguages.find(
+          (lang: { code: string }) => lang.code === "en"
+        );
+
+        const others = allLanguages.filter(
+          (lang: { code: string }) => lang.code !== "en"
+        );
+        const englishFirst = english ? [english, ...others] : allLanguages;
+        setLanguages(englishFirst);
+      } catch (error) {
+        console.error("Error fetching country language:", error);
+      }
+    };
+    getLanguages();
   }, []);
 
   const handleSubmit = async (
     values: OfferFormValues,
     resetForm: () => void
   ) => {
-    // setLoading(true);
+    setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
-      offer_title: values.offer_title,
-      offer_title_ar: values.offer_title_ar,
-      offer_subtitle: values.offer_subtitle,
-      offer_subtitle_ar: values.offer_subtitle_ar,
       date_from: values.date_from,
       date_to: values.date_to,
       status: values.status,
@@ -171,13 +179,21 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       created_by,
       updated_by: created_by,
       customer_segment_ids: values.customer_segment_ids,
-      description_en: values.description_en,
-      description_ar: values.description_ar,
-      terms_and_conditions_en: termsAndConditionsEn || "",
-      terms_and_conditions_ar: termsAndConditionsAr || "",
       all_users: values.all_users,
       images: images,
       station_type: values.station_type,
+      locales: Object.entries(values.offerBasicInfo.locales).map(
+        ([languageId, localization]) => ({
+          languageId,
+          title: localization.title,
+          subtitle: localization.subtitle,
+          description: localization.description,
+          term_and_condition: localization.term_and_condition,
+          benefits: localization.benefits,
+          desktop_image: localization.desktop_image,
+          mobile_image: localization.mobile_image,
+        })
+      ),
     }));
 
     const responses = await Promise.all(
@@ -196,13 +212,13 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
     );
     const anyFailed = responses.some((res) => res?.status !== 201);
     if (anyFailed) {
-      // setLoading(false);
+      setLoading(false);
       toast.error("failed to create offer");
     } else {
       toast.success("offer created successfully!");
       resetForm();
       setBenefits("");
-      // setLoading(false);
+      setLoading(false);
       onSuccess();
     }
   };
@@ -212,36 +228,6 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       ...benefitsInputs,
       { name_en: "", name_ar: "", icon: "" },
     ]);
-  };
-
-  const handleArabictranslate = async (
-    key: string,
-    value: string,
-    richEditor: boolean = false
-  ) => {
-    try {
-      if (value) {
-        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-        const res = await POST("/openai/translate-to-arabic", { value });
-        if (res?.data.status) {
-          if (richEditor) {
-            setTermsAndConditionsAr(res?.data?.data);
-          } else {
-            setFieldValue(key, res?.data?.data);
-          }
-          return res?.data?.data;
-        }
-        return "";
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        status: error?.response?.status || 500,
-        message: error?.response?.data?.message || "Unknown error",
-      };
-    } finally {
-      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
-    }
   };
 
   const handleFileChange = async (
@@ -264,10 +250,8 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       });
       if (res?.data.success) {
         setBenefitsInputs((prev) =>
-          prev.map(
-            (item, i) =>
-              i === index ? { ...item, icon: res?.data.uploaded_url } : item
-            // i === index ? { ...item, [iconType]: res?.data.uploaded_url } : item
+          prev.map((item, i) =>
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item
           )
         );
       }
@@ -281,7 +265,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const uploadImageToBucket = async (
     e: React.ChangeEvent<HTMLInputElement>,
     device: "desktop" | "mobile",
-    lang: "en" | "ar"
+    langId: string
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -294,7 +278,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
     setUploading((prev) => ({
       ...prev,
-      [device]: { ...prev[device], [lang]: true },
+      [device]: { ...prev[device], [langId]: true },
     }));
 
     const formData = new FormData();
@@ -306,17 +290,17 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       });
 
       if (res?.data.success) {
-        setImages((prev) => ({
-          ...prev,
-          [device]: { ...prev[device], [lang]: res.data.uploaded_url },
-        }));
+        setFieldValue(
+          `offerBasicInfo.locales.${langId}.${device}_image`,
+          res.data.uploaded_url
+        );
       }
     } catch (err) {
       console.error("Upload failed", err);
     } finally {
       setUploading((prev) => ({
         ...prev,
-        [device]: { ...prev[device], [lang]: false },
+        [device]: { ...prev[device], [langId]: false },
       }));
     }
   };
@@ -324,7 +308,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const removeFileFromBucket = async (
     url: string,
     device: "desktop" | "mobile",
-    lang: "en" | "ar"
+    langId: string
   ) => {
     setRemoving(true);
     try {
@@ -333,10 +317,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
           params: { url },
         });
         if (response?.status == 200 && response?.data.url) {
-          setImages((prev) => ({
-            ...prev,
-            [device]: { ...prev[device], [lang]: "" },
-          }));
+          setFieldValue(`offerBasicInfo.locales.${langId}.${device}_image`, "");
           toast.success("File removed successfully!");
         }
       }
@@ -372,89 +353,180 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
     }
   };
 
+  const handleTranslateText = async (
+    targetLang: string,
+    englishText: string
+  ): Promise<string> => {
+    try {
+      const payload = {
+        text: englishText,
+        targetLanguage: [targetLang],
+        sourceLanguage: "en",
+      };
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
+      const response = await openAIService.translateText(payload);
+      return response.translatedText?.[targetLang] || "";
+    } catch (error) {
+      console.error(`Translation failed for ${targetLang}:`, error);
+      return "";
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
+    }
+  };
+
   return (
     <>
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
-          {/* Offer Title English */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Offer Title English"
-              value={values.offer_title}
-              name="offer_title"
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate("offer_title_ar", e.target.value)
-              }
-              error={!!touched.offer_title && !!errors.offer_title}
-              helperText={touched.offer_title && errors.offer_title}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["offer_title_ar"] && (
-                      <CircularProgress size={20} />
+          {/* Offer Title */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              const fieldName = `offerBasicInfo.locales.${langId}.title`;
+              return (
+                <Grid item xs={12} key={index}>
+                  <TextField
+                    fullWidth
+                    name={fieldName}
+                    label={`Offer title (${singleLanguage.name})`}
+                    value={values.offerBasicInfo.locales[langId]?.title || ""}
+                    onChange={handleChange}
+                    error={Boolean(
+                      errors.offerBasicInfo?.locales?.[langId]?.title
                     )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+                    helperText={
+                      errors.offerBasicInfo?.locales?.[langId]?.title
+                        ? String(errors.offerBasicInfo.locales[langId].title)
+                        : ""
+                    }
+                    onBlur={async (e) => {
+                      if (langCode === "en") {
+                        const englishText = e.target.value;
+                        if (!englishText.trim()) return;
 
-          {/* Offer Title Arabic */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Offer Title Arabic"
-              value={values.offer_title_ar}
-              name="offer_title_ar"
-              onChange={handleChange}
-              error={!!touched.offer_title_ar && !!errors.offer_title_ar}
-              helperText={touched.offer_title_ar && errors.offer_title_ar}
-            />
-          </Grid>
+                        for (const lang of languages) {
+                          const targetLangId = lang?.id;
+                          const targetLang = lang?.code;
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`title_${targetLang}`]: true,
+                              }));
 
-          {/* Offer Subtitle English */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Offer Subtitle English"
-              value={values.offer_subtitle}
-              name="offer_subtitle"
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate("offer_subtitle_ar", e.target.value)
-              }
-              error={!!touched.offer_subtitle && !!errors.offer_subtitle}
-              helperText={touched.offer_subtitle && errors.offer_subtitle}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["offer_subtitle_ar"] && (
-                      <CircularProgress size={20} />
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+                              setFieldValue(
+                                `offerBasicInfo.locales.${targetLangId}.title`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`title_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading[`title_${langCode}`] && (
+                            <CircularProgress size={20} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              );
+            })}
+
+          {/* Offer Subtitle */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              const fieldName = `offerBasicInfo.locales.${langId}.subtitle`;
+              return (
+                <Grid item xs={12} key={index}>
+                  <TextField
+                    fullWidth
+                    name={fieldName}
+                    label={`Offer subtitle (${singleLanguage.name})`}
+                    value={
+                      values.offerBasicInfo.locales[langId]?.subtitle || ""
+                    }
+                    onChange={handleChange}
+                    error={Boolean(
+                      errors.offerBasicInfo?.locales?.[langId]?.subtitle
                     )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+                    helperText={
+                      errors.offerBasicInfo?.locales?.[langId]?.subtitle
+                        ? String(errors.offerBasicInfo.locales[langId].subtitle)
+                        : ""
+                    }
+                    onBlur={async (e) => {
+                      if (langCode === "en") {
+                        const englishText = e.target.value;
+                        if (!englishText.trim()) return;
 
-          {/* Offer Subtitle Arabic */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Offer Subtitle Arabic"
-              value={values.offer_subtitle_ar}
-              name="offer_subtitle_ar"
-              onChange={handleChange}
-              error={!!touched.offer_subtitle_ar && !!errors.offer_subtitle_ar}
-              helperText={touched.offer_subtitle_ar && errors.offer_subtitle_ar}
-            />
-          </Grid>
+                        for (const lang of languages) {
+                          const targetLangId = lang?.id;
+                          const targetLang = lang?.code;
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`subtitle_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+                              setFieldValue(
+                                `offerBasicInfo.locales.${targetLangId}.subtitle`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`subtitle_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading[`subtitle_${langCode}`] && (
+                            <CircularProgress size={20} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              );
+            })}
 
           {/* Business Units */}
           <Grid item xs={12}>
@@ -610,12 +682,12 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               Benefits (optional)
             </Typography>
 
-            {benefitsInputs.map((input, index) => (
+            {benefitsInputs.map((input, benefitIndex) => (
               <Box
                 display="flex"
                 alignItems="flex-start"
                 gap={1}
-                key={index + 1}
+                key={benefitIndex + 1}
                 mb={2}
                 p={2}
                 border="1px solid #ddd"
@@ -632,9 +704,9 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                       fullWidth
                       size="small"
                       sx={{ width: 150, height: 35 }}
-                      disabled={uploadingIndex === index}
+                      disabled={uploadingIndex === benefitIndex}
                     >
-                      {uploadingIndex === index ? (
+                      {uploadingIndex === benefitIndex ? (
                         <CircularProgress size={18} />
                       ) : input.icon ? (
                         "Change Icon"
@@ -645,7 +717,9 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                         type="file"
                         hidden
                         accept="image/*"
-                        onChange={(e) => handleFileChange(e, index, "icon")}
+                        onChange={(e) =>
+                          handleFileChange(e, benefitIndex, "icon")
+                        }
                       />
                     </Button>
                     {input.icon && (
@@ -660,7 +734,10 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           variant="text"
                           color="error"
                           onClick={() =>
-                            removeBenefitIconFromBucket(index, input.icon)
+                            removeBenefitIconFromBucket(
+                              benefitIndex,
+                              input.icon
+                            )
                           }
                         >
                           Remove
@@ -705,55 +782,91 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                       )}
                     </div> */}
                   </Box>
+                  {/* Loop for each language */}
+                  {languages.length > 0 &&
+                    languages.map((singleLanguage: Language, langIndex) => {
+                      const langId = singleLanguage.id;
+                      const langCode = singleLanguage.code;
 
-                  <TextField
-                    fullWidth
-                    name="benefits"
-                    label={`Benefit ${index + 1}`}
-                    value={input.name_en}
-                    onChange={(e) => {
-                      const newInputs = [...benefitsInputs];
-                      newInputs[index].name_en = e.target.value;
-                      setBenefitsInputs(newInputs);
-                    }}
-                    onBlur={async (e) => {
-                      if (e.target.value.trim()) {
-                        const translated = await handleArabictranslate(
-                          `benefit_${index}`,
-                          e.target.value
-                        );
+                      const benefitName =
+                        input[`name_${langCode}` as keyof typeof input] || "";
 
-                        if (translated?.success !== false) {
-                          const newInputs = [...benefitsInputs];
-                          newInputs[index].name_ar = translated || "";
-                          setBenefitsInputs(newInputs);
-                        }
-                      }
-                    }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {translationLoading[`benefit_${index}`] && (
-                            <CircularProgress size={20} />
-                          )}
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    name="benefits"
-                    label={`Arabic Benefit ${index + 1}`}
-                    value={input.name_ar}
-                    onChange={(e) => {
-                      const newInputs = [...benefitsInputs];
-                      newInputs[index].name_ar = e.target.value;
-                      setBenefitsInputs(newInputs);
-                    }}
-                  />
+                      return (
+                        <TextField
+                          key={`${benefitIndex}-${langId}`}
+                          fullWidth
+                          label={`Benefit ${benefitIndex + 1} (${
+                            singleLanguage.name
+                          })`}
+                          value={benefitName}
+                          onChange={(e) => {
+                            const newInputs: any = [...benefitsInputs];
+                            newInputs[benefitIndex][`name_${langCode}`] =
+                              e.target.value;
+                            setBenefitsInputs(newInputs);
+                          }}
+                          onBlur={async (e) => {
+                            if (langCode === "en") {
+                              const englishText = e.target.value;
+                              if (!englishText.trim()) return;
+
+                              for (const lang of languages) {
+                                const targetLangId = lang?.id;
+                                const targetLang = lang.code;
+                                if (targetLang !== "en") {
+                                  try {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`benefit_${targetLang}_${benefitIndex}`]:
+                                        true,
+                                    }));
+
+                                    const translatedText =
+                                      await handleTranslateText(
+                                        targetLang,
+                                        englishText
+                                      );
+
+                                    const newInputs: any = [...benefitsInputs];
+                                    newInputs[benefitIndex][
+                                      `name_${targetLang}`
+                                    ] = translatedText || "";
+
+                                    setFieldValue(
+                                      `offerBasicInfo.locales.${targetLangId}.benefits`,
+                                      newInputs
+                                    );
+                                  } catch (err) {
+                                    console.error(
+                                      `Translation failed for ${targetLang}`,
+                                      err
+                                    );
+                                  } finally {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`benefit_${targetLang}_${benefitIndex}`]:
+                                        false,
+                                    }));
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                {translationLoading[
+                                  `benefit_${langCode}_${benefitIndex}`
+                                ] && <CircularProgress size={20} />}
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      );
+                    })}
                 </Box>
 
-                {index === 0 ? (
+                {benefitIndex === 0 ? (
                   <IconButton onClick={addBenefitInput}>
                     <AddIcon fontSize="small" color="primary" />
                   </IconButton>
@@ -764,7 +877,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                       color="error"
                       onClick={() => {
                         setBenefitsInputs(
-                          benefitsInputs.filter((_, i) => i !== index)
+                          benefitsInputs.filter((_, i) => i !== benefitIndex)
                         );
                       }}
                     />
@@ -774,280 +887,289 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
             ))}
           </Grid>
 
-          {/* Desktop and mobile image start*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Desktop image (English)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.desktop.en ? (
-                  <CircularProgress size={18} />
-                ) : images.desktop.en ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "desktop", "en")}
-                />
-              </Button>
+          {/* Desktop image */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Desktop image (${singleLanguage.name})`}
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      size="small"
+                      sx={{ width: 150, height: 35 }}
+                    >
+                      {uploading.desktop?.[langId] ? (
+                        <CircularProgress size={18} />
+                      ) : values.offerBasicInfo.locales[langId]
+                          ?.desktop_image ? (
+                        "Change Image"
+                      ) : (
+                        "Upload Image"
+                      )}
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) =>
+                          uploadImageToBucket(e, "desktop", langId)
+                        }
+                      />
+                    </Button>
 
-              {images.desktop.en && (
-                <Box mt={1} display="flex" alignItems="center" gap={3}>
-                  <img
-                    src={images.desktop.en}
-                    alt="Desktop English Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
+                    {/* Image Preview + Remove */}
+                    {values.offerBasicInfo.locales[langId]?.desktop_image && (
+                      <Box mt={1} display="flex" alignItems="center" gap={3}>
+                        <img
+                          src={
+                            values.offerBasicInfo.locales[langId]?.desktop_image
+                          }
+                          alt={`Desktop ${singleLanguage.name} Image`}
+                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                        />
 
-                  <Button
-                    variant="text"
-                    color="error"
-                    onClick={() =>
-                      removeFileFromBucket(images?.desktop?.en, "desktop", "en")
-                    }
-                  >
-                    Remove
-                  </Button>
-                </Box>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Desktop image (Arabic)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.desktop.ar ? (
-                  <CircularProgress size={18} />
-                ) : images.desktop.ar ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "desktop", "ar")}
-                />
-              </Button>
-
-              {images.desktop.ar && (
-                <Box mt={1} display="flex" alignItems="center" gap={3}>
-                  <img
-                    src={images.desktop.ar}
-                    alt="Desktop Arabic Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                  <Button
-                    variant="text"
-                    color="error"
-                    onClick={() =>
-                      removeFileFromBucket(images?.desktop?.ar, "desktop", "ar")
-                    }
-                  >
-                    Remove
-                  </Button>
-                </Box>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Mobile image (English)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.mobile.en ? (
-                  <CircularProgress size={18} />
-                ) : images.mobile.en ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "mobile", "en")}
-                />
-              </Button>
-
-              {images.mobile.en && (
-                <Box mt={1} display="flex" alignItems="center" gap={3}>
-                  <img
-                    src={images.mobile.en}
-                    alt="Mobile English Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                  <Button
-                    variant="text"
-                    color="error"
-                    onClick={() =>
-                      removeFileFromBucket(images?.mobile?.en, "mobile", "en")
-                    }
-                  >
-                    Remove
-                  </Button>
-                </Box>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Mobile image (Arabic)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.mobile.ar ? (
-                  <CircularProgress size={18} />
-                ) : images.mobile.ar ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "mobile", "ar")}
-                />
-              </Button>
-
-              {images.mobile.ar && (
-                <Box mt={1} display="flex" alignItems="center" gap={3}>
-                  <img
-                    src={images.mobile.ar}
-                    alt="Mobile Arabic Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                  <Button
-                    variant="text"
-                    color="error"
-                    onClick={() =>
-                      removeFileFromBucket(images?.mobile?.ar, "mobile", "ar")
-                    }
-                  >
-                    Remove
-                  </Button>
-                </Box>
-              )}
-            </Box>
-          </Grid>
-          {/* Desktop and mobile image end */}
-
-          {/* Description English */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Description (English)
-            </Typography>
-            <TextField
-              label="Description English"
-              variant="outlined"
-              name="description_en"
-              value={values.description_en}
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate("description_ar", e.target.value)
-              }
-              fullWidth
-              multiline
-              rows={4}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["description_ar"] && (
-                      <CircularProgress size={20} />
+                        <Button
+                          variant="text"
+                          color="error"
+                          onClick={() =>
+                            removeFileFromBucket(
+                              values.offerBasicInfo.locales[langId]
+                                ?.desktop_image,
+                              "desktop",
+                              langId
+                            )
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </Box>
                     )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+                  </Box>
+                </Grid>
+              );
+            })}
 
-          {/* Description Arabic */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Description (Arabic)
-            </Typography>
-            <TextField
-              label="Description Arabic"
-              variant="outlined"
-              name="description_ar"
-              value={values.description_ar}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              rows={4}
-            />
-          </Grid>
+          {/* Mobile image */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
 
-          {/* Terms And Conditions English*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Terms And Conditions (English)
-            </Typography>
-            <RichTextEditor
-              value={termsAndConditionsEn}
-              setValue={setTermsAndConditionsEn}
-              language="en"
-              height={250}
-              onBlur={() =>
-                handleArabictranslate(
-                  "termsAndConditionsAr",
-                  termsAndConditionsEn,
-                  true
-                )
-              }
-              translationLoading={translationLoading["termsAndConditionsAr"]}
-            />
-          </Grid>
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Mobile image (${singleLanguage.name})`}
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      size="small"
+                      sx={{ width: 150, height: 35 }}
+                    >
+                      {uploading.mobile?.[langId] ? (
+                        <CircularProgress size={18} />
+                      ) : values.offerBasicInfo.locales[langId]
+                          ?.mobile_image ? (
+                        "Change Image"
+                      ) : (
+                        "Upload Image"
+                      )}
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) =>
+                          uploadImageToBucket(e, "mobile", langId)
+                        }
+                      />
+                    </Button>
 
-          {/* Terms And Conditions Arabic*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Terms And Conditions (Arabic)
-            </Typography>
-            <RichTextEditor
-              value={termsAndConditionsAr}
-              setValue={setTermsAndConditionsAr}
-              language="en"
-              height={250}
-            />
-          </Grid>
+                    {/* Image Preview + Remove */}
+                    {values.offerBasicInfo.locales[langId]?.mobile_image && (
+                      <Box mt={1} display="flex" alignItems="center" gap={3}>
+                        <img
+                          src={
+                            values.offerBasicInfo.locales[langId]?.mobile_image
+                          }
+                          alt={`Mobile ${singleLanguage.name} Image`}
+                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                        />
+
+                        <Button
+                          variant="text"
+                          color="error"
+                          onClick={() =>
+                            removeFileFromBucket(
+                              values.offerBasicInfo.locales[langId]
+                                ?.mobile_image,
+                              "mobile",
+                              langId
+                            )
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              );
+            })}
+
+          {/* Description */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Description (${singleLanguage.name})`}
+                  </Typography>
+
+                  <RichTextEditor
+                    value={
+                      values.offerBasicInfo.locales[langId]?.description || ""
+                    }
+                    setValue={(value: string) => {
+                      setFieldValue(
+                        `offerBasicInfo.locales.${langId}.description`,
+                        value
+                      );
+                    }}
+                    language={langCode}
+                    onBlur={async () => {
+                      if (langCode === "en") {
+                        const englishText =
+                          values.offerBasicInfo.locales[langId]?.description ||
+                          "";
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLang = lang.code;
+                          const targetLangId = lang.id;
+
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`description_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+
+                              setFieldValue(
+                                `offerBasicInfo.locales.${targetLangId}.description`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`description_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    translationLoading={
+                      translationLoading[`description_${langCode}`]
+                    }
+                  />
+                </Grid>
+              );
+            })}
+
+          {/* Terms And Conditions*/}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Terms And Conditions  (${singleLanguage.name})`}
+                  </Typography>
+
+                  <RichTextEditor
+                    value={
+                      values.offerBasicInfo.locales[langId]
+                        ?.term_and_condition || ""
+                    }
+                    setValue={(value: string) => {
+                      setFieldValue(
+                        `offerBasicInfo.locales.${langId}.term_and_condition`,
+                        value
+                      );
+                    }}
+                    language={langCode}
+                    onBlur={async () => {
+                      if (langCode === "en") {
+                        const englishText =
+                          values.offerBasicInfo.locales[langId]
+                            ?.term_and_condition || "";
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLang = lang.code;
+                          const targetLangId = lang.id;
+
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`term_and_condition_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+
+                              setFieldValue(
+                                `offerBasicInfo.locales.${targetLangId}.term_and_condition`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`term_and_condition_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    translationLoading={
+                      translationLoading[`term_and_condition_${langCode}`]
+                    }
+                  />
+                </Grid>
+              );
+            })}
 
           <Grid item xs={12}>
             <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>

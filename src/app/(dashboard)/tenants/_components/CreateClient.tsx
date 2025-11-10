@@ -57,18 +57,17 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
   const schema = yup.object().shape({
     name: yup.string().required("Name is required"),
     domain: yup.string().required("Domain is required"),
-    // currency: yup.string().required("Currency is required"),
-    // countryId: yup.string().required("Country is required"),
-    // languageIds: yup
-    //   .array()
-    //   .of(yup.number())
-    //   .min(1, "At least one language is required")
-    //   .required("Language is required"),
-    // currencyIds: yup
-    //   .array()
-    //   .of(yup.number())
-    //   .min(1, "At least one currency is required")
-    //   .required("currency is required"),
+    countryId: yup.string().required("Country is required"),
+    languageIds: yup
+      .array()
+      .of(yup.mixed().test("is-valid", "Invalid language", (val) => !!val))
+      .min(1, "At least one language is required")
+      .required("Language is required"),
+    currencyIds: yup
+      .array()
+      .of(yup.mixed().test("is-valid", "Invalid currency", (val) => !!val))
+      .min(1, "At least one currency is required")
+      .required("Currency is required"),
   });
 
   const handleSubmit = async () => {

@@ -313,7 +313,7 @@ const OfferList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginationOffer.map((offer, index) => (
+            {paginationOffer.map((offer: any, index) => (
               <Grid item xs={12} sm={6} md={4} key={offer?.uuid}>
                 <Card
                   sx={{
@@ -347,7 +347,7 @@ const OfferList = () => {
                             letterSpacing: "0%",
                           }}
                         >
-                          {offer?.offer_title}
+                          {offer?.locales[0]?.title}
                         </Typography>
                       </Box>
                       <Box>
@@ -421,7 +421,7 @@ const OfferList = () => {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary" mt={1}>
-                      Description: {offer.description_en}
+                      Description: {offer?.description_en}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -444,9 +444,9 @@ const OfferList = () => {
                 </TableHead>
 
                 <TableBody>
-                  {offers.map((offer) => (
+                  {offers.map((offer: any) => (
                     <TableRow key={offer.uuid}>
-                      <TableCell>{offer.offer_title}</TableCell>
+                      <TableCell>{offer?.locales[0]?.title}</TableCell>
                       <TableCell
                         sx={{
                           maxWidth: 200,

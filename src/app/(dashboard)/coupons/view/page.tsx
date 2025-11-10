@@ -344,7 +344,7 @@ const CouponList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginationcoupon.map((coupon) => (
+            {paginationcoupon.map((coupon: any) => (
               <Grid item xs={12} sm={6} md={4} key={coupon.id}>
                 <Card
                   sx={{
@@ -378,7 +378,7 @@ const CouponList = () => {
                             letterSpacing: "0%",
                           }}
                         >
-                          {coupon?.coupon_title}
+                          {coupon?.locales[0]?.title}
                         </Typography>
                       </Box>
                       <Box>
@@ -496,9 +496,9 @@ const CouponList = () => {
                 </TableHead>
 
                 <TableBody>
-                  {coupons.map((coupon) => (
+                  {coupons.map((coupon: any) => (
                     <TableRow key={coupon.id}>
-                      <TableCell>{coupon.coupon_title}</TableCell>
+                      <TableCell> {coupon?.locales[0]?.title}</TableCell>
                       <TableCell
                         sx={{
                           maxWidth: 200,

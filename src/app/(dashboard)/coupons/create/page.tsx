@@ -35,6 +35,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import {
+  Benefit,
   BusinessUnit,
   CouponFormValues,
   dynamicRows,
@@ -42,31 +43,15 @@ import {
   Model,
   Tier,
 } from "../types";
+import { businessUnitService } from "@/services/businessUnitService";
+import { Language } from "@/types/language.type";
+import { tenantService } from "@/services/tenantService";
+import { openAIService } from "@/services/openAiService";
+import { UploadingState } from "@/types/offer.type";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
-const fetchBusinessUnits = async (
-  name: string = ""
-): Promise<BusinessUnit[]> => {
-  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const response = await GET(
-    `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
-  );
-  if (response?.status !== 200) {
-    throw new Error("Failed to fetch business units");
-  }
-  return response.data;
-};
-
 const selectAllVariants = { TrimId: "all", Trim: "Select All" };
-
-type Benefit = {
-  name_en: string;
-  name_ar: string;
-  icon: string;
-  // icon_ar: string;
-  drawerType?: string;
-};
 
 const CreateCouponForm = ({
   onSuccess,
@@ -86,6 +71,7 @@ const CreateCouponForm = ({
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
+  const [languages, setLanguages] = useState<Language[]>([]);
 
   /** Multiple Benefits with icon */
   const [benefitsInputs, setBenefitsInputs] = useState<Benefit[]>([
@@ -102,12 +88,9 @@ const CreateCouponForm = ({
     mobile: { en: "", ar: "" },
   });
 
-  const [uploading, setUploading] = useState<{
-    desktop: { en: boolean; ar: boolean };
-    mobile: { en: boolean; ar: boolean };
-  }>({
-    desktop: { en: false, ar: false },
-    mobile: { en: false, ar: false },
+  const [uploading, setUploading] = useState<UploadingState>({
+    desktop: {},
+    mobile: {},
   });
   /** images for Desktop and mobile end*/
 
@@ -145,8 +128,9 @@ const CreateCouponForm = ({
 
   const formik = useFormik<CouponFormValues>({
     initialValues: {
-      coupon_title: "",
-      coupon_title_ar: "",
+      couponBasicInfo: {
+        locales: {},
+      },
       code: "",
       coupon_type: "",
       discount_type: "fixed_discount",
@@ -158,10 +142,6 @@ const CreateCouponForm = ({
       max_usage_per_user: 0,
       reuse_interval: 0,
       conditions: {},
-      general_error_message_en: "",
-      general_error_message_ar: "",
-      exception_error_message_en: "",
-      exception_error_message_ar: "",
       benefits: "",
       date_from: "",
       date_to: "",
@@ -169,12 +149,23 @@ const CreateCouponForm = ({
       is_point_earning_disabled: 0,
       status: 1,
       customer_segment_ids: [] as number[],
-      description_en: "",
-      description_ar: "",
       all_users: 0,
     },
     validationSchema: Yup.object({
-      coupon_title: Yup.string().required("Coupon title is required"),
+      couponBasicInfo: Yup.object().shape({
+        locales: Yup.object().shape(
+          Object.fromEntries(
+            languages.map((lang) => [
+              lang.id,
+              Yup.object().shape({
+                title: Yup.string().required(
+                  `Coupon title (${lang.name}) is required`
+                ),
+              }),
+            ])
+          )
+        ),
+      }),
       code: Yup.string().when([], {
         is: () => drawerType !== "bulkupload",
         then: (schema) => schema.required("Code is required"),
@@ -222,7 +213,9 @@ const CreateCouponForm = ({
   const loadData = async () => {
     setLoading(true);
     try {
-      const [buData] = await Promise.all([fetchBusinessUnits()]);
+      const [buData] = await Promise.all([
+        businessUnitService.getBusinessUnit(),
+      ]);
       setBusinessUnits(buData);
     } finally {
       setLoading(false);
@@ -292,6 +285,27 @@ const CreateCouponForm = ({
     loadData();
     fetchCouponTypes();
     fetchCustomerSegments();
+
+    const getLanguages = async () => {
+      try {
+        const languageResponse = await tenantService.getTenantById();
+        const allLanguages =
+          languageResponse?.languages?.map((cl: any) => cl?.language) || [];
+
+        const english = allLanguages.find(
+          (lang: { code: string }) => lang.code === "en"
+        );
+
+        const others = allLanguages.filter(
+          (lang: { code: string }) => lang.code !== "en"
+        );
+        const englishFirst = english ? [english, ...others] : allLanguages;
+        setLanguages(englishFirst);
+      } catch (error) {
+        console.error("Error fetching country language:", error);
+      }
+    };
+    getLanguages();
   }, []);
 
   useEffect(() => {
@@ -520,20 +534,12 @@ const CreateCouponForm = ({
 
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
-      coupon_title: values.coupon_title,
-      coupon_title_ar: values.coupon_title_ar,
       code: values.code,
       // coupon_type_id: values.coupon_type,
       // conditions: dynamicRows.map(({ models, variants, ...rest }) => rest),
       coupon_type_id: coupon_type_id,
       complex_coupon: complexCouponArr,
       conditions: condtionsArr,
-      errors: {
-        general_error_message_en: values.general_error_message_en,
-        general_error_message_ar: values.general_error_message_ar,
-        exception_error_message_en: values.exception_error_message_en,
-        exception_error_message_ar: values.exception_error_message_ar,
-      },
       discount_type: values.discount_type,
       discount_price: values.discount_price || 0,
       upto_amount: values.upto_amount || 0,
@@ -548,20 +554,27 @@ const CreateCouponForm = ({
         : values.validity_after_assignment,
       is_point_earning_disabled: values.is_point_earning_disabled || 0,
       status: values.status,
-      // benefits: benefits || "",
-      benefits: benefitsInputs || [],
       business_unit_id: buId,
       tenant_id: created_by,
       created_by,
       updated_by: created_by,
       customer_segment_ids: values.customer_segment_ids,
-      description_en: values.description_en,
-      description_ar: values.description_ar,
-      terms_and_conditions_en: termsAndConditionsEn || "",
-      terms_and_conditions_ar: termsAndConditionsAr || "",
       all_users: values.all_users,
       ...(selectedCouponCsv ? { file: selectedCouponCsv } : {}),
       images: images,
+      locales: Object.entries(values.couponBasicInfo.locales).map(
+        ([languageId, localization]) => ({
+          languageId,
+          title: localization.title,
+          description: localization.description,
+          term_and_condition: localization.term_and_condition,
+          benefits: localization.benefits,
+          desktop_image: localization.desktop_image,
+          mobile_image: localization.mobile_image,
+          general_error: localization.general_error,
+          exception_error: localization.exception_error,
+        })
+      ),
     }));
 
     if (drawerType === DRAWER_TYPE_BULK_UPLOAD) {
@@ -805,34 +818,6 @@ const CreateCouponForm = ({
     ]);
   };
 
-  const handleArabictranslate = async (
-    key: string,
-    value: string,
-    richEditor: boolean = false
-  ) => {
-    try {
-      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-      const res = await POST("/openai/translate-to-arabic", { value });
-      if (res?.data.status) {
-        if (richEditor) {
-          setTermsAndConditionsAr(res?.data?.data);
-        } else {
-          setFieldValue(key, res?.data?.data);
-        }
-        return res?.data?.data;
-      }
-      return "";
-    } catch (error: any) {
-      return {
-        success: false,
-        status: error?.response?.status || 500,
-        message: error?.response?.data?.message || "Unknown error",
-      };
-    } finally {
-      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
-    }
-  };
-
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,
@@ -853,10 +838,8 @@ const CreateCouponForm = ({
       });
       if (res?.data.success) {
         setBenefitsInputs((prev) =>
-          prev.map(
-            (item, i) =>
-              i === index ? { ...item, icon: res?.data.uploaded_url } : item
-            // i === index ? { ...item, [iconType]: res?.data.uploaded_url } : item
+          prev.map((item, i) =>
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item
           )
         );
       }
@@ -887,7 +870,7 @@ const CreateCouponForm = ({
   const uploadImageToBucket = async (
     e: React.ChangeEvent<HTMLInputElement>,
     device: "desktop" | "mobile",
-    lang: "en" | "ar"
+    langId: string
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -900,7 +883,7 @@ const CreateCouponForm = ({
 
     setUploading((prev) => ({
       ...prev,
-      [device]: { ...prev[device], [lang]: true },
+      [device]: { ...prev[device], [langId]: true },
     }));
 
     const formData = new FormData();
@@ -912,18 +895,41 @@ const CreateCouponForm = ({
       });
 
       if (res?.data.success) {
-        setImages((prev) => ({
-          ...prev,
-          [device]: { ...prev[device], [lang]: res.data.uploaded_url },
-        }));
+        setFieldValue(
+          `couponBasicInfo.locales.${langId}.${device}_image`,
+          res.data.uploaded_url
+        );
       }
     } catch (err) {
       console.error("Upload failed", err);
     } finally {
       setUploading((prev) => ({
         ...prev,
-        [device]: { ...prev[device], [lang]: false },
+        [device]: { ...prev[device], [langId]: false },
       }));
+    }
+  };
+
+  const handleTranslateText = async (
+    targetLang: string,
+    englishText: string
+  ): Promise<string> => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
+
+      const payload = {
+        text: englishText,
+        targetLanguage: [targetLang],
+        sourceLanguage: "en",
+      };
+
+      const response = await openAIService.translateText(payload);
+      return response.translatedText?.[targetLang] || "";
+    } catch (error) {
+      console.error(`Translation failed for ${targetLang}:`, error);
+      return "";
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
     }
   };
 
@@ -931,45 +937,80 @@ const CreateCouponForm = ({
     <>
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
-          {/* Coupon Title English */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Coupon Title English"
-              value={values.coupon_title}
-              name="coupon_title"
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate("coupon_title_ar", e.target.value)
-              }
-              error={!!touched.coupon_title && !!errors.coupon_title}
-              helperText={touched.coupon_title && errors.coupon_title}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["coupon_title_ar"] && (
-                      <CircularProgress size={20} />
-                    )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+          {/* Coupon Title */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              const fieldName = `couponBasicInfo.locales.${langId}.title`;
 
-          {/* Coupon Title Arabic */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Coupon Title Arabic"
-              value={values.coupon_title_ar}
-              name="coupon_title_ar"
-              onChange={handleChange}
-              error={!!touched.coupon_title_ar && !!errors.coupon_title_ar}
-              helperText={touched.coupon_title_ar && errors.coupon_title_ar}
-            />
-          </Grid>
+              return (
+                <Grid item xs={12} key={index}>
+                  <TextField
+                    fullWidth
+                    name={fieldName}
+                    label={`Coupon title (${singleLanguage.name})`}
+                    value={values.couponBasicInfo.locales[langId]?.title || ""}
+                    onChange={handleChange}
+                    error={Boolean(
+                      errors.couponBasicInfo?.locales?.[langId]?.title
+                    )}
+                    helperText={
+                      errors.couponBasicInfo?.locales?.[langId]?.title
+                        ? String(errors.couponBasicInfo.locales[langId].title)
+                        : ""
+                    }
+                    onBlur={async (e) => {
+                      if (langCode === "en") {
+                        const englishText = e.target.value;
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLangId = lang?.id;
+                          const targetLang = lang?.code;
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`title_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+                              setFieldValue(
+                                `couponBasicInfo.locales.${targetLangId}.title`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`title_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading[`title_${langCode}`] && (
+                            <CircularProgress size={20} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              );
+            })}
 
           {/* Bulk Upload coupon Upload csv */}
           {drawerType == DRAWER_TYPE_BULK_UPLOAD ? (
@@ -1650,110 +1691,175 @@ const CreateCouponForm = ({
           </Grid>
 
           {/* General failure Error */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="General failure error (English)"
-              value={values.general_error_message_en}
-              name="general_error_message_en"
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate(
-                  "general_error_message_ar",
-                  e.target.value
-                )
-              }
-              error={
-                !!touched.general_error_message_en &&
-                !!errors.general_error_message_en
-              }
-              helperText={
-                touched.general_error_message_en &&
-                errors.general_error_message_en
-              }
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["general_error_message_ar"] && (
-                      <CircularProgress size={20} />
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              const fieldName = `couponBasicInfo.locales.${langId}.general_error`;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <TextField
+                    fullWidth
+                    name={fieldName}
+                    label={`General failure error (${singleLanguage.name})`}
+                    value={
+                      values.couponBasicInfo.locales[langId]?.general_error ||
+                      ""
+                    }
+                    onChange={handleChange}
+                    error={Boolean(
+                      touched.couponBasicInfo?.locales?.[langCode]
+                        ?.general_error &&
+                        errors.couponBasicInfo?.locales?.[langCode]
+                          ?.general_error
                     )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="General failure error (Arabic)"
-              value={values.general_error_message_ar}
-              name="general_error_message_ar"
-              onChange={handleChange}
-              error={
-                !!touched.general_error_message_ar &&
-                !!errors.general_error_message_ar
-              }
-              helperText={
-                touched.general_error_message_ar &&
-                errors.general_error_message_ar
-              }
-            />
-          </Grid>
+                    helperText={
+                      touched.couponBasicInfo?.locales?.[langId]
+                        ?.general_error &&
+                      errors.couponBasicInfo?.locales?.[langId]?.general_error
+                        ? String(
+                            errors.couponBasicInfo.locales[langId].general_error
+                          )
+                        : ""
+                    }
+                    onBlur={async (e) => {
+                      if (langCode === "en") {
+                        const englishText = e.target.value;
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLangId = lang?.id;
+                          const targetLang = lang?.code;
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`general_error_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+                              setFieldValue(
+                                `couponBasicInfo.locales.${targetLangId}.general_error`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`general_error_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading[`general_error_${langCode}`] && (
+                            <CircularProgress size={20} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              );
+            })}
 
           {/* Exception Error */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Exception error (English)"
-              value={values.exception_error_message_en}
-              name="exception_error_message_en"
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate(
-                  "exception_error_message_ar",
-                  e.target.value
-                )
-              }
-              error={
-                !!touched.exception_error_message_en &&
-                !!errors.exception_error_message_en
-              }
-              helperText={
-                touched.exception_error_message_en &&
-                errors.exception_error_message_en
-              }
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["exception_error_message_ar"] && (
-                      <CircularProgress size={20} />
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              const fieldName = `couponBasicInfo.locales.${langId}.exception_error`;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <TextField
+                    fullWidth
+                    name={fieldName}
+                    label={`Exception error (${singleLanguage.name})`}
+                    value={
+                      values.couponBasicInfo.locales[langId]?.exception_error ||
+                      ""
+                    }
+                    onChange={handleChange}
+                    error={Boolean(
+                      touched.couponBasicInfo?.locales?.[langCode]
+                        ?.exception_error &&
+                        errors.couponBasicInfo?.locales?.[langCode]
+                          ?.exception_error
                     )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Exception error (Arabic)"
-              value={values.exception_error_message_ar}
-              name="exception_error_message_ar"
-              onChange={handleChange}
-              error={
-                !!touched.exception_error_message_ar &&
-                !!errors.exception_error_message_ar
-              }
-              helperText={
-                touched.exception_error_message_ar &&
-                errors.exception_error_message_ar
-              }
-            />
-          </Grid>
+                    helperText={
+                      touched.couponBasicInfo?.locales?.[langId]
+                        ?.exception_error &&
+                      errors.couponBasicInfo?.locales?.[langId]?.exception_error
+                        ? String(
+                            errors.couponBasicInfo.locales[langId]
+                              .exception_error
+                          )
+                        : ""
+                    }
+                    onBlur={async (e) => {
+                      if (langCode === "en") {
+                        const englishText = e.target.value;
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLangId = lang?.id;
+                          const targetLang = lang?.code;
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`exception_error_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+                              setFieldValue(
+                                `couponBasicInfo.locales.${targetLangId}.exception_error`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`exception_error_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading[
+                            `exception_error_${langCode}`
+                          ] && <CircularProgress size={20} />}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              );
+            })}
 
           {/* Apply to all users */}
           <Grid item xs={12}>
@@ -1852,12 +1958,12 @@ const CreateCouponForm = ({
               Benefits (optional)
             </Typography>
 
-            {benefitsInputs.map((input, index) => (
+            {benefitsInputs.map((input, benefitIndex) => (
               <Box
                 display="flex"
                 alignItems="flex-start"
                 gap={1}
-                key={index + 1}
+                key={benefitIndex + 1}
                 mb={2}
                 p={2}
                 border="1px solid #ddd"
@@ -1874,10 +1980,10 @@ const CreateCouponForm = ({
                       fullWidth
                       size="small"
                       sx={{ width: 150, height: 35 }}
-                      disabled={uploadingIndex === index}
+                      disabled={uploadingIndex === benefitIndex}
                     >
                       {/* {input.icon ? "Change Icon" : "Upload Icon"} */}
-                      {uploadingIndex === index ? (
+                      {uploadingIndex === benefitIndex ? (
                         <CircularProgress size={18} />
                       ) : input.icon ? (
                         "Change English Icon"
@@ -1888,7 +1994,9 @@ const CreateCouponForm = ({
                         type="file"
                         hidden
                         accept="image/*"
-                        onChange={(e) => handleFileChange(e, index, "icon")}
+                        onChange={(e) =>
+                          handleFileChange(e, benefitIndex, "icon")
+                        }
                       />
                     </Button>
                     {input.icon && (
@@ -1939,54 +2047,91 @@ const CreateCouponForm = ({
                     </div> */}
                   </Box>
 
-                  <TextField
-                    fullWidth
-                    name="benefits"
-                    label={`Benefit ${index + 1}`}
-                    value={input.name_en}
-                    onChange={(e) => {
-                      const newInputs = [...benefitsInputs];
-                      newInputs[index].name_en = e.target.value;
-                      setBenefitsInputs(newInputs);
-                    }}
-                    onBlur={async (e) => {
-                      if (e.target.value.trim()) {
-                        const translated = await handleArabictranslate(
-                          `benefit_${index}`,
-                          e.target.value
-                        );
+                  {/* Loop for each language */}
+                  {languages.length > 0 &&
+                    languages.map((singleLanguage: Language, langIndex) => {
+                      const langId = singleLanguage.id;
+                      const langCode = singleLanguage.code;
 
-                        if (translated?.success !== false) {
-                          const newInputs = [...benefitsInputs];
-                          newInputs[index].name_ar = translated || "";
-                          setBenefitsInputs(newInputs);
-                        }
-                      }
-                    }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {translationLoading[`benefit_${index}`] && (
-                            <CircularProgress size={20} />
-                          )}
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    name="benefits"
-                    label={`Arabic Benefit ${index + 1}`}
-                    value={input.name_ar}
-                    onChange={(e) => {
-                      const newInputs = [...benefitsInputs];
-                      newInputs[index].name_ar = e.target.value;
-                      setBenefitsInputs(newInputs);
-                    }}
-                  />
+                      const benefitName =
+                        input[`name_${langCode}` as keyof typeof input] || "";
+
+                      return (
+                        <TextField
+                          key={`${benefitIndex}-${langId}`}
+                          fullWidth
+                          label={`Benefit ${benefitIndex + 1} (${
+                            singleLanguage.name
+                          })`}
+                          value={benefitName}
+                          onChange={(e) => {
+                            const newInputs: any = [...benefitsInputs];
+                            newInputs[benefitIndex][`name_${langCode}`] =
+                              e.target.value;
+                            setBenefitsInputs(newInputs);
+                          }}
+                          onBlur={async (e) => {
+                            if (langCode === "en") {
+                              const englishText = e.target.value;
+                              if (!englishText.trim()) return;
+
+                              for (const lang of languages) {
+                                const targetLangId = lang?.id;
+                                const targetLang = lang.code;
+                                if (targetLang !== "en") {
+                                  try {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`benefit_${targetLang}_${benefitIndex}`]:
+                                        true,
+                                    }));
+
+                                    const translatedText =
+                                      await handleTranslateText(
+                                        targetLang,
+                                        englishText
+                                      );
+
+                                    const newInputs: any = [...benefitsInputs];
+                                    newInputs[benefitIndex][
+                                      `name_${targetLang}`
+                                    ] = translatedText || "";
+
+                                    setFieldValue(
+                                      `couponBasicInfo.locales.${targetLangId}.benefits`,
+                                      newInputs
+                                    );
+                                  } catch (err) {
+                                    console.error(
+                                      `Translation failed for ${targetLang}`,
+                                      err
+                                    );
+                                  } finally {
+                                    setTranslationLoading((prev) => ({
+                                      ...prev,
+                                      [`benefit_${targetLang}_${benefitIndex}`]:
+                                        false,
+                                    }));
+                                  }
+                                }
+                              }
+                            }
+                          }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                {translationLoading[
+                                  `benefit_${langCode}_${benefitIndex}`
+                                ] && <CircularProgress size={20} />}
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      );
+                    })}
                 </Box>
 
-                {index === 0 ? (
+                {benefitIndex === 0 ? (
                   <IconButton onClick={addBenefitInput}>
                     <AddIcon fontSize="small" color="primary" />
                   </IconButton>
@@ -1997,7 +2142,7 @@ const CreateCouponForm = ({
                       color="error"
                       onClick={() => {
                         setBenefitsInputs(
-                          benefitsInputs.filter((_, i) => i !== index)
+                          benefitsInputs.filter((_, i) => i !== benefitIndex)
                         );
                       }}
                     />
@@ -2005,251 +2150,263 @@ const CreateCouponForm = ({
                 )}
               </Box>
             ))}
-
-            {/* <RichTextEditor
-              value={benefits}
-              setValue={setBenefits}
-              language="en"
-            /> */}
           </Grid>
 
-          {/* Desktop and mobile image start*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Desktop image (English)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.desktop.en ? (
-                  <CircularProgress size={18} />
-                ) : images.desktop.en ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "desktop", "en")}
-                />
-              </Button>
+          {/* Desktop image */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
 
-              {images.desktop.en && (
-                <Box mt={1}>
-                  <img
-                    src={images.desktop.en}
-                    alt="Desktop English Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Grid>
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Desktop image (${singleLanguage.name})`}
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      size="small"
+                      sx={{ width: 150, height: 35 }}
+                    >
+                      {uploading.desktop?.[langId] ? (
+                        <CircularProgress size={18} />
+                      ) : values.couponBasicInfo.locales[langId]
+                          ?.desktop_image ? (
+                        "Change Image"
+                      ) : (
+                        "Upload Image"
+                      )}
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) =>
+                          uploadImageToBucket(e, "desktop", langId)
+                        }
+                      />
+                    </Button>
 
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Desktop image (Arabic)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.desktop.ar ? (
-                  <CircularProgress size={18} />
-                ) : images.desktop.ar ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "desktop", "ar")}
-                />
-              </Button>
-
-              {images.desktop.ar && (
-                <Box mt={1}>
-                  <img
-                    src={images.desktop.ar}
-                    alt="Desktop Arabic Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Mobile image (English)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.mobile.en ? (
-                  <CircularProgress size={18} />
-                ) : images.mobile.en ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "mobile", "en")}
-                />
-              </Button>
-
-              {images.mobile.en && (
-                <Box mt={1}>
-                  <img
-                    src={images.mobile.en}
-                    alt="Mobile English Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Mobile image (Arabic)
-            </Typography>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                size="small"
-                sx={{ width: 150, height: 35 }}
-              >
-                {uploading.mobile.ar ? (
-                  <CircularProgress size={18} />
-                ) : images.mobile.ar ? (
-                  "Change Image"
-                ) : (
-                  "Upload Image"
-                )}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => uploadImageToBucket(e, "mobile", "ar")}
-                />
-              </Button>
-
-              {images.mobile.ar && (
-                <Box mt={1}>
-                  <img
-                    src={images.mobile.ar}
-                    alt="Mobile Arabic Image"
-                    style={{ width: 33, height: 33, borderRadius: 2 }}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Grid>
-          {/* Desktop and mobile image end */}
-
-          {/* Description English */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Description (English)
-            </Typography>
-            <TextField
-              label="Description English"
-              variant="outlined"
-              name="description_en"
-              value={values.description_en}
-              onChange={handleChange}
-              onBlur={(e) =>
-                handleArabictranslate("description_ar", e.target.value)
-              }
-              fullWidth
-              multiline
-              rows={4}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["description_ar"] && (
-                      <CircularProgress size={20} />
+                    {/* Image Preview + Remove */}
+                    {values.couponBasicInfo.locales[langId]?.desktop_image && (
+                      <Box mt={1} display="flex" alignItems="center" gap={3}>
+                        <img
+                          src={
+                            values.couponBasicInfo.locales[langId]
+                              ?.desktop_image
+                          }
+                          alt={`Desktop ${singleLanguage.name} Image`}
+                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                        />
+                      </Box>
                     )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+                  </Box>
+                </Grid>
+              );
+            })}
 
-          {/* Description Arabic */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Description (Arabic)
-            </Typography>
-            <TextField
-              label="Description Arabic"
-              variant="outlined"
-              name="description_ar"
-              value={values.description_ar}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              rows={4}
-            />
-          </Grid>
+          {/* Mobile image */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
 
-          {/* Terms And Conditions English*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Terms And Conditions (English)
-            </Typography>
-            <RichTextEditor
-              value={termsAndConditionsEn}
-              setValue={setTermsAndConditionsEn}
-              language="en"
-              height={250}
-              onBlur={() =>
-                handleArabictranslate(
-                  "termsAndConditionsAr",
-                  termsAndConditionsEn,
-                  true
-                )
-              }
-              translationLoading={translationLoading["termsAndConditionsAr"]}
-            />
-          </Grid>
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Mobile image (${singleLanguage.name})`}
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      size="small"
+                      sx={{ width: 150, height: 35 }}
+                    >
+                      {uploading.mobile?.[langId] ? (
+                        <CircularProgress size={18} />
+                      ) : values.couponBasicInfo.locales[langId]
+                          ?.mobile_image ? (
+                        "Change Image"
+                      ) : (
+                        "Upload Image"
+                      )}
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) =>
+                          uploadImageToBucket(e, "mobile", langId)
+                        }
+                      />
+                    </Button>
 
-          {/* Terms And Conditions Arabic*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Terms And Conditions (Arabic)
-            </Typography>
-            <RichTextEditor
-              value={termsAndConditionsAr}
-              setValue={setTermsAndConditionsAr}
-              language="en"
-              height={250}
-            />
-          </Grid>
+                    {/* Image Preview + Remove */}
+                    {values.couponBasicInfo.locales[langId]?.mobile_image && (
+                      <Box mt={1} display="flex" alignItems="center" gap={3}>
+                        <img
+                          src={
+                            values.couponBasicInfo.locales[langId]?.mobile_image
+                          }
+                          alt={`Mobile ${singleLanguage.name} Image`}
+                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              );
+            })}
+
+          {/* Description */}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Description (${singleLanguage.name})`}
+                  </Typography>
+
+                  <RichTextEditor
+                    value={
+                      values.couponBasicInfo.locales[langId]?.description || ""
+                    }
+                    setValue={(value: string) => {
+                      setFieldValue(
+                        `couponBasicInfo.locales.${langId}.description`,
+                        value
+                      );
+                    }}
+                    language={langCode}
+                    onBlur={async () => {
+                      if (langCode === "en") {
+                        const englishText =
+                          values.couponBasicInfo.locales[langId]?.description ||
+                          "";
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLang = lang.code;
+                          const targetLangId = lang.id;
+
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`description_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+
+                              setFieldValue(
+                                `couponBasicInfo.locales.${targetLangId}.description`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`description_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    translationLoading={
+                      translationLoading[`description_${langCode}`]
+                    }
+                  />
+                </Grid>
+              );
+            })}
+
+          {/* Terms And Conditions*/}
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Terms And Conditions  (${singleLanguage.name})`}
+                  </Typography>
+
+                  <RichTextEditor
+                    value={
+                      values.couponBasicInfo.locales[langId]
+                        ?.term_and_condition || ""
+                    }
+                    setValue={(value: string) => {
+                      setFieldValue(
+                        `couponBasicInfo.locales.${langId}.term_and_condition`,
+                        value
+                      );
+                    }}
+                    language={langCode}
+                    onBlur={async () => {
+                      if (langCode === "en") {
+                        const englishText =
+                          values.couponBasicInfo.locales[langId]
+                            ?.term_and_condition || "";
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLang = lang.code;
+                          const targetLangId = lang.id;
+
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`term_and_condition_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+
+                              setFieldValue(
+                                `couponBasicInfo.locales.${targetLangId}.term_and_condition`,
+                                translatedText
+                              );
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`term_and_condition_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    translationLoading={
+                      translationLoading[`term_and_condition_${langCode}`]
+                    }
+                  />
+                </Grid>
+              );
+            })}
 
           <Grid item xs={12}>
             <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
