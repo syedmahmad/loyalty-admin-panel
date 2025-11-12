@@ -2071,49 +2071,45 @@ const CreateCouponForm = ({
                             setBenefitsInputs(newInputs);
                           }}
                           onBlur={async (e) => {
-                            if (langCode === "en") {
-                              const englishText = e.target.value;
-                              if (!englishText.trim()) return;
+                            const englishText = e.target.value;
+                            if (!englishText.trim()) return;
 
-                              for (const lang of languages) {
-                                const targetLangId = lang?.id;
-                                const targetLang = lang.code;
-                                if (targetLang !== "en") {
-                                  try {
-                                    setTranslationLoading((prev) => ({
-                                      ...prev,
-                                      [`benefit_${targetLang}_${benefitIndex}`]:
-                                        true,
-                                    }));
+                            for (const lang of languages) {
+                              const targetLangId = lang?.id;
+                              const targetLang = lang.code;
 
-                                    const translatedText =
-                                      await handleTranslateText(
-                                        targetLang,
-                                        englishText
-                                      );
+                              try {
+                                setTranslationLoading((prev) => ({
+                                  ...prev,
+                                  [`benefit_${targetLang}_${benefitIndex}`]:
+                                    true,
+                                }));
 
-                                    const newInputs: any = [...benefitsInputs];
-                                    newInputs[benefitIndex][
-                                      `name_${targetLang}`
-                                    ] = translatedText || "";
+                                const translatedText =
+                                  await handleTranslateText(
+                                    targetLang,
+                                    englishText
+                                  );
 
-                                    setFieldValue(
-                                      `couponBasicInfo.locales.${targetLangId}.benefits`,
-                                      newInputs
-                                    );
-                                  } catch (err) {
-                                    console.error(
-                                      `Translation failed for ${targetLang}`,
-                                      err
-                                    );
-                                  } finally {
-                                    setTranslationLoading((prev) => ({
-                                      ...prev,
-                                      [`benefit_${targetLang}_${benefitIndex}`]:
-                                        false,
-                                    }));
-                                  }
-                                }
+                                const newInputs: any = [...benefitsInputs];
+                                newInputs[benefitIndex][`name_${targetLang}`] =
+                                  translatedText || "";
+
+                                setFieldValue(
+                                  `couponBasicInfo.locales.${targetLangId}.benefits`,
+                                  newInputs
+                                );
+                              } catch (err) {
+                                console.error(
+                                  `Translation failed for ${targetLang}`,
+                                  err
+                                );
+                              } finally {
+                                setTranslationLoading((prev) => ({
+                                  ...prev,
+                                  [`benefit_${targetLang}_${benefitIndex}`]:
+                                    false,
+                                }));
                               }
                             }
                           }}

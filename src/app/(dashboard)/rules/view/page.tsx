@@ -100,7 +100,7 @@ const RuleList = () => {
     }
 
     const res = await GET(`/rules/${clientInfo.id}${query}`);
-    setRules(res?.data || []);
+    setRules(res?.data?.rules || []);
     setLoading(false);
   };
 
@@ -160,12 +160,10 @@ const RuleList = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  const paginatedrule =
+  const paginatedrule: any =
     viewMode === "card"
       ? rules
       : rules.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  console.log("paginatedrule:::", paginatedrule);
 
   return (
     <Box sx={{ backgroundColor: "#F9FAFB", mt: "-25px" }}>
@@ -306,7 +304,7 @@ const RuleList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginatedrule.map((rule: any, index) => (
+            {paginatedrule?.map((rule: any, index: number) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Card
                   sx={{
