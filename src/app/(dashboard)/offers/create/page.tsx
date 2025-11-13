@@ -106,6 +106,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       description_ar: "",
       all_users: 0,
       station_type: "",
+      show_in_app: 0,
     },
     validationSchema: Yup.object({
       offer_title: Yup.string().required("Offer title is required"),
@@ -178,6 +179,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       all_users: values.all_users,
       images: images,
       station_type: values.station_type,
+      show_in_app: values.show_in_app,
     }));
 
     const responses = await Promise.all(
@@ -598,6 +600,25 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                   checked={values.status === 1}
                   onChange={(e) =>
                     setFieldValue("status", e.target.checked ? 1 : 0)
+                  }
+                />
+              </Grid>
+            </Grid>
+          </Grid>
+
+          {/* Show On Apps */}
+          <Grid item xs={12}>
+            <Grid container alignItems="center" spacing={2}>
+              <Grid item>
+                <Typography variant="subtitle1">Show in App</Typography>
+              </Grid>
+              <Grid item>
+                <Switch
+                  name="showInApp"
+                  color="primary"
+                  checked={values.show_in_app === 1}
+                  onChange={(e) =>
+                    setFieldValue("show_in_app", e.target.checked ? 1 : 0)
                   }
                 />
               </Grid>
