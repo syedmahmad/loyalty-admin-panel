@@ -180,6 +180,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         offerData?.customerSegments.map((ls: any) => ls.segment.id) || [],
       all_users: offerData?.all_users,
       offerBasicInfo: { locales: { ...offerData?.offerBasicInfo?.localesObj } },
+      show_in_app: offerData?.show_in_app,
     },
     validationSchema: Yup.object({
       offerBasicInfo: Yup.object().shape({
@@ -252,6 +253,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
           benefits: localization.benefits,
         })
       ),
+      show_in_app: values.show_in_app,
     }));
 
     const responses = await Promise.all(
@@ -753,6 +755,25 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                     checked={values.status === 1}
                     onChange={(e) =>
                       setFieldValue("status", e.target.checked ? 1 : 0)
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Show On Apps */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Typography variant="subtitle1">Show in App</Typography>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="showInApp"
+                    color="primary"
+                    checked={values.show_in_app === 1}
+                    onChange={(e) =>
+                      setFieldValue("show_in_app", e.target.checked ? 1 : 0)
                     }
                   />
                 </Grid>
