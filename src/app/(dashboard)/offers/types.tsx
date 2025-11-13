@@ -13,7 +13,8 @@ export type OfferFormValues = {
   description_ar: string;
   all_users: number;
   file?: any;
-  station_type:string;
+  station_type: string;
+  show_in_app: number;
 };
 
 export type BusinessUnit = {
