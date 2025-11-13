@@ -142,7 +142,6 @@ const CreateCouponForm = ({
       max_usage_per_user: 0,
       reuse_interval: 0,
       conditions: {},
-      benefits: "",
       date_from: "",
       date_to: "",
       validity_after_assignment: "",
