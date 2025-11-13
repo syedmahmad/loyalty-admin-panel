@@ -37,6 +37,7 @@ import { toast } from "react-toastify";
 import CreateOfferForm from "../create/page";
 import EditOfferForm from "../edit/page";
 import { BusinessUnit } from "../types";
+import { htmlToPlainText } from "@/utils/Index";
 
 type Offer = {
   id: number;
@@ -421,7 +422,8 @@ const OfferList = () => {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary" mt={1}>
-                      Description: {offer?.description_en}
+                      Description:{" "}
+                      {htmlToPlainText(offer?.locales?.[0]?.description || "-")}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -460,8 +462,18 @@ const OfferList = () => {
                         </Tooltip>
                       </TableCell>
                       <TableCell>{offer.station_type || ""}</TableCell>
-                      <TableCell>{offer.description_en}</TableCell>
-                      <TableCell>{offer.terms_and_conditions_en}</TableCell>
+                      <TableCell>
+                        {" "}
+                        {htmlToPlainText(
+                          offer?.locales?.[0]?.description || "-"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {" "}
+                        {htmlToPlainText(
+                          offer?.locales?.[0]?.term_and_condition || "-"
+                        )}
+                      </TableCell>
                       <TableCell sx={{ display: "flex" }}>
                         <IconButton
                           onClick={(event) => handleMenuClick(event, offer)}
@@ -495,7 +507,7 @@ const OfferList = () => {
                               handleClose();
                               if (selectedOffer) {
                                 router.push(
-                                  `/offers/view?drawer=edit&id=${selectedOffer.id}`
+                                  `/offers/view?drawer=edit&id=${selectedOffer.uuid}`
                                 );
                               }
                             }}
