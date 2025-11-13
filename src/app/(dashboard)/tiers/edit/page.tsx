@@ -546,43 +546,42 @@ const EditTierForm = ({ onSuccess }: any) => {
                                         for (const lang of languages) {
                                           const targetLangId = lang?.id;
                                           const targetLang = lang.code;
-                                          if (targetLang !== "en") {
-                                            try {
-                                              setTranslationLoading((prev) => ({
-                                                ...prev,
-                                                [`benefit_${targetLang}_${benefitIndex}`]:
-                                                  true,
-                                              }));
 
-                                              const translatedText =
-                                                await handleTranslateText(
-                                                  targetLang,
-                                                  englishText
-                                                );
+                                          try {
+                                            setTranslationLoading((prev) => ({
+                                              ...prev,
+                                              [`benefit_${targetLang}_${benefitIndex}`]:
+                                                true,
+                                            }));
 
-                                              const newInputs: any = [
-                                                ...benefitsInputs,
-                                              ];
-                                              newInputs[benefitIndex][
-                                                `name_${targetLang}`
-                                              ] = translatedText || "";
-
-                                              setFieldValue(
-                                                `tierBasicInfo.locales.${targetLangId}.benefits`,
-                                                newInputs
+                                            const translatedText =
+                                              await handleTranslateText(
+                                                targetLang,
+                                                englishText
                                               );
-                                            } catch (err) {
-                                              console.error(
-                                                `Translation failed for ${targetLang}`,
-                                                err
-                                              );
-                                            } finally {
-                                              setTranslationLoading((prev) => ({
-                                                ...prev,
-                                                [`benefit_${targetLang}_${benefitIndex}`]:
-                                                  false,
-                                              }));
-                                            }
+
+                                            const newInputs: any = [
+                                              ...benefitsInputs,
+                                            ];
+                                            newInputs[benefitIndex][
+                                              `name_${targetLang}`
+                                            ] = translatedText || "";
+
+                                            setFieldValue(
+                                              `tierBasicInfo.locales.${targetLangId}.benefits`,
+                                              newInputs
+                                            );
+                                          } catch (err) {
+                                            console.error(
+                                              `Translation failed for ${targetLang}`,
+                                              err
+                                            );
+                                          } finally {
+                                            setTranslationLoading((prev) => ({
+                                              ...prev,
+                                              [`benefit_${targetLang}_${benefitIndex}`]:
+                                                false,
+                                            }));
                                           }
                                         }
                                       }
