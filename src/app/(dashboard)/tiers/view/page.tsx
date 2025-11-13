@@ -299,7 +299,7 @@ const TierList = () => {
           </Box>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginatedtier.map((tier) => (
+            {paginatedtier.map((tier: any) => (
               <Grid item xs={12} sm={6} md={4} key={tier.id}>
                 <Card
                   sx={{
@@ -330,7 +330,7 @@ const TierList = () => {
                           letterSpacing: "0%",
                         }}
                       >
-                        {tier.name}
+                        {tier?.locales[0]?.name}
                       </Typography>
                       <Box>
                         <IconButton
@@ -433,11 +433,11 @@ const TierList = () => {
                 <TableBody>
                   {tiers
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((tier) => (
+                    .map((tier: any) => (
                       <TableRow key={tier.id}>
                         <TableCell>
-                          <Tooltip title={tier.name}>
-                            <span>{tier.name}</span>
+                          <Tooltip title={tier?.locales[0]?.name}>
+                            <span>{tier?.locales[0]?.name}</span>
                           </Tooltip>
                         </TableCell>
                         <TableCell>{tier.min_points}</TableCell>

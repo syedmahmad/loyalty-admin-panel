@@ -148,7 +148,7 @@ const CampaignEdit = ({ onSuccess }: any) => {
     setAllBus(buRes?.data || []);
     setAllTiers(tierRes?.data?.tiers || []);
 
-    const groupedRules = (rulesRes?.data || []).reduce(
+    const groupedRules = (rulesRes?.data?.rules || []).reduce(
       (acc: any, rule: any) => {
         acc[rule.rule_type] = acc[rule.rule_type] || [];
         acc[rule.rule_type].push(rule);
@@ -486,11 +486,13 @@ const CampaignEdit = ({ onSuccess }: any) => {
                               />
                             }
                             value={rule.id}
-                            label={rule.name}
+                            label={rule?.locales?.[0]?.name || ""}
                           />
-                          {rule.description && (
+                          {rule?.locales?.[0]?.description && (
                             <Typography variant="body1">
-                              ({htmlToPlainText(rule.description)})
+                              (
+                              {htmlToPlainText(rule?.locales?.[0]?.description)}
+                              )
                             </Typography>
                           )}
                         </Box>
@@ -635,7 +637,7 @@ const CampaignEdit = ({ onSuccess }: any) => {
                         />
                       }
                       sx={{ mb: 2 }}
-                      label={tier.name}
+                      label={tier?.locales?.[0]?.name || ""}
                     />
                   </Grid>
 

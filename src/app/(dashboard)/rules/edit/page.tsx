@@ -22,7 +22,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import React, { useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { GET, POST, PUT } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
@@ -37,10 +37,16 @@ import { FREQUENCY } from "@/constants/constants";
 import slugify from "slugify";
 import ConditionTypeDropdown from "@/components/third-party/ConditionTypeInput";
 import { BusinessUnit } from "../../coupons/types";
+import { businessUnitService } from "@/services/businessUnitService";
+import { FormType } from "@/types/rule.type";
+import { tenantService } from "@/services/tenantService";
+import { Language } from "@/types/language.type";
+import { openAIService } from "@/services/openAiService";
 
-const initialForm = {
-  name: "",
-  name_ar: "",
+const initialForm: FormType = {
+  ruleBasicInfo: {
+    locales: {},
+  },
   rule_type: "event based earn",
   reward_condition: "minimum",
   min_amount_spent: "",
@@ -61,20 +67,6 @@ const initialForm = {
   business_unit_id: "",
 };
 
-interface BurnTypeOption {
-  label: string;
-  value: string;
-}
-
-const fetchBusinessUnits = async (): Promise<BusinessUnit[]> => {
-  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const response = await GET(`/business-units/${clientInfo.id}`);
-  if (response?.status !== 200) {
-    throw new Error("Failed to fetch business units");
-  }
-  return response.data;
-};
-
 const RuleEdit = ({ onSuccess }: any) => {
   const searchParams = useSearchParams();
   const paramId = searchParams.get("uuid");
@@ -90,18 +82,52 @@ const RuleEdit = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
-  const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate?: number }[]>([]);
+  const [tiers, setTiers] = useState<
+    { tier_id: number; point_conversion_rate?: number }[]
+  >([]);
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
-  // const [selectedBurnType, setSelectedBurnType] =
-  //   useState<BurnTypeOption | null>({
-  //     label: "FIXED",
-  //     value: "FIXED",
-  //   });
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [ruleLocales, setRuleLocales] = useState<any>([]);
 
-  const handleChange = (field: string, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (
+    eOrName:
+      | string
+      | ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    maybeValue?: any
+  ) => {
+    let name: string;
+    let value: any;
+
+    // Case 1: handleChange("business_unit_id", value)
+    if (typeof eOrName === "string") {
+      name = eOrName;
+      value = maybeValue;
+    }
+    // Case 2: handleChange(event)
+    else {
+      name = eOrName.target.name;
+      value = eOrName.target.value;
+    }
+
+    setForm((prev) => {
+      const updatedForm = { ...prev };
+
+      // Split nested names (like "ruleBasicInfo.locales.en.name")
+      const keys = name.split(".");
+
+      let current: any = updatedForm;
+      for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        if (!current[key]) current[key] = {};
+        current = current[key];
+      }
+
+      current[keys[keys.length - 1]] = value;
+
+      return updatedForm;
+    });
   };
 
   const loadRuleDetails = async (ruleId: string) => {
@@ -110,9 +136,18 @@ const RuleEdit = ({ onSuccess }: any) => {
     const rule = res?.data;
 
     if (rule) {
+      const tierLocales: any = {};
+      rule.locales.forEach((locale: any) => {
+        const langId = locale.language?.id;
+        if (langId) {
+          tierLocales[langId] = {
+            name: locale.name || "",
+            description: locale.description || "",
+          };
+        }
+      });
+
       setForm({
-        name: rule.name,
-        name_ar: rule.name_ar || "",
         rule_type: rule.rule_type,
         min_amount_spent: rule.min_amount_spent?.toString() || "",
         reward_points: rule.reward_points?.toString() || "",
@@ -132,15 +167,19 @@ const RuleEdit = ({ onSuccess }: any) => {
         conditions: rule.dynamic_conditions || form.conditions,
         is_priority: rule.is_priority,
         business_unit_id: rule.business_unit_id || 0,
+        ruleBasicInfo: {
+          locales: tierLocales,
+        },
       });
+
+      setRuleLocales(rule.locales);
+
       setTiers(
-      rule.tiers.map((t: any) => ({
-        tier_id: t.tier.id,
-        point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
-      }))
-    );
-      setDescription(rule.description || "");
-      setDescriptionAr(rule.description_ar || "");
+        rule.tiers.map((t: any) => ({
+          tier_id: t.tier.id,
+          point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
+        }))
+      );
 
       const burnType: any = BURN_TYPES.find(
         (singleBurnType) => singleBurnType.value === rule.burn_type
@@ -168,7 +207,9 @@ const RuleEdit = ({ onSuccess }: any) => {
   const fetchBusinessUnitInfo = async () => {
     setLoading(true);
     try {
-      const [buData] = await Promise.all([fetchBusinessUnits()]);
+      const [buData] = await Promise.all([
+        businessUnitService.getBusinessUnit(),
+      ]);
       setBusinessUnits(buData);
     } finally {
       setLoading(false);
@@ -177,10 +218,34 @@ const RuleEdit = ({ onSuccess }: any) => {
 
   useEffect(() => {
     fetchBusinessUnitInfo();
+    const getLanguages = async () => {
+      try {
+        const languageResponse = await tenantService.getTenantById();
+        const allLanguages =
+          languageResponse?.languages?.map((cl: any) => cl?.language) || [];
+
+        const english = allLanguages.find(
+          (lang: { code: string }) => lang.code === "en"
+        );
+
+        const others = allLanguages.filter(
+          (lang: { code: string }) => lang.code !== "en"
+        );
+        const englishFirst = english ? [english, ...others] : allLanguages;
+        setLanguages(englishFirst);
+      } catch (error) {
+        console.error("Error fetching country language:", error);
+      }
+    };
+    getLanguages();
   }, []);
 
   const handleSubmit = async () => {
-    if (!form.name || !form.rule_type || !form.business_unit_id) {
+    const allNamesValid = Object.values(form.ruleBasicInfo.locales).every(
+      (locale) => locale.name && locale.name.trim() !== ""
+    );
+
+    if (!allNamesValid || !form.rule_type || !form.business_unit_id) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -191,14 +256,12 @@ const RuleEdit = ({ onSuccess }: any) => {
       (form.rule_type === "spend and earn" &&
         (!form.min_amount_spent || !form.reward_points)) ||
       (form.rule_type === "burn" &&
-        (!form.min_amount_spent ||
-          !form.max_redeemption_points_limit
-          // ||
-          // (selectedBurnType?.value === "FIXED" &&
-          //   !form.points_conversion_factor) ||
-          // (selectedBurnType?.value === "PERCENTAGE" &&
-          //   !form.max_burn_percent_on_invoice)
-          ))
+        (!form.min_amount_spent || !form.max_redeemption_points_limit))
+      // ||
+      // (selectedBurnType?.value === "FIXED" &&
+      //   !form.points_conversion_factor) ||
+      // (selectedBurnType?.value === "PERCENTAGE" &&
+      //   !form.max_burn_percent_on_invoice)
     ) {
       toast.error("Please fill all required fields for this rule type");
       return;
@@ -235,12 +298,11 @@ const RuleEdit = ({ onSuccess }: any) => {
     }));
 
     const payload = {
-      name: form.name,
-      name_ar: form.name_ar,
-      slug: slugify(form.name, {
-        replacement: "_",
-        lower: true,
-      }),
+      // slug: slugify(form.name, {
+      //   replacement: "_",
+      //   lower: true,
+      // }),
+      slug: null,
       rule_type: form.rule_type,
       min_amount_spent: form.min_amount_spent
         ? parseFloat(form.min_amount_spent)
@@ -264,8 +326,6 @@ const RuleEdit = ({ onSuccess }: any) => {
           ? undefined
           : form.validity_after_assignment,
       frequency: form.frequency || "once",
-      description,
-      description_ar: descriptionAr,
       updated_by,
       // burn_type: burnType,
       reward_condition: form.reward_condition,
@@ -275,8 +335,18 @@ const RuleEdit = ({ onSuccess }: any) => {
       is_priority: form.is_priority ? 1 : 0,
       tiers: tiersPayload,
       business_unit_id: form.business_unit_id,
+      locales: Object.entries(form.ruleBasicInfo.locales).map(
+        ([languageId, localization]) => ({
+          id: ruleLocales.find((loc: any) => loc?.language.id === languageId)
+            ?.id,
+          languageId,
+          name: localization.name,
+          description: localization.description,
+        })
+      ),
     };
 
+    console.log("payload :::", payload);
     const res = await PUT(`/rules/${selectedId}`, payload);
 
     if (res?.status === 200) {
@@ -299,88 +369,70 @@ const RuleEdit = ({ onSuccess }: any) => {
   };
 
   const isTierSelected = (id: number) => tiers.some((t) => t.tier_id === id);
-  
-    const handleTierToggle = (tierId: number) => {
-      if (isTierSelected(tierId)) {
-        setTiers(tiers.filter((t) => t.tier_id !== tierId));
-      } else {
-        setTiers([...tiers, { tier_id: tierId, point_conversion_rate: 1 }]);
-      }
-    };
-  
-    const handleConversionRateChange = (tierId: number, value?: number) => {
-      setTiers((prev) =>
-        prev.map((t) =>
-          t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
-        )
-      );
-    };
-  
-    useEffect(() => {
-      const fetchTiers = async () => {
-        try {
-          const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-          const response = await GET(`/tiers/${clientInfo.id}?bu=${form.business_unit_id}`);
-          if (response?.status === 200) {
-            setAllTiers(response.data.tiers || []);
-          } else {
-            toast.error("Failed to fetch tiers");
-          }
-        } catch (error) {
-          toast.error("An error occurred while fetching tiers");
-        }
-      };
-  
-      if (form.business_unit_id) {
-        fetchTiers();
-      }
-    }, [form.business_unit_id]);
 
-    const handleArabictranslate = async (
-      key: string,
-      value: string,
-      richEditor: boolean = false
-    ) => {
+  const handleTierToggle = (tierId: number) => {
+    if (isTierSelected(tierId)) {
+      setTiers(tiers.filter((t) => t.tier_id !== tierId));
+    } else {
+      setTiers([...tiers, { tier_id: tierId, point_conversion_rate: 1 }]);
+    }
+  };
+
+  const handleConversionRateChange = (tierId: number, value?: number) => {
+    setTiers((prev) =>
+      prev.map((t) =>
+        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
+      )
+    );
+  };
+
+  useEffect(() => {
+    const fetchTiers = async () => {
       try {
-        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-        const res = await POST("/openai/translate-to-arabic", { value });
-        if (res?.data.status) {
-          if (richEditor) {
-            setDescriptionAr(res?.data?.data);
-          } else {
-            console.log("Translating", key, res?.data?.data);
-            
-            handleChange(key, res?.data?.data);
-          }
-          return res?.data?.data;
+        const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+        const response = await GET(
+          `/tiers/${clientInfo.id}?bu=${form.business_unit_id}`
+        );
+        if (response?.status === 200) {
+          setAllTiers(response.data.tiers || []);
+        } else {
+          toast.error("Failed to fetch tiers");
         }
-        return "";
-      } catch (error: any) {
-        return {
-          success: false,
-          status: error?.response?.status || 500,
-          message: error?.response?.data?.message || "Unknown error",
-        };
-      } finally {
-        setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+      } catch (error) {
+        toast.error("An error occurred while fetching tiers");
       }
     };
-  
-  
+
+    if (form.business_unit_id) {
+      fetchTiers();
+    }
+  }, [form.business_unit_id]);
+
+  const handleTranslateText = async (
+    targetLang: string,
+    englishText: string
+  ): Promise<string> => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
+
+      const payload = {
+        text: englishText,
+        targetLanguage: [targetLang],
+        sourceLanguage: "en",
+      };
+
+      const response = await openAIService.translateText(payload);
+      return response.translatedText?.[targetLang] || "";
+    } catch (error) {
+      console.error(`Translation failed for ${targetLang}:`, error);
+      return "";
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
+    }
+  };
 
   return (
     <>
-      {/* <Tooltip title="Go Back">
-        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
-          <ArrowBackIcon /> &nbsp; Go Back
-        </IconButton>
-      </Tooltip>
-
-      <Card sx={{ width: 600, mx: 'auto', mt: 4, p: 3, borderRadius: 3 }}>
-      <Typography variant="h5" gutterBottom fontWeight={600}>
-        ✏️ Edit Rule
-      </Typography> */}
-
       {!paramId && (
         <Grid container spacing={2} sx={{ mb: 1 }}>
           {/* Select Rule */}
@@ -409,41 +461,83 @@ const RuleEdit = ({ onSuccess }: any) => {
 
       {selectedId && (
         <Grid container spacing={2}>
-          {/* Rule Name */}
-          <Grid item xs={12}>
-            <InfoLabel
-              label="Rule Name "
-              tooltip="Enter a descriptive name for this rule."
-            />
-            <TextField
-              fullWidth
-              value={form.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              onBlur={(e) => {handleArabictranslate("name_ar", e.target.value)}}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {translationLoading["name_ar"] && (
-                      <CircularProgress size={20} />
-                    )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+              const fieldName = `ruleBasicInfo.locales.${langId}.name`;
 
-          {/* Rule Name Ar */}
-          <Grid item xs={12}>
-            <InfoLabel
-              label="Rule Name Ar"
-              tooltip="Name of the rule to identify it easily."
-            />
-            <TextField
-              fullWidth
-              value={form.name_ar}
-              onChange={(e) => handleChange("name_ar", e.target.value)}
-            />
-          </Grid>
+              return (
+                <Grid item xs={12} key={index}>
+                  <TextField
+                    fullWidth
+                    name={fieldName}
+                    label={`Rule Name (${singleLanguage.name})`}
+                    value={form.ruleBasicInfo.locales[langId]?.name || ""}
+                    onChange={handleChange}
+                    onBlur={async (e) => {
+                      if (langCode === "en") {
+                        const englishText = e.target.value;
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLangId = lang?.id;
+                          const targetLang = lang?.code;
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`name_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+
+                              setForm((prev) => ({
+                                ...prev,
+                                ruleBasicInfo: {
+                                  ...prev.ruleBasicInfo,
+                                  locales: {
+                                    ...prev.ruleBasicInfo.locales,
+                                    [targetLangId]: {
+                                      ...(prev.ruleBasicInfo.locales[
+                                        targetLangId
+                                      ] || {}),
+                                      name: translatedText || "",
+                                    },
+                                  },
+                                },
+                              }));
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`name_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          {translationLoading[`name_${langCode}`] && (
+                            <CircularProgress size={20} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              );
+            })}
 
           {/* Business Unit */}
           <Grid item xs={12}>
@@ -753,40 +847,37 @@ const RuleEdit = ({ onSuccess }: any) => {
               </Grid>
 
               {/* {selectedBurnType?.value === "FIXED" && ( */}
-                <Grid item xs={12}>
-                  <InfoLabel
-                    label="Points Conversion Factor"
-                    tooltip="Points to currency value ratio."
-                  />
-                  <TextField
-                    fullWidth
-                    type="number"
-                    value={form.points_conversion_factor}
-                    onChange={(e) =>
-                      handleChange("points_conversion_factor", e.target.value)
-                    }
-                  />
-                </Grid>
+              <Grid item xs={12}>
+                <InfoLabel
+                  label="Points Conversion Factor"
+                  tooltip="Points to currency value ratio."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.points_conversion_factor}
+                  onChange={(e) =>
+                    handleChange("points_conversion_factor", e.target.value)
+                  }
+                />
+              </Grid>
               {/* )} */}
 
               {/* {selectedBurnType?.value === "PERCENTAGE" && ( */}
-                <Grid item xs={12}>
-                  <InfoLabel
-                    label="Max Burn % on Invoice"
-                    tooltip="Maximum invoice value percentage that can be paid using points."
-                  />
-                  <TextField
-                    fullWidth
-                    type="number"
-                    value={form.max_burn_percent_on_invoice}
-                    onChange={(e) =>
-                      handleChange(
-                        "max_burn_percent_on_invoice",
-                        e.target.value
-                      )
-                    }
-                  />
-                </Grid>
+              <Grid item xs={12}>
+                <InfoLabel
+                  label="Max Burn % on Invoice"
+                  tooltip="Maximum invoice value percentage that can be paid using points."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.max_burn_percent_on_invoice}
+                  onChange={(e) =>
+                    handleChange("max_burn_percent_on_invoice", e.target.value)
+                  }
+                />
+              </Grid>
               {/* )} */}
             </>
           )}
@@ -885,7 +976,7 @@ const RuleEdit = ({ onSuccess }: any) => {
               </Typography>
             </Alert>
             <br />
-  
+
             <Grid container>
               {allTiers.map((tier, index) => {
                 const selected = isTierSelected(tier.id);
@@ -904,24 +995,24 @@ const RuleEdit = ({ onSuccess }: any) => {
                         label={tier.name}
                       />
                     </Grid>
-  
+
                     <Grid item xs={8}>
                       {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="Point Conversion Rate"
-                          value={current?.point_conversion_rate ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            handleConversionRateChange(
-                              tier.id,
-                              val === "" ? undefined : Number(val)
-                            );
-                          }}
-                          sx={{ mb: 2 }}
-                          inputProps={{ step: 0.01, min: 0 }}
-                        />
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Point Conversion Rate"
+                        value={current?.point_conversion_rate ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleConversionRateChange(
+                            tier.id,
+                            val === "" ? undefined : Number(val)
+                          );
+                        }}
+                        sx={{ mb: 2 }}
+                        inputProps={{ step: 0.01, min: 0 }}
+                      />
                       {/* )} */}
                     </Grid>
                   </React.Fragment>
@@ -931,30 +1022,96 @@ const RuleEdit = ({ onSuccess }: any) => {
           </Grid>
 
           {/* Description */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Description (optional)
-            </Typography>
-            <RichTextEditor
-              value={description}
-              setValue={setDescription}
-              language="en"
-              onBlur={(e: any) => {handleArabictranslate("description_ar", description, true)}}
-            />
-          </Grid>
-          
-          {/* Description Ar*/}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
-              Description Ar (optional)
-            </Typography>
-            <RichTextEditor
-              value={descriptionAr}
-              setValue={setDescriptionAr}
-              language="ar"
-            />
-          </Grid>
-          
+          {languages.length > 0 &&
+            languages.map((singleLanguage: Language, index) => {
+              const langId = singleLanguage.id;
+              const langCode = singleLanguage.code;
+
+              return (
+                <Grid item xs={12} key={index}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {`Description (${singleLanguage.name})`}
+                  </Typography>
+
+                  <RichTextEditor
+                    value={
+                      form.ruleBasicInfo.locales[langId]?.description || ""
+                    }
+                    setValue={(value: string) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        ruleBasicInfo: {
+                          ...prev.ruleBasicInfo,
+                          locales: {
+                            ...prev.ruleBasicInfo.locales,
+                            [langId]: {
+                              ...(prev.ruleBasicInfo.locales[langId] || {}),
+                              description: value || "",
+                            },
+                          },
+                        },
+                      }));
+                    }}
+                    language={langCode}
+                    onBlur={async () => {
+                      if (langCode === "en") {
+                        const englishText =
+                          form.ruleBasicInfo.locales[langId]?.description || "";
+                        if (!englishText.trim()) return;
+
+                        for (const lang of languages) {
+                          const targetLang = lang.code;
+                          const targetLangId = lang.id;
+
+                          if (targetLang !== "en") {
+                            try {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`description_${targetLang}`]: true,
+                              }));
+
+                              const translatedText = await handleTranslateText(
+                                targetLang,
+                                englishText
+                              );
+
+                              setForm((prev) => ({
+                                ...prev,
+                                ruleBasicInfo: {
+                                  ...prev.ruleBasicInfo,
+                                  locales: {
+                                    ...prev.ruleBasicInfo.locales,
+                                    [targetLangId]: {
+                                      ...(prev.ruleBasicInfo.locales[
+                                        targetLangId
+                                      ] || {}),
+                                      description: translatedText || "",
+                                    },
+                                  },
+                                },
+                              }));
+                            } catch (err) {
+                              console.error(
+                                `Translation failed for ${targetLang}`,
+                                err
+                              );
+                            } finally {
+                              setTranslationLoading((prev) => ({
+                                ...prev,
+                                [`description_${targetLang}`]: false,
+                              }));
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    translationLoading={
+                      translationLoading[`description_${langCode}`]
+                    }
+                  />
+                </Grid>
+              );
+            })}
         </Grid>
       )}
 

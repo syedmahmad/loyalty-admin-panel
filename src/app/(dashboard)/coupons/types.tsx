@@ -6,12 +6,21 @@ export type ConditionField = {
 };
 
 export type CouponFormValues = {
-  coupon_title: string;
-  coupon_title_ar: string;
-  exception_error_message_ar: string;
-  exception_error_message_en: string;
-  general_error_message_ar: string;
-  general_error_message_en: string;
+  couponBasicInfo: {
+    locales: Record<
+      string,
+      {
+        title: string;
+        description: string;
+        term_and_condition: string;
+        desktop_image: string;
+        mobile_image: string;
+        general_error: string;
+        exception_error: string;
+        benefits: any;
+      }
+    >;
+  };
   discount_price: number;
   upto_amount: number;
   code: string;
@@ -27,7 +36,6 @@ export type CouponFormValues = {
   reuse_interval?: number;
   is_point_earning_disabled?: number;
   status: number;
-  benefits: string;
   customer_segment_ids: number[];
   conditions: {
     [key: string]: any;
@@ -35,8 +43,6 @@ export type CouponFormValues = {
   errors?: {
     [key: string]: string;
   };
-  description_en: string;
-  description_ar: string;
   all_users: number;
   file?: any;
 };
@@ -72,4 +78,11 @@ export type dynamicRows = {
   variant?: (number | string)[];
   models?: Model[];
   variants?: Variant[];
+};
+
+export type Benefit = {
+  name_en: string;
+  name_ar: string;
+  icon: string;
+  drawerType?: string;
 };

@@ -99,7 +99,7 @@ const CampaignCreate = ({ onSuccess }: any) => {
     setAllTiers(tierRes?.data?.tiers || []);
     setAllCoupons(couponsRes?.data?.data || []);
     setAllSegments(segmentsRes?.data.data || []);
-    const groupedRules = (rulesRes?.data || []).reduce(
+    const groupedRules = (rulesRes?.data?.rules || []).reduce(
       (acc: any, rule: any) => {
         acc[rule.rule_type] = acc[rule.rule_type] || [];
         acc[rule.rule_type].push(rule);
@@ -443,11 +443,11 @@ const CampaignCreate = ({ onSuccess }: any) => {
                             />
                           }
                           value={rule.id}
-                          label={rule.name}
+                          label={rule?.locales?.[0]?.name}
                         />
-                        {rule.description && (
+                        {rule?.locales?.[0]?.description && (
                           <Typography variant="body1">
-                            ({htmlToPlainText(rule.description)})
+                            ({htmlToPlainText(rule?.locales?.[0]?.description)})
                           </Typography>
                         )}
                       </Box>
@@ -605,7 +605,7 @@ const CampaignCreate = ({ onSuccess }: any) => {
                         />
                       }
                       sx={{ mb: 2 }}
-                      label={tier.name}
+                      label={tier?.locales?.[0]?.name}
                     />
                   </Grid>
 
