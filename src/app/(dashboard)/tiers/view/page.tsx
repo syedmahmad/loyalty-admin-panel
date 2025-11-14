@@ -401,7 +401,8 @@ const TierList = () => {
                       Business Unit: {tier.business_unit?.name || "-"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mt={1}>
-                      Description: {htmlToPlainText(tier.description || "-")}
+                      Description:{" "}
+                      {htmlToPlainText(tier?.locales?.[0]?.description || "-")}
                     </Typography>
                     {/* <Typography variant="body2" color="text.secondary" mt={1}>
                       Benefits:
@@ -453,7 +454,7 @@ const TierList = () => {
                                 dangerouslySetInnerHTML={{
                                   __html: DOMPurify.sanitize(
                                     marked.parse(
-                                      tier.description || "-"
+                                      tier?.locales?.[0]?.description || "-"
                                     ) as string
                                   ),
                                 }}
@@ -461,7 +462,9 @@ const TierList = () => {
                             }
                           >
                             <span>
-                              {htmlToPlainText(tier.description || "-")}
+                              {htmlToPlainText(
+                                tier?.locales?.[0]?.description || "-"
+                              )}
                             </span>
                           </Tooltip>
                         </TableCell>

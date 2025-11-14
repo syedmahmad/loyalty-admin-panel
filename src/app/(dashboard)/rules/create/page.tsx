@@ -886,7 +886,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                         />
                       }
                       sx={{ mb: 2 }}
-                      label={tier.name}
+                      label={tier?.locales?.[0]?.name}
                     />
                   </Grid>
 
