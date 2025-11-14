@@ -40,6 +40,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ConfirmDeleteDialog from "@/components/dialogs/ConfirmDeleteDialog";
 import { DRAWER_TYPE_BULK_UPLOAD } from "@/constants/constants";
+import { htmlToPlainText } from "@/utils/Index";
 
 type CustomerSegment = {
   id: number;
@@ -241,7 +242,7 @@ const CustomerSegmentList = () => {
           </Box>
         ) : viewMode === "card" ? (
           <Grid container spacing={3} sx={{ boxShadow: "none" }}>
-            {paginatedSegments.map((segment) => (
+            {paginatedSegments.map((segment: any) => (
               <Grid item xs={12} sm={6} md={4} key={segment.id}>
                 <Card
                   sx={{
@@ -274,7 +275,7 @@ const CustomerSegmentList = () => {
                           letterSpacing: "0%",
                         }}
                       >
-                        {segment.name}
+                        {segment?.locales?.[0]?.name || ""}
                       </Typography>
                       <IconButton
                         onClick={(event: any) =>
@@ -337,7 +338,9 @@ const CustomerSegmentList = () => {
                       </Menu>
                     </Box>
                     <Typography variant="body2" mt={1}>
-                      {segment.description || "No Description"}
+                      {htmlToPlainText(
+                        segment?.locales?.[0]?.description || "No Description"
+                      )}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mt={1}>
                       Status: {segment.status === 1 ? "Active" : "Inactive"}
@@ -365,10 +368,15 @@ const CustomerSegmentList = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedSegments.map((segment) => (
+                  {paginatedSegments.map((segment: any) => (
                     <TableRow key={segment.id}>
-                      <TableCell>{segment.name}</TableCell>
-                      <TableCell>{segment.description}</TableCell>
+                      <TableCell>{segment?.locales?.[0]?.name || ""}</TableCell>
+                      <TableCell>
+                        {" "}
+                        {htmlToPlainText(
+                          segment?.locales?.[0]?.description || "No Description"
+                        )}
+                      </TableCell>
                       <TableCell>
                         {segment.status === 1 ? "Active" : "Inactive"}
                       </TableCell>
