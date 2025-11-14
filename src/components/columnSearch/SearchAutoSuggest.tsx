@@ -40,7 +40,7 @@ export default function SearchAutoSuggest({
       onInputChange={(_, value) => {
         inputTextChange(value);
       }}
-      getOptionLabel={(option) => option.label}
+      getOptionLabel={(option) => option?.label ?? ""}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       renderOption={(props, option) => (
         <li {...props} key={option.id}>
