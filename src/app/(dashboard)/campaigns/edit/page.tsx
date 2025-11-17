@@ -12,6 +12,7 @@ import {
   FormGroup,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   ListSubheader,
   MenuItem,
@@ -32,6 +33,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RichTextEditor } from "@/components/TextEditor";
 import CouponCard from "@/components/cards/CouponCard";
 import { CAMPAIGN_TYPES } from "@/constants/constants";
+import { LocalesState } from "@/types/campaign.type";
+import { Language } from "@/types/language.type";
+import { tenantService } from "@/services/tenantService";
+import { openAIService } from "@/services/openAiService";
 
 const htmlToPlainText = (htmlString: string): string => {
   if (!htmlString) return "";
@@ -75,6 +80,13 @@ const CampaignEdit = ({ onSuccess }: any) => {
   const [selectedCampaignType, setSelectedCampaignType] =
     useState<CampaignTypeOption | null>(null);
 
+  const [locales, setLocales] = useState<LocalesState>({});
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [translationLoading, setTranslationLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [campaignLocales, setCampaignLocales] = useState<any>([]);
+
   const ALL_RULE_TYPES = [
     "event based earn",
     "spend and earn",
@@ -84,6 +96,26 @@ const CampaignEdit = ({ onSuccess }: any) => {
 
   useEffect(() => {
     fetchInitialData();
+    const getLanguages = async () => {
+      try {
+        const languageResponse = await tenantService.getTenantById();
+        const allLanguages =
+          languageResponse?.languages?.map((cl: any) => cl?.language) || [];
+
+        const english = allLanguages.find(
+          (lang: { code: string }) => lang.code === "en"
+        );
+
+        const others = allLanguages.filter(
+          (lang: { code: string }) => lang.code !== "en"
+        );
+        const englishFirst = english ? [english, ...others] : allLanguages;
+        setLanguages(englishFirst);
+      } catch (error) {
+        console.error("Error fetching country language:", error);
+      }
+    };
+    getLanguages();
   }, []);
 
   const fetchInitialData = async () => {
@@ -99,7 +131,19 @@ const CampaignEdit = ({ onSuccess }: any) => {
       ]);
 
     const campaign = campaignRes?.data;
+    const campaignLocales: any = {};
+    campaign.locales.forEach((locale: any) => {
+      const langId = locale.language?.id;
+      if (langId) {
+        campaignLocales[langId] = {
+          name: locale.name || "",
+          description: locale.description || "",
+        };
+      }
+    });
 
+    setCampaignLocales(campaign.locales);
+    setLocales(campaignLocales);
     setName(campaign.name);
     setStartDate(DateTime.fromISO(campaign.start_date).toFormat("yyyy-MM-dd"));
     setEndDate(DateTime.fromISO(campaign.end_date).toFormat("yyyy-MM-dd"));
@@ -225,7 +269,13 @@ const CampaignEdit = ({ onSuccess }: any) => {
   };
 
   const handleSubmit = async () => {
-    if (!name || !startDate || !endDate || !bus) {
+    const allNamesValid =
+      Object.keys(locales).length > 0 &&
+      Object.values(locales).every(
+        (locale) => (locale.name ?? "").trim() !== ""
+      );
+
+    if (!allNamesValid || !startDate || !endDate || !bus) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -294,6 +344,13 @@ const CampaignEdit = ({ onSuccess }: any) => {
       description,
       customer_segment_ids: segmentIds,
       campaign_type: selectedCampaignType?.value,
+      locales: Object.entries(locales).map(([languageId, localization]) => ({
+        id: campaignLocales.find((loc: any) => loc?.language.id === languageId)
+          ?.id,
+        languageId,
+        name: localization.name,
+        description: localization.description,
+      })),
     };
 
     setLoading(true);
@@ -328,6 +385,29 @@ const CampaignEdit = ({ onSuccess }: any) => {
     setAllCoupons(couponsRes?.data?.coupons || []);
   };
 
+  const handleTranslateText = async (
+    targetLang: string,
+    englishText: string
+  ): Promise<string> => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
+
+      const payload = {
+        text: englishText,
+        targetLanguage: [targetLang],
+        sourceLanguage: "en",
+      };
+
+      const response = await openAIService.translateText(payload);
+      return response.translatedText?.[targetLang] || "";
+    } catch (error) {
+      console.error(`Translation failed for ${targetLang}:`, error);
+      return "";
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
+    }
+  };
+
   return (
     <>
       {/* <Tooltip title="Go Back">
@@ -341,14 +421,84 @@ const CampaignEdit = ({ onSuccess }: any) => {
       </Typography> */}
 
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Campaign Name"
-            fullWidth
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </Grid>
+        {/* Campaign Name */}
+        {languages.length > 0 &&
+          languages.map((singleLanguage: Language, index) => {
+            const langId = singleLanguage.id;
+            const langCode = singleLanguage.code;
+            const fieldName = `campaignBasicInfo.locales.${langId}.name`;
+
+            return (
+              <Grid item xs={12} key={index}>
+                <TextField
+                  fullWidth
+                  name={fieldName}
+                  label={`Campaign Name (${singleLanguage.name})`}
+                  value={locales[langId]?.name || ""}
+                  onChange={async (e) => {
+                    const newValue = e.target.value;
+                    setLocales((prev: any) => ({
+                      ...prev,
+                      [langId]: {
+                        ...prev[langId],
+                        name: newValue,
+                      },
+                    }));
+                  }}
+                  onBlur={async (e) => {
+                    if (langCode === "en") {
+                      const englishText = e.target.value;
+                      if (!englishText.trim()) return;
+
+                      for (const lang of languages) {
+                        const targetLangId = lang?.id;
+                        const targetLang = lang?.code;
+                        if (targetLang !== "en") {
+                          try {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`name_${targetLang}`]: true,
+                            }));
+
+                            const translatedText = await handleTranslateText(
+                              targetLang,
+                              englishText
+                            );
+                            setLocales((prev: any) => ({
+                              ...prev,
+                              [lang.id]: {
+                                ...prev[lang.id],
+                                name: translatedText,
+                              },
+                            }));
+                          } catch (err) {
+                            console.error(
+                              `Translation failed for ${targetLang}`,
+                              err
+                            );
+                          } finally {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`name_${targetLang}`]: false,
+                            }));
+                          }
+                        }
+                      }
+                    }
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        {translationLoading[`name_${langCode}`] && (
+                          <CircularProgress size={20} />
+                        )}
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+            );
+          })}
 
         <Grid item xs={6}>
           <TextField
@@ -666,16 +816,80 @@ const CampaignEdit = ({ onSuccess }: any) => {
           </Grid>
         </Grid>
 
-        <Grid item xs={12}>
-          <Typography variant="subtitle1" gutterBottom>
-            Description (optional)
-          </Typography>
-          <RichTextEditor
-            value={description}
-            setValue={setDescription}
-            language="en"
-          />
-        </Grid>
+        {/* Description */}
+        {languages.length > 0 &&
+          languages.map((singleLanguage: Language, index) => {
+            const langId = singleLanguage.id;
+            const langCode = singleLanguage.code;
+
+            return (
+              <Grid item xs={12} key={index}>
+                <Typography variant="subtitle1" gutterBottom>
+                  {`Description (${singleLanguage.name})`}
+                </Typography>
+
+                <RichTextEditor
+                  value={locales[langId]?.description || ""}
+                  setValue={(value: string) => {
+                    setLocales((prev: any) => ({
+                      ...prev,
+                      [langId]: {
+                        ...(prev[langId] || {}),
+                        description: value || "",
+                      },
+                    }));
+                  }}
+                  language={langCode}
+                  onBlur={async () => {
+                    if (langCode === "en") {
+                      const englishText = locales[langId]?.description || "";
+                      if (!englishText.trim()) return;
+
+                      for (const lang of languages) {
+                        const targetLang = lang.code;
+                        const targetLangId = lang.id;
+
+                        if (targetLang !== "en") {
+                          try {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`description_${targetLang}`]: true,
+                            }));
+
+                            const translatedText = await handleTranslateText(
+                              targetLang,
+                              englishText
+                            );
+
+                            setLocales((prev: any) => ({
+                              ...prev,
+                              [targetLangId]: {
+                                ...(prev[targetLangId] || {}),
+                                description: translatedText || "",
+                              },
+                            }));
+                          } catch (err) {
+                            console.error(
+                              `Translation failed for ${targetLang}`,
+                              err
+                            );
+                          } finally {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`description_${targetLang}`]: false,
+                            }));
+                          }
+                        }
+                      }
+                    }
+                  }}
+                  translationLoading={
+                    translationLoading[`description_${langCode}`]
+                  }
+                />
+              </Grid>
+            );
+          })}
       </Grid>
 
       <Box mt={3} display="flex" justifyContent="flex-end">

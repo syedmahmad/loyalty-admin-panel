@@ -274,7 +274,7 @@ const CampaignsList = () => {
                               letterSpacing: "0%",
                             }}
                           >
-                            {campaign.name}
+                            {campaign?.locales?.[0]?.name || ""}
                           </Typography>
                         </Box>
                         <Box>
@@ -398,7 +398,10 @@ const CampaignsList = () => {
 
                     return (
                       <TableRow key={campaign.id}>
-                        <TableCell>{campaign.name}</TableCell>
+                        <TableCell>
+                          {" "}
+                          {campaign?.locales?.[0]?.name || ""}
+                        </TableCell>
                         <TableCell>
                           {campaign.business_unit?.name || "N/A"}
                         </TableCell>

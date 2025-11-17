@@ -19,6 +19,11 @@ import { toast } from "react-toastify";
 import SearchAutoSuggest from "@/components/columnSearch/SearchAutoSuggest";
 import { DRAWER_TYPE_BULK_UPLOAD } from "@/constants/constants";
 import { BusinessUnit } from "../../coupons/types";
+import { openAIService } from "@/services/openAiService";
+import { tenantService } from "@/services/tenantService";
+import { Language } from "@/types/language.type";
+import { LocalesState } from "@/types/campaign.type";
+import { RichTextEditor } from "@/components/TextEditor";
 
 const fetchAllCustomers = async (tenantId: number) => {
   const response = await GET(`/customers/${tenantId}`);
@@ -59,8 +64,10 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
-  const [searchText, setSearchText] = useState("");
   const [selectedCouponCsv, setSelectedCouponCsv] = useState<File | null>(null);
+
+  const [locales, setLocales] = useState<LocalesState>({});
+  const [languages, setLanguages] = useState<Language[]>([]);
 
   /** States For Auto suggest dropdown Start */
   const [options, setOptions] = useState<{ label: string; id: number }[]>([]);
@@ -93,13 +100,18 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      setError("Name is required");
+    const allNamesValid =
+      Object.keys(locales).length > 0 &&
+      Object.values(locales).every(
+        (locale) => (locale.name ?? "").trim() !== ""
+      );
+
+    if (!allNamesValid) {
+      toast.error("Name is required");
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const clientInfo = localStorage.getItem("client-info");
@@ -116,6 +128,7 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
         selected_customer_ids: number[];
         business_unit_id: string;
         file?: any;
+        locales?: any;
       } = {
         name,
         description,
@@ -124,6 +137,11 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
         tenant_id: parsed.id,
         business_unit_id: selectedBusinessUnitId,
         selected_customer_ids: selectedCustomerIds,
+        locales: Object.entries(locales).map(([languageId, localization]) => ({
+          languageId,
+          name: localization.name || "",
+          description: localization.description || "",
+        })),
       };
 
       console.log("Creating customer segment with payload:", payload);
@@ -184,30 +202,6 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
     }
   };
 
-  const handleArabictranslate = async (key: string, value: string) => {
-    if (value) {
-      try {
-        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-        const res = await POST("/openai/translate-to-arabic", { value });
-        if (res?.data.status) {
-          if (key === "segment_name_arabic") {
-            setNameAr(res?.data?.data);
-          } else if (key === "description_arabic") {
-            setDescriptionAr(res?.data?.data);
-          }
-        }
-      } catch (error: any) {
-        return {
-          success: false,
-          status: error?.response?.status || 500,
-          message: error?.response?.data?.message || "Unknown error",
-        };
-      } finally {
-        setTranslationLoading((prev) => ({ ...prev, [key]: false }));
-      }
-    }
-  };
-
   /**Auto Suggest Dropdown */
   const handleAddCustomerInputChange = (inputString: string) => {
     if (inputString.trim() === "") {
@@ -257,6 +251,26 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
   // Get all businessunits
   useEffect(() => {
     fetchBusinessUnitInfo();
+    const getLanguages = async () => {
+      try {
+        const languageResponse = await tenantService.getTenantById();
+        const allLanguages =
+          languageResponse?.languages?.map((cl: any) => cl?.language) || [];
+
+        const english = allLanguages.find(
+          (lang: { code: string }) => lang.code === "en"
+        );
+
+        const others = allLanguages.filter(
+          (lang: { code: string }) => lang.code !== "en"
+        );
+        const englishFirst = english ? [english, ...others] : allLanguages;
+        setLanguages(englishFirst);
+      } catch (error) {
+        console.error("Error fetching country language:", error);
+      }
+    };
+    getLanguages();
   }, []);
 
   // Bulk Upload Customer from CSV
@@ -277,94 +291,185 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
     setSelectedCouponCsv(selectedFile);
   };
 
+  const handleTranslateText = async (
+    targetLang: string,
+    englishText: string
+  ): Promise<string> => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
+
+      const payload = {
+        text: englishText,
+        targetLanguage: [targetLang],
+        sourceLanguage: "en",
+      };
+
+      const response = await openAIService.translateText(payload);
+      return response.translatedText?.[targetLang] || "";
+    } catch (error) {
+      console.error(`Translation failed for ${targetLang}:`, error);
+      return "";
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
+    }
+  };
+
   return (
     <>
       <Grid container spacing={2}>
         {/* Segment Name */}
-        <Grid item xs={12}>
-          <InfoLabel
-            label="Segment Name"
-            tooltip="Give your customer segment a meaningful name."
-          />
-          <TextField
-            fullWidth
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={(e) =>
-              handleArabictranslate("segment_name_arabic", e.target.value)
-            }
-            required
-            disabled={loading || submitted}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  {translationLoading["segment_name_arabic"] && (
-                    <CircularProgress size={20} />
-                  )}
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
+        {languages.length > 0 &&
+          languages.map((singleLanguage: Language, index) => {
+            const langId = singleLanguage.id;
+            const langCode = singleLanguage.code;
+            const fieldName = `locales.${langId}.name`;
 
-        {/* Segment Name Arabic */}
-        <Grid item xs={12}>
-          <InfoLabel
-            label="Segment Name Arabic"
-            tooltip="Give your customer segment a meaningful name."
-          />
-          <TextField
-            fullWidth
-            value={nameAr}
-            onChange={(e) => setNameAr(e.target.value)}
-            required
-            disabled={loading || submitted}
-          />
-        </Grid>
+            return (
+              <Grid item xs={12} key={index}>
+                <TextField
+                  fullWidth
+                  name={fieldName}
+                  label={`Segment Name (${singleLanguage.name})`}
+                  value={locales[langId]?.name || ""}
+                  onChange={async (e) => {
+                    const newValue = e.target.value;
+                    setLocales((prev: any) => ({
+                      ...prev,
+                      [langId]: {
+                        ...prev[langId],
+                        name: newValue,
+                      },
+                    }));
+                  }}
+                  onBlur={async (e) => {
+                    if (langCode === "en") {
+                      const englishText = e.target.value;
+                      if (!englishText.trim()) return;
+
+                      for (const lang of languages) {
+                        const targetLangId = lang?.id;
+                        const targetLang = lang?.code;
+                        if (targetLang !== "en") {
+                          try {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`name_${targetLang}`]: true,
+                            }));
+
+                            const translatedText = await handleTranslateText(
+                              targetLang,
+                              englishText
+                            );
+                            setLocales((prev: any) => ({
+                              ...prev,
+                              [lang.id]: {
+                                ...prev[lang.id],
+                                name: translatedText,
+                              },
+                            }));
+                          } catch (err) {
+                            console.error(
+                              `Translation failed for ${targetLang}`,
+                              err
+                            );
+                          } finally {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`name_${targetLang}`]: false,
+                            }));
+                          }
+                        }
+                      }
+                    }
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        {translationLoading[`name_${langCode}`] && (
+                          <CircularProgress size={20} />
+                        )}
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+            );
+          })}
 
         {/* Description */}
-        <Grid item xs={12}>
-          <InfoLabel
-            label="Description"
-            tooltip="Optional: Describe what defines this segment."
-          />
-          <TextField
-            fullWidth
-            multiline
-            minRows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={(e) =>
-              handleArabictranslate("description_arabic", e.target.value)
-            }
-            disabled={loading || submitted}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  {translationLoading["description_arabic"] && (
-                    <CircularProgress size={20} />
-                  )}
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
+        {languages.length > 0 &&
+          languages.map((singleLanguage: Language, index) => {
+            const langId = singleLanguage.id;
+            const langCode = singleLanguage.code;
 
-        {/* Description Arabic */}
-        <Grid item xs={12}>
-          <InfoLabel
-            label="Description Arabic"
-            tooltip="Optional: Describe what defines this segment."
-          />
-          <TextField
-            fullWidth
-            multiline
-            minRows={3}
-            value={descriptionAr}
-            onChange={(e) => setDescriptionAr(e.target.value)}
-            disabled={loading || submitted}
-          />
-        </Grid>
+            return (
+              <Grid item xs={12} key={index}>
+                <Typography variant="subtitle1" gutterBottom>
+                  {`Description (${singleLanguage.name})`}
+                </Typography>
+
+                <RichTextEditor
+                  value={locales[langId]?.description || ""}
+                  setValue={(value: string) => {
+                    setLocales((prev: any) => ({
+                      ...prev,
+                      [langId]: {
+                        ...(prev[langId] || {}),
+                        description: value || "",
+                      },
+                    }));
+                  }}
+                  language={langCode}
+                  onBlur={async () => {
+                    if (langCode === "en") {
+                      const englishText = locales[langId]?.description || "";
+                      if (!englishText.trim()) return;
+
+                      for (const lang of languages) {
+                        const targetLang = lang.code;
+                        const targetLangId = lang.id;
+
+                        if (targetLang !== "en") {
+                          try {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`description_${targetLang}`]: true,
+                            }));
+
+                            const translatedText = await handleTranslateText(
+                              targetLang,
+                              englishText
+                            );
+
+                            setLocales((prev: any) => ({
+                              ...prev,
+                              [targetLangId]: {
+                                ...(prev[targetLangId] || {}),
+                                description: translatedText || "",
+                              },
+                            }));
+                          } catch (err) {
+                            console.error(
+                              `Translation failed for ${targetLang}`,
+                              err
+                            );
+                          } finally {
+                            setTranslationLoading((prev) => ({
+                              ...prev,
+                              [`description_${targetLang}`]: false,
+                            }));
+                          }
+                        }
+                      }
+                    }
+                  }}
+                  translationLoading={
+                    translationLoading[`description_${langCode}`]
+                  }
+                />
+              </Grid>
+            );
+          })}
 
         {/* Business Unit */}
         <Grid item xs={12}>
