@@ -24,6 +24,7 @@ import { GET, PATCH } from "@/utils/AxiosUtility";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 type Customer = {
   tenant: any;
   id: number;
@@ -130,12 +131,16 @@ const CustomerList = () => {
   };
 
   const handleToggleStatus = async () => {
-    if (selectedCustomer) {
+    if (!selectedCustomer) return;
+    try {
       await PATCH(`/customers/${selectedCustomer.id}/status`, {
         status: selectedCustomer.status === 1 ? 0 : 1,
       });
       handleCloseMenu();
       loadData(search, pageSize, pageNumber);
+    } catch (error: any) {
+      console.error("Failed to update status:", error);
+      toast.error(error?.response?.data?.message || "Failed to update status");
     }
   };
 
@@ -208,7 +213,11 @@ const CustomerList = () => {
                 </TableHead>
                 <TableBody>
                   {customers.map((c) => (
-                    <TableRow key={c.id} onClick={() => handleRowClick(c.id)}>
+                    <TableRow
+                      key={c.id}
+                      onClick={() => handleRowClick(c.id)}
+                      sx={{ cursor: "pointer" }}
+                    >
                       <TableCell>{c.name}</TableCell>
                       <TableCell
                         sx={{
@@ -237,7 +246,12 @@ const CustomerList = () => {
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
                       <TableCell>{c?.tenant?.name || "—"}</TableCell>
                       <TableCell align="right">
-                        <IconButton onClick={(e) => handleMenuClick(e, c)}>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMenuClick(e, c);
+                          }}
+                        >
                           <MoreVertIcon />
                         </IconButton>
                       </TableCell>
