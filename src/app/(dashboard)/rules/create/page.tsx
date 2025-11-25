@@ -224,8 +224,6 @@ const RuleCreateForm = ({ onSuccess }: any) => {
           : form.validity_after_assignment,
       frequency: form.frequency || "once",
       tiers: tiersPayload,
-      description,
-      description_ar: descriptionAr,
       created_by,
       // burn_type: burnType,
       dynamic_conditions: ["dynamic rule", "burn"].includes(form.rule_type)

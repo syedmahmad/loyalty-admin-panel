@@ -378,7 +378,7 @@ const CouponList = () => {
                             letterSpacing: "0%",
                           }}
                         >
-                          {coupon?.locales[0]?.title}
+                          {coupon?.locales?.[0]?.title}
                         </Typography>
                       </Box>
                       <Box>
@@ -498,7 +498,7 @@ const CouponList = () => {
                 <TableBody>
                   {coupons.map((coupon: any) => (
                     <TableRow key={coupon.id}>
-                      <TableCell> {coupon?.locales[0]?.title}</TableCell>
+                      <TableCell> {coupon?.locales?.[0]?.title}</TableCell>
                       <TableCell
                         sx={{
                           maxWidth: 200,
