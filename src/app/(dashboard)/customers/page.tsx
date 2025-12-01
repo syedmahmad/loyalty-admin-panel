@@ -24,6 +24,7 @@ import { GET, PATCH } from "@/utils/AxiosUtility";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 type Customer = {
   tenant: any;
   id: number;
@@ -55,16 +56,41 @@ const fetchCustomers = async (
   pageSize: number,
   pageNumber: number
 ): Promise<FetchCustomersResponse> => {
-  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const res = await GET(
-    `/customers/${
-      clientInfo.id
-    }?page=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
-      search
-    )}`
-  );
-  if (res?.status !== 200) throw new Error("Failed to fetch customers");
-  return res.data;
+  try {
+    const clientInfoRaw = localStorage.getItem("client-info");
+    if (!clientInfoRaw) throw new Error("Client info not found");
+
+    const clientInfo = JSON.parse(clientInfoRaw);
+
+    const res = await GET(
+      `/customers/${
+        clientInfo.id
+      }?page=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
+        search
+      )}`
+    );
+
+    if (res?.status !== 200) throw new Error("Failed to fetch customers");
+
+    return res.data;
+  } catch (err: any) {
+    if (!toast.isActive("fetch-customers-error")) {
+      toast.error(
+        err?.response?.data?.message ||
+          "An error occurred while fetching customers",
+        {
+          toastId: "fetch-customers-error",
+        }
+      );
+    }
+
+    // Return correct empty structure according to FetchCustomersResponse
+    return {
+      data: [],
+      total: 0,
+      page: pageNumber,
+    };
+  }
 };
 
 const CustomerList = () => {

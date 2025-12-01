@@ -211,17 +211,22 @@ const RuleCreateForm = ({ onSuccess }: any) => {
       is_priority: form.is_priority ? 1 : 0,
       business_unit_id: form.business_unit_id,
     };
+    try {
+      const response = await POST("/rules", payload);
 
-    const response = await POST("/rules", payload);
-
-    if (response?.status === 201) {
-      toast.success("Rule created successfully!");
-      setForm(initialForm);
-      setDescription("");
-      setDescriptionAr("");
-      onSuccess();
-    } else {
-      toast.error("Failed to create rule");
+      if (response?.status === 201) {
+        toast.success("Rule created successfully!");
+        setForm(initialForm);
+        setDescription("");
+        onSuccess();
+      } else {
+        toast.error("Failed to create rule");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+          "An error occurred while creating the rule"
+      );
     }
 
     setLoading(false);

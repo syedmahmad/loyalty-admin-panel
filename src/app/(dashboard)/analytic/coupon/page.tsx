@@ -31,6 +31,7 @@ import {
 import { useEffect, useState } from "react";
 import React from "react";
 import { GET } from "@/utils/AxiosUtility";
+import { toast } from "react-toastify";
 
 const CouponAnalyticsPage = () => {
   const stats = [
@@ -122,8 +123,17 @@ const CouponAnalyticsPage = () => {
         },
       });
       setCouponAnalyticsData(response?.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading analytics data:", error);
+      if (!toast.isActive("fetch-coupons-analytics-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-coupons-analytics-error",
+          }
+        );
+      }
     } finally {
       setLoading(false);
     }

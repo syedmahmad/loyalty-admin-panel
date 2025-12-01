@@ -88,11 +88,26 @@ const CampaignsList = () => {
     params.append("page", pageNumber.toString());
     params.append("pageSize", pageSize.toString());
 
-    const res = await GET(`/campaigns/${clientInfo.id}?${params.toString()}`);
-    if (res?.data) {
-      setCampaigns(res?.data?.data);
-      setTotalNumberOfPages(res?.data.totalPages);
-      setPageNumber(res?.data.page);
+    try {
+      const res = await GET(`/campaigns/${clientInfo.id}?${params.toString()}`);
+      if (res?.data) {
+        setCampaigns(res?.data?.data);
+        setTotalNumberOfPages(res?.data.totalPages);
+        setPageNumber(res?.data.page);
+      }
+    } catch (error: any) {
+      if (!toast.isActive("fetch-campaigns-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-campaigns-error",
+          }
+        );
+      }
+      setCampaigns([]);
+      setTotalNumberOfPages(0);
+      setPageNumber(0);
     }
     setLoading(false);
   };

@@ -99,8 +99,20 @@ const RuleList = () => {
       query += query ? `&bu=${selectedBU}` : `?bu=${selectedBU}`;
     }
 
-    const res = await GET(`/rules/${clientInfo.id}${query}`);
-    setRules(res?.data || []);
+    try {
+      const res = await GET(`/rules/${clientInfo.id}${query}`);
+      setRules(res?.data || []);
+    } catch (error: any) {
+      if (!toast.isActive("fetch-rules-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while creating the rule",
+          {
+            toastId: "fetch-rules-error",
+          }
+        );
+      }
+    }
     setLoading(false);
   };
 

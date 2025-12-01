@@ -94,13 +94,27 @@ const OfferList = () => {
     params.append("page", pageNumber.toString());
     params.append("pageSize", pageSize.toString());
 
-    const res = await GET(
-      `/offers/${clientInfo.id}?langCode=en&${params.toString()}`
-    );
+    try {
+      const res = await GET(
+        `/offers/${clientInfo.id}?langCode=en&${params.toString()}`
+      );
 
-    setOffers(res?.data.data || []);
-    setPageNumber(res?.data?.page);
-    setTotalNumberOfPages(res?.data?.totalPages);
+      setOffers(res?.data.data || []);
+      setPageNumber(res?.data?.page);
+      setTotalNumberOfPages(res?.data?.totalPages);
+    } catch (error: any) {
+      console.error("Error fetching offers:", error);
+      if (!toast.isActive("view-offer-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "view-offer-error",
+          }
+        );
+      }
+      setOffers([]);
+    }
     setLoading(false);
   };
 

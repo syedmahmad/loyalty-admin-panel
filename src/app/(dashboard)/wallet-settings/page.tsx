@@ -19,6 +19,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { useEffect, useState } from "react";
 import WalletSettingsForm from "./walletSettingsForm"; // The drawer
 import { WalletService } from "../wallets/service/wallet.service";
+import { toast } from "react-toastify";
 
 type WalletSetting = {
   id: number;
@@ -62,15 +63,39 @@ export default function WalletSettingsPage() {
 
   const fetchSettings = async (buId: any) => {
     setLoading(true);
-    const res = await WalletService.getSettings(buId);
-    setSettings(res?.data || null);
+    try {
+      const res = await WalletService.getSettings(buId);
+      setSettings(res?.data || null);
+    } catch (error: any) {
+      if (!toast.isActive("fetch-wallet-settings-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-wallet-settings-error",
+          }
+        );
+      }
+    }
     setLoading(false);
   };
 
   const fetchAllWalltetSettings = async () => {
     setLoading(true);
-    const allWalletSettings = await WalletService.getAllWalletSettings();
-    setAllWalletSettings(allWalletSettings?.data || []);
+    try {
+      const allWalletSettings = await WalletService.getAllWalletSettings();
+      setAllWalletSettings(allWalletSettings?.data || []);
+    } catch (error: any) {
+      if (!toast.isActive("fetch-wallet-settings-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-wallet-settings-error",
+          }
+        );
+      }
+    }
     setLoading(false);
   };
 

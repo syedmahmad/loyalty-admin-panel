@@ -90,18 +90,46 @@ const TierList = () => {
       query += query ? `&bu=${selectedBU}` : `?bu=${selectedBU}`;
     }
 
-    const res = await GET(`/tiers/${clientInfo.id}${query}`);
-    setTiers(res?.data?.tiers || []);
+    try {
+      const res = await GET(`/tiers/${clientInfo.id}${query}`);
+      setTiers(res?.data?.tiers || []);
+    } catch (error: any) {
+      console.error("Error fetching tiers:", error);
+      if (!toast.isActive("view-tiers-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "view-tiers-error",
+          }
+        );
+      }
+      setTiers([]);
+    }
     setLoading(false);
   };
 
   const fetchBusinessUnits = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const response = await GET(`/business-units/${clientInfo.id}`);
-    if (response?.data) {
-      setBusinessUnits(response.data);
-    } else {
-      console.warn("No business units found");
+    try {
+      const response = await GET(`/business-units/${clientInfo.id}`);
+      if (response?.data) {
+        setBusinessUnits(response.data);
+      } else {
+        console.warn("No business units found");
+        setBusinessUnits([]);
+      }
+    } catch (error: any) {
+      console.error("Error fetching business units:", error);
+      if (!toast.isActive("view-tiers-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "view-tiers-error",
+          }
+        );
+      }
       setBusinessUnits([]);
     }
   };

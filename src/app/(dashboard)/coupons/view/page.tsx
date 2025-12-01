@@ -105,21 +105,49 @@ const CouponList = () => {
     params.append("page", pageNumber.toString());
     params.append("pageSize", pageSize.toString());
 
-    const res = await GET(`/coupons/${clientInfo.id}?${params.toString()}`);
+    try {
+      const res = await GET(`/coupons/${clientInfo.id}?${params.toString()}`);
 
-    setCoupons(res?.data.data || []);
-    setPageNumber(res?.data?.page);
-    setTotalNumberOfPages(res?.data?.totalPages);
+      setCoupons(res?.data.data || []);
+      setPageNumber(res?.data?.page);
+      setTotalNumberOfPages(res?.data?.totalPages);
+    } catch (err: any) {
+      console.error(err);
+      if (!toast.isActive("get-coupons-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "get-coupons-error",
+          }
+        );
+      }
+    }
     setLoading(false);
   };
 
   const fetchBusinessUnits = async () => {
-    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    const response = await GET(`/business-units/${clientInfo.id}`);
-    if (response?.data) {
-      setBusinessUnits(response.data);
-    } else {
-      console.warn("No business units found");
+    try {
+      const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+      const response = await GET(`/business-units/${clientInfo.id}`);
+
+      if (response?.data) {
+        setBusinessUnits(response.data);
+      } else {
+        console.warn("No business units found");
+        setBusinessUnits([]);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch business units:", err);
+      if (!toast.isActive("get-coupons-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "get-coupons-error",
+          }
+        );
+      }
       setBusinessUnits([]);
     }
   };

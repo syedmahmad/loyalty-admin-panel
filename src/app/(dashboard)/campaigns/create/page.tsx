@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { RichTextEditor } from "@/components/TextEditor";
 import CouponCard from "@/components/cards/CouponCard";
 import { CAMPAIGN_TYPES } from "@/constants/constants";
+import { AnyAaaaRecord } from "dns";
 
 const htmlToPlainText = (htmlString: string): string => {
   if (!htmlString) return "";
@@ -262,9 +263,17 @@ const CampaignCreate = ({ onSuccess }: any) => {
       toast.success("Campaign(s) created!");
       // router.push('/campaigns/view');
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Failed to create one or more campaigns");
+      if (!toast.isActive("create-campaigns-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "create-campaigns-error",
+          }
+        );
+      }
     }
 
     setLoading(false);

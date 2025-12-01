@@ -90,7 +90,9 @@ const RuleEdit = ({ onSuccess }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
   const [allTiers, setAllTiers] = useState<any[]>([]);
-  const [tiers, setTiers] = useState<{ tier_id: number; point_conversion_rate?: number }[]>([]);
+  const [tiers, setTiers] = useState<
+    { tier_id: number; point_conversion_rate?: number }[]
+  >([]);
   const [translationLoading, setTranslationLoading] = useState<{
     [key: string]: boolean;
   }>({});
@@ -134,11 +136,11 @@ const RuleEdit = ({ onSuccess }: any) => {
         business_unit_id: rule.business_unit_id || 0,
       });
       setTiers(
-      rule.tiers.map((t: any) => ({
-        tier_id: t.tier.id,
-        point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
-      }))
-    );
+        rule.tiers.map((t: any) => ({
+          tier_id: t.tier.id,
+          point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
+        }))
+      );
       setDescription(rule.description || "");
       setDescriptionAr(rule.description_ar || "");
 
@@ -191,14 +193,12 @@ const RuleEdit = ({ onSuccess }: any) => {
       (form.rule_type === "spend and earn" &&
         (!form.min_amount_spent || !form.reward_points)) ||
       (form.rule_type === "burn" &&
-        (!form.min_amount_spent ||
-          !form.max_redeemption_points_limit
-          // ||
-          // (selectedBurnType?.value === "FIXED" &&
-          //   !form.points_conversion_factor) ||
-          // (selectedBurnType?.value === "PERCENTAGE" &&
-          //   !form.max_burn_percent_on_invoice)
-          ))
+        (!form.min_amount_spent || !form.max_redeemption_points_limit))
+        // ||
+        // (selectedBurnType?.value === "FIXED" &&
+        //   !form.points_conversion_factor) ||
+        // (selectedBurnType?.value === "PERCENTAGE" &&
+        //   !form.max_burn_percent_on_invoice)
     ) {
       toast.error("Please fill all required fields for this rule type");
       return;
@@ -277,13 +277,25 @@ const RuleEdit = ({ onSuccess }: any) => {
       business_unit_id: form.business_unit_id,
     };
 
-    const res = await PUT(`/rules/${selectedId}`, payload);
+    try {
+      const res = await PUT(`/rules/${selectedId}`, payload);
 
-    if (res?.status === 200) {
-      toast.success("Rule updated successfully!");
-      onSuccess();
-    } else {
-      toast.error("Failed to update rule");
+      if (res?.status === 200) {
+        toast.success("Rule updated successfully!");
+        onSuccess();
+      } else {
+        toast.error("Failed to update rule");
+      }
+    } catch (error: any) {
+      if (!toast.isActive("fetch-rules-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-rules-error",
+          }
+        );
+      }
     }
 
     setLoading(false);
@@ -299,74 +311,74 @@ const RuleEdit = ({ onSuccess }: any) => {
   };
 
   const isTierSelected = (id: number) => tiers.some((t) => t.tier_id === id);
-  
-    const handleTierToggle = (tierId: number) => {
-      if (isTierSelected(tierId)) {
-        setTiers(tiers.filter((t) => t.tier_id !== tierId));
-      } else {
-        setTiers([...tiers, { tier_id: tierId, point_conversion_rate: 1 }]);
-      }
-    };
-  
-    const handleConversionRateChange = (tierId: number, value?: number) => {
-      setTiers((prev) =>
-        prev.map((t) =>
-          t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
-        )
-      );
-    };
-  
-    useEffect(() => {
-      const fetchTiers = async () => {
-        try {
-          const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-          const response = await GET(`/tiers/${clientInfo.id}?bu=${form.business_unit_id}`);
-          if (response?.status === 200) {
-            setAllTiers(response.data.tiers || []);
-          } else {
-            toast.error("Failed to fetch tiers");
-          }
-        } catch (error) {
-          toast.error("An error occurred while fetching tiers");
-        }
-      };
-  
-      if (form.business_unit_id) {
-        fetchTiers();
-      }
-    }, [form.business_unit_id]);
 
-    const handleArabictranslate = async (
-      key: string,
-      value: string,
-      richEditor: boolean = false
-    ) => {
+  const handleTierToggle = (tierId: number) => {
+    if (isTierSelected(tierId)) {
+      setTiers(tiers.filter((t) => t.tier_id !== tierId));
+    } else {
+      setTiers([...tiers, { tier_id: tierId, point_conversion_rate: 1 }]);
+    }
+  };
+
+  const handleConversionRateChange = (tierId: number, value?: number) => {
+    setTiers((prev) =>
+      prev.map((t) =>
+        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
+      )
+    );
+  };
+
+  useEffect(() => {
+    const fetchTiers = async () => {
       try {
-        setTranslationLoading((prev) => ({ ...prev, [key]: true }));
-        const res = await POST("/openai/translate-to-arabic", { value });
-        if (res?.data.status) {
-          if (richEditor) {
-            setDescriptionAr(res?.data?.data);
-          } else {
-            console.log("Translating", key, res?.data?.data);
-            
-            handleChange(key, res?.data?.data);
-          }
-          return res?.data?.data;
+        const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+        const response = await GET(
+          `/tiers/${clientInfo.id}?bu=${form.business_unit_id}`
+        );
+        if (response?.status === 200) {
+          setAllTiers(response.data.tiers || []);
+        } else {
+          toast.error("Failed to fetch tiers");
         }
-        return "";
-      } catch (error: any) {
-        return {
-          success: false,
-          status: error?.response?.status || 500,
-          message: error?.response?.data?.message || "Unknown error",
-        };
-      } finally {
-        setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+      } catch (error) {
+        toast.error("An error occurred while fetching tiers");
       }
     };
-  
-  
+
+    if (form.business_unit_id) {
+      fetchTiers();
+    }
+  }, [form.business_unit_id]);
+
+  const handleArabictranslate = async (
+    key: string,
+    value: string,
+    richEditor: boolean = false
+  ) => {
+    try {
+      setTranslationLoading((prev) => ({ ...prev, [key]: true }));
+      const res = await POST("/openai/translate-to-arabic", { value });
+      if (res?.data.status) {
+        if (richEditor) {
+          setDescriptionAr(res?.data?.data);
+        } else {
+          console.log("Translating", key, res?.data?.data);
+
+          handleChange(key, res?.data?.data);
+        }
+        return res?.data?.data;
+      }
+      return "";
+    } catch (error: any) {
+      return {
+        success: false,
+        status: error?.response?.status || 500,
+        message: error?.response?.data?.message || "Unknown error",
+      };
+    } finally {
+      setTranslationLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   return (
     <>
@@ -419,7 +431,9 @@ const RuleEdit = ({ onSuccess }: any) => {
               fullWidth
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              onBlur={(e) => {handleArabictranslate("name_ar", e.target.value)}}
+              onBlur={(e) => {
+                handleArabictranslate("name_ar", e.target.value);
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -753,40 +767,37 @@ const RuleEdit = ({ onSuccess }: any) => {
               </Grid>
 
               {/* {selectedBurnType?.value === "FIXED" && ( */}
-                <Grid item xs={12}>
-                  <InfoLabel
-                    label="Points Conversion Factor"
-                    tooltip="Points to currency value ratio."
-                  />
-                  <TextField
-                    fullWidth
-                    type="number"
-                    value={form.points_conversion_factor}
-                    onChange={(e) =>
-                      handleChange("points_conversion_factor", e.target.value)
-                    }
-                  />
-                </Grid>
+              <Grid item xs={12}>
+                <InfoLabel
+                  label="Points Conversion Factor"
+                  tooltip="Points to currency value ratio."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.points_conversion_factor}
+                  onChange={(e) =>
+                    handleChange("points_conversion_factor", e.target.value)
+                  }
+                />
+              </Grid>
               {/* )} */}
 
               {/* {selectedBurnType?.value === "PERCENTAGE" && ( */}
-                <Grid item xs={12}>
-                  <InfoLabel
-                    label="Max Burn % on Invoice"
-                    tooltip="Maximum invoice value percentage that can be paid using points."
-                  />
-                  <TextField
-                    fullWidth
-                    type="number"
-                    value={form.max_burn_percent_on_invoice}
-                    onChange={(e) =>
-                      handleChange(
-                        "max_burn_percent_on_invoice",
-                        e.target.value
-                      )
-                    }
-                  />
-                </Grid>
+              <Grid item xs={12}>
+                <InfoLabel
+                  label="Max Burn % on Invoice"
+                  tooltip="Maximum invoice value percentage that can be paid using points."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={form.max_burn_percent_on_invoice}
+                  onChange={(e) =>
+                    handleChange("max_burn_percent_on_invoice", e.target.value)
+                  }
+                />
+              </Grid>
               {/* )} */}
             </>
           )}
@@ -885,7 +896,7 @@ const RuleEdit = ({ onSuccess }: any) => {
               </Typography>
             </Alert>
             <br />
-  
+
             <Grid container>
               {allTiers.map((tier, index) => {
                 const selected = isTierSelected(tier.id);
@@ -904,24 +915,24 @@ const RuleEdit = ({ onSuccess }: any) => {
                         label={tier.name}
                       />
                     </Grid>
-  
+
                     <Grid item xs={8}>
                       {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
-                        <TextField
-                          fullWidth
-                          type="number"
-                          label="Point Conversion Rate"
-                          value={current?.point_conversion_rate ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            handleConversionRateChange(
-                              tier.id,
-                              val === "" ? undefined : Number(val)
-                            );
-                          }}
-                          sx={{ mb: 2 }}
-                          inputProps={{ step: 0.01, min: 0 }}
-                        />
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Point Conversion Rate"
+                        value={current?.point_conversion_rate ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleConversionRateChange(
+                            tier.id,
+                            val === "" ? undefined : Number(val)
+                          );
+                        }}
+                        sx={{ mb: 2 }}
+                        inputProps={{ step: 0.01, min: 0 }}
+                      />
                       {/* )} */}
                     </Grid>
                   </React.Fragment>
@@ -939,10 +950,12 @@ const RuleEdit = ({ onSuccess }: any) => {
               value={description}
               setValue={setDescription}
               language="en"
-              onBlur={(e: any) => {handleArabictranslate("description_ar", description, true)}}
+              onBlur={(e: any) => {
+                handleArabictranslate("description_ar", description, true);
+              }}
             />
           </Grid>
-          
+
           {/* Description Ar*/}
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
@@ -954,7 +967,6 @@ const RuleEdit = ({ onSuccess }: any) => {
               language="ar"
             />
           </Grid>
-          
         </Grid>
       )}
 
