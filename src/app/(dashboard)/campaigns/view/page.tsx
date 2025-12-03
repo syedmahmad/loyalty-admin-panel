@@ -49,7 +49,7 @@ const CampaignsList = () => {
   const router = useRouter();
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const [page, setPage] = useState(0);
-  const count = campaigns.length;
+  const count = campaigns?.length;
   const totalPages = Math.ceil(count / rowsPerPage);
   const searchParams = useSearchParams();
   const drawerOpen = searchParams.get("drawer");
@@ -498,7 +498,7 @@ const CampaignsList = () => {
                       </TableRow>
                     );
                   })}
-                  {campaigns.length === 0 && (
+                  {campaigns?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} align="center">
                         No campaigns found.
