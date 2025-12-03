@@ -86,10 +86,14 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         currencyIds: clientInfo?.currencyIds,
       };
 
+      const token = localStorage.getItem("token");
+
       const response = await POST("/tenants", payload, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          authorization: `Bearer ${token}`,
+          "user-secret": token,
         },
       });
 

@@ -363,9 +363,17 @@ const CampaignEdit = ({ onSuccess }: any) => {
       } else {
         toast.error("Update failed");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("An error occurred");
+      if (!toast.isActive("update-campaigns-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "update-campaigns-error",
+          }
+        );
+      }
     }
     setLoading(false);
   };

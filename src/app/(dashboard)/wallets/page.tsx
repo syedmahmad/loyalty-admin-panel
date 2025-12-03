@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { WalletService } from "./service/wallet.service";
 import WalletDetailDrawer from "./components/WalletDetailDrawer";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { toast } from "react-toastify";
 interface BusinessUnit {
   id: number;
   name: string;
@@ -85,8 +86,16 @@ export default function WalletListPage() {
       setWallets(res?.data?.data || []);
       setTotalNumberOfPages(res?.data?.totalPages);
       setPageNumber(res?.data?.page);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (!toast.isActive("fetch-wallets-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-wallets-error",
+          }
+        );
+      }
     } finally {
       setLoading(false);
     }

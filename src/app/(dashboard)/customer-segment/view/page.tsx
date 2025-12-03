@@ -114,6 +114,16 @@ const CustomerSegmentList = () => {
         );
         setPageNumber(Number(res.data.page));
       }
+    } catch (err: any) {
+      if (!toast.isActive("fetch-segment-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-segment-error",
+          }
+        );
+      }
     } finally {
       setLoading(false);
     }

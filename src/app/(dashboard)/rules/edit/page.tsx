@@ -180,7 +180,8 @@ const RuleEdit = ({ onSuccess }: any) => {
           point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
         }))
       );
-
+      setDescription(rule.description || "");
+      setDescriptionAr(rule.description_ar || "");
       const burnType: any = BURN_TYPES.find(
         (singleBurnType) => singleBurnType.value === rule.burn_type
       );
@@ -346,14 +347,25 @@ const RuleEdit = ({ onSuccess }: any) => {
       ),
     };
 
-    console.log("payload :::", payload);
-    const res = await PUT(`/rules/${selectedId}`, payload);
+    try {
+      const res = await PUT(`/rules/${selectedId}`, payload);
 
-    if (res?.status === 200) {
-      toast.success("Rule updated successfully!");
-      onSuccess();
-    } else {
-      toast.error("Failed to update rule");
+      if (res?.status === 200) {
+        toast.success("Rule updated successfully!");
+        onSuccess();
+      } else {
+        toast.error("Failed to update rule");
+      }
+    } catch (error: any) {
+      if (!toast.isActive("fetch-rules-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-rules-error",
+          }
+        );
+      }
     }
 
     setLoading(false);

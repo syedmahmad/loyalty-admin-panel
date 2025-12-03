@@ -3,7 +3,8 @@ import { toast } from "react-toastify";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const token = localStorage.getItem("token");
-
+const clientInfo = localStorage.getItem("client-info");
+const parsed = JSON.parse(clientInfo!);
 const axiosInstance = () =>
   axios.create({
     baseURL: API_URL,
@@ -11,6 +12,7 @@ const axiosInstance = () =>
       "Content-Type": "application/json",
       authorization: `Bearer ${token}`,
       "user-secret": token,
+      client_id: parsed.id,
     },
   });
 

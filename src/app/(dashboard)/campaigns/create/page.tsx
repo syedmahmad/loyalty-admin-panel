@@ -37,6 +37,7 @@ import { Language } from "@/types/language.type";
 import { tenantService } from "@/services/tenantService";
 import { openAIService } from "@/services/openAiService";
 import { LocalesState } from "@/types/campaign.type";
+import { AnyAaaaRecord } from "dns";
 
 const htmlToPlainText = (htmlString: string): string => {
   if (!htmlString) return "";
@@ -301,9 +302,17 @@ const CampaignCreate = ({ onSuccess }: any) => {
       toast.success("Campaign(s) created!");
       // router.push('/campaigns/view');
       onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Failed to create one or more campaigns");
+      if (!toast.isActive("create-campaigns-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "create-campaigns-error",
+          }
+        );
+      }
     }
 
     setLoading(false);
