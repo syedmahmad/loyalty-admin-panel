@@ -247,7 +247,7 @@ const CampaignsList = () => {
           </Box>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {campaignsArr.map((campaign) => {
+            {campaignsArr?.map((campaign) => {
               const ruleNames =
                 campaign.rules?.map((r: any) => r.rule?.name).join(", ") ||
                 "No Rules";
@@ -401,7 +401,7 @@ const CampaignsList = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {campaignsArr.map((campaign) => {
+                  {campaignsArr?.map((campaign) => {
                     const ruleNames =
                       campaign.rules
                         ?.map((r: any) => r.rule?.name)
@@ -418,19 +418,19 @@ const CampaignsList = () => {
                           {campaign.business_unit?.name || "N/A"}
                         </TableCell>
                         <TableCell>
-                          {dayjs(campaign.start_date).format("YYYY-MM-DD")}
+                          {dayjs(campaign?.start_date)?.format("YYYY-MM-DD")}
                         </TableCell>
                         <TableCell>
-                          {dayjs(campaign.end_date).format("YYYY-MM-DD")}
+                          {dayjs(campaign?.end_date)?.format("YYYY-MM-DD")}
                         </TableCell>
                         <TableCell>
                           <Tooltip title={ruleNames}>
-                            <span>{campaign.rules?.length || 0}</span>
+                            <span>{campaign?.rules?.length || 0}</span>
                           </Tooltip>
                         </TableCell>
                         <TableCell>
                           <Tooltip title={tierNames}>
-                            <span>{campaign.tiers?.length || 0}</span>
+                            <span>{campaign?.tiers?.length || 0}</span>
                           </Tooltip>
                         </TableCell>
                         <TableCell align="right">
