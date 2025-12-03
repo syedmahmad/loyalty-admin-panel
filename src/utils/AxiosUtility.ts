@@ -12,7 +12,7 @@ const axiosInstance = () =>
       "Content-Type": "application/json",
       authorization: `Bearer ${token}`,
       "user-secret": token,
-      client_id: parsed.id,
+      "client-id": parsed?.id || 0,
     },
   });
 

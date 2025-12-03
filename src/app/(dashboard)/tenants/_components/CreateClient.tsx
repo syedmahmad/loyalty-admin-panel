@@ -110,7 +110,15 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         });
         setFormErrors(errors);
       } else {
-        toast.error("Something went wrong. Please try again.");
+        if (!toast.isActive("create-tenant-error")) {
+          toast.error(
+            err?.response?.data?.message ||
+              "An error occurred while creating tenant",
+            {
+              toastId: "create-tenant-error",
+            }
+          );
+        }
       }
     }
   };
