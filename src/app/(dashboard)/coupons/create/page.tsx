@@ -1885,7 +1885,7 @@ const CreateCouponForm = ({
               <Autocomplete
                 multiple
                 options={segments}
-                getOptionLabel={(option: any) => option.name}
+                getOptionLabel={(option: any) => option?.locales?.[0]?.name}
                 value={segments.filter((s: any) =>
                   values.customer_segment_ids.includes(s.id)
                 )}
