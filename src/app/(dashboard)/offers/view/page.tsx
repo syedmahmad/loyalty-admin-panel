@@ -12,6 +12,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Grid,
   IconButton,
@@ -21,6 +22,7 @@ import {
   Pagination,
   Paper,
   Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -64,6 +66,7 @@ const OfferList = () => {
   const [totalNumberOfPages, setTotalNumberOfPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
+  const today = new Date();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -327,120 +330,148 @@ const OfferList = () => {
           </Typography>
         ) : viewMode === "card" ? (
           <Grid container spacing={3}>
-            {paginationOffer.map((offer, index) => (
-              <Grid item xs={12} sm={6} md={4} key={offer?.uuid}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    boxShadow: "none",
-                    border: "none",
-                    transition: "none",
-                  }}
-                >
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        boxShadow: "none",
-                        transition: "none",
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant="h3"
-                          fontWeight={500}
-                          sx={{
-                            fontFamily: "Outfit",
-                            fontSize: "14px",
-                            lineHeight: "21px",
-                            letterSpacing: "0%",
-                          }}
-                        >
-                          {offer?.offer_title}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <IconButton
-                          onClick={(event) => handleMenuClick(event, offer)}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={open}
-                          onClose={handleClose}
-                          anchorOrigin={{
-                            vertical: "bottom",
-                            horizontal: "right",
-                          }}
-                          transformOrigin={{
-                            vertical: "top",
-                            horizontal: "right",
-                          }}
-                          slotProps={{
-                            paper: {
-                              sx: {
-                                boxShadow: "none",
-                                border: "1px solid #e0e0e0",
-                                mt: 1,
+            {paginationOffer.map((offer: any, index) => {
+              const toDate = new Date(offer?.date_to);
+              const isAvailable = today <= toDate;
+              return (
+                <Grid item xs={12} sm={6} md={4} key={offer?.uuid}>
+                  <Card
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      boxShadow: "none",
+                      border: "none",
+                      transition: "none",
+                    }}
+                  >
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          boxShadow: "none",
+                          transition: "none",
+                        }}
+                      >
+                        <Box>
+                          <Typography
+                            variant="h3"
+                            fontWeight={500}
+                            sx={{
+                              fontFamily: "Outfit",
+                              fontSize: "14px",
+                              lineHeight: "21px",
+                              letterSpacing: "0%",
+                            }}
+                          >
+                            {offer?.offer_title}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <IconButton
+                            onClick={(event) => handleMenuClick(event, offer)}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={open}
+                            onClose={handleClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "right",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "right",
+                            }}
+                            slotProps={{
+                              paper: {
+                                sx: {
+                                  boxShadow: "none",
+                                  border: "1px solid #e0e0e0",
+                                  mt: 1,
+                                },
                               },
-                            },
-                          }}
-                        >
-                          <MenuItem
-                            onClick={() => {
-                              handleClose();
-                              if (selectedOffer) {
-                                router.push(
-                                  `/offers/view?drawer=edit&id=${selectedOffer.uuid}`
-                                );
-                              }
                             }}
                           >
-                            <EditIcon
-                              fontSize="small"
-                              style={{ marginRight: 8 }}
-                            />
-                            Edit
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              handleClose();
-                              if (selectedOffer) {
-                                setDeleteId(selectedOffer.uuid);
-                              }
-                            }}
-                          >
-                            <DeleteIcon
-                              fontSize="small"
-                              style={{ marginRight: 8 }}
-                            />
-                            Delete
-                          </MenuItem>
-                        </Menu>
+                            <MenuItem
+                              onClick={() => {
+                                handleClose();
+                                if (selectedOffer) {
+                                  router.push(
+                                    `/offers/view?drawer=edit&id=${selectedOffer.uuid}`
+                                  );
+                                }
+                              }}
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                style={{ marginRight: 8 }}
+                              />
+                              Edit
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                handleClose();
+                                if (selectedOffer) {
+                                  setDeleteId(selectedOffer.uuid);
+                                }
+                              }}
+                            >
+                              <DeleteIcon
+                                fontSize="small"
+                                style={{ marginRight: 8 }}
+                              />
+                              Delete
+                            </MenuItem>
+                          </Menu>
+                        </Box>
                       </Box>
-                    </Box>
 
-                    <Typography variant="body2" color="text.secondary" mt={1}>
-                      Business Unit: {offer.business_unit?.name ?? "-"}
-                    </Typography>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Business Unit: {offer.business_unit?.name ?? "-"}
+                      </Typography>
 
-                    <Typography variant="body2" color="text.secondary" mt={1}>
-                      Station Type: {offer.station_type ?? "-"}
-                    </Typography>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Station Type: {offer.station_type ?? "-"}
+                      </Typography>
 
-                    <Typography variant="body2" color="text.secondary" mt={1}>
-                      Description: {offer.description_en}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Description: {offer.description_en}
+                      </Typography>
+
+                      <Stack direction="row" spacing={1} mt={2}>
+                        <Chip
+                          label="Show In App"
+                          size="small"
+                          color={offer?.show_in_app === 1 ? "success" : "error"}
+                        />
+                        <Chip
+                          label={offer?.status === 1 ? "Active" : "Inactive"}
+                          size="small"
+                          color={offer?.status === 1 ? "success" : "error"}
+                        />
+                        <Chip
+                          label="Apply to all User"
+                          size="small"
+                          color={offer?.all_users === 1 ? "success" : "error"}
+                        />
+
+                        <Chip
+                          label={isAvailable ? "Available" : "Expired"}
+                          size="small"
+                          color={isAvailable ? "success" : "error"}
+                        />
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         ) : (
           <Box component={Paper}>
