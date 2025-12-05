@@ -53,7 +53,7 @@ type BusinessUnit = {
 const fetchBusinessUnits = async (
   name: string = ""
 ): Promise<BusinessUnit[]> => {
-  if (typeof window === undefined) {
+  if (typeof window === "undefined") {
     return [];
   } else {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
