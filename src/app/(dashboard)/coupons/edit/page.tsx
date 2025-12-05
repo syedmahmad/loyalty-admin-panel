@@ -6,8 +6,10 @@ import {
   COUPON_TYPE_ARRAY,
   discountTypes,
   MAX_USAGE_PER_USER,
+  tooltipMessageReuseInterval,
   tooltipMessages,
   tooltipMessagesValidityAfterAssignment,
+  tooltipMessageUsageLimit,
   USAGE_LIMIT,
 } from "@/constants/constants";
 import { openAIService } from "@/services/openAiService";
@@ -1659,7 +1661,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 InputProps={{
                   endAdornment: selectedCouponType ? (
                     <InputAdornment position="end">
-                      <Tooltip title={USAGE_LIMIT || ""}>
+                      <Tooltip title={tooltipMessageUsageLimit || ""}>
                         <IconButton edge="end">
                           <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
@@ -1741,6 +1743,17 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 onChange={handleChange}
                 error={!!touched.reuse_interval && !!errors.reuse_interval}
                 helperText={touched.reuse_interval && errors.reuse_interval}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="start">
+                      <Tooltip title={tooltipMessageReuseInterval}>
+                        <IconButton edge="end">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             {/* )} */}
@@ -1779,7 +1792,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
             </Grid>
 
             {/* Validity for user After Assigned */}
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <TextField
                 fullWidth
                 variant="outlined"
@@ -1809,10 +1822,10 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   errors.validity_after_assignment
                 }
               />
-            </Grid>
+            </Grid> */}
 
             {/* General failure Error */}
-            {languages.length > 0 &&
+            {/* {languages.length > 0 &&
               languages.map((singleLanguage: Language, index) => {
                 const langId = singleLanguage.id;
                 const langCode = singleLanguage.code;
@@ -1896,10 +1909,10 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                     />
                   </Grid>
                 );
-              })}
+              })} */}
 
             {/* Exception Error */}
-            {languages.length > 0 &&
+            {/* {languages.length > 0 &&
               languages.map((singleLanguage: Language, index) => {
                 const langId = singleLanguage.id;
                 const langCode = singleLanguage.code;
@@ -1984,7 +1997,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                     />
                   </Grid>
                 );
-              })}
+              })} */}
 
             {/* Apply to all users */}
             <Grid item xs={12}>
@@ -2008,14 +2021,14 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
             </Grid>
 
             {/* Customer Segments */}
-            {/* {values.all_users === 0 && (
+            {values.all_users === 0 && (
               <Grid item xs={12}>
                 <Autocomplete
                   multiple
                   options={segments.filter(
                     (s: any) => !values.customer_segment_ids.includes(s.id)
                   )}
-                  getOptionLabel={(option: any) => option.name}
+                  getOptionLabel={(option: any) => option?.locales?.[0]?.name}
                   value={segments.filter((s: any) =>
                     values.customer_segment_ids.includes(s.id)
                   )}
@@ -2043,7 +2056,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   )}
                 />
               </Grid>
-            )} */}
+            )}
 
             {/* is_point_earning_disabled */}
             <Grid item xs={12}>
