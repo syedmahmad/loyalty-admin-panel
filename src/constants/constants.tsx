@@ -167,3 +167,9 @@ export const STATION_TYPES = [
     value: "Petromin EV & Premium AutoCare",
   },
 ];
+
+export const tooltipMessageUsageLimit =
+  "Maximum number of times this coupon can be used.";
+
+  export const tooltipMessageMaxUsagePerUser = "Maximum times a single user can use this coupon."
+   export const tooltipMessageReuseInterval ="Minimum interval between two uses by the same user."

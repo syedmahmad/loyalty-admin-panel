@@ -6,8 +6,11 @@ import {
   COUPON_TYPE_ARRAY,
   discountTypes,
   DRAWER_TYPE_BULK_UPLOAD,
+  tooltipMessageMaxUsagePerUser,
+  tooltipMessageReuseInterval,
   tooltipMessages,
   tooltipMessagesValidityAfterAssignment,
+  tooltipMessageUsageLimit,
 } from "@/constants/constants";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { generateRandomCode, getYearsArray } from "@/utils/Index";
@@ -1563,6 +1566,17 @@ const CreateCouponForm = ({
               onChange={handleChange}
               error={!!touched.usage_limit && !!errors.usage_limit}
               helperText={touched.usage_limit && errors.usage_limit}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="start">
+                    <Tooltip title={tooltipMessageUsageLimit}>
+                      <IconButton edge="end">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
@@ -1604,6 +1618,17 @@ const CreateCouponForm = ({
               helperText={
                 touched.max_usage_per_user && errors.max_usage_per_user
               }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="start">
+                    <Tooltip title={tooltipMessageMaxUsagePerUser}>
+                      <IconButton edge="end">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
@@ -1620,6 +1645,17 @@ const CreateCouponForm = ({
               onChange={handleChange}
               error={!!touched.reuse_interval && !!errors.reuse_interval}
               helperText={touched.reuse_interval && errors.reuse_interval}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="start">
+                    <Tooltip title={tooltipMessageReuseInterval}>
+                      <IconButton edge="end">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Grid>
 
@@ -1657,7 +1693,7 @@ const CreateCouponForm = ({
           </Grid>
 
           {/* Validity for user After Assigned */}
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <TextField
               fullWidth
               variant="outlined"
@@ -1687,10 +1723,10 @@ const CreateCouponForm = ({
                 errors.validity_after_assignment
               }
             />
-          </Grid>
+          </Grid> */}
 
           {/* General failure Error */}
-          {languages.length > 0 &&
+          {/* {languages.length > 0 &&
             languages.map((singleLanguage: Language, index) => {
               const langId = singleLanguage.id;
               const langCode = singleLanguage.code;
@@ -1772,10 +1808,10 @@ const CreateCouponForm = ({
                   />
                 </Grid>
               );
-            })}
+            })} */}
 
           {/* Exception Error */}
-          {languages.length > 0 &&
+          {/* {languages.length > 0 &&
             languages.map((singleLanguage: Language, index) => {
               const langId = singleLanguage.id;
               const langCode = singleLanguage.code;
@@ -1858,7 +1894,7 @@ const CreateCouponForm = ({
                   />
                 </Grid>
               );
-            })}
+            })} */}
 
           {/* Apply to all users */}
           <Grid item xs={12}>

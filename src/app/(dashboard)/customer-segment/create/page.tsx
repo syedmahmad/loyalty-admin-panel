@@ -155,6 +155,7 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
         formData.append("description_ar", descriptionAr);
         formData.append("tenant_id", parsed.id);
         formData.append("business_unit_id", String(selectedBusinessUnitId));
+        formData.append("locales", JSON.stringify(payload.locales));
 
         if (selectedCouponCsv) {
           formData.append("file", selectedCouponCsv); // 👈 File upload
