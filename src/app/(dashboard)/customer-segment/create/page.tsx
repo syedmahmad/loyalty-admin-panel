@@ -122,8 +122,6 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
       const payload: {
         name: string;
         description: string;
-        name_ar: string;
-        description_ar: string;
         tenant_id: any;
         selected_customer_ids: number[];
         business_unit_id: string;
@@ -132,8 +130,6 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
       } = {
         name,
         description,
-        name_ar: nameAr,
-        description_ar: descriptionAr,
         tenant_id: parsed.id,
         business_unit_id: selectedBusinessUnitId,
         selected_customer_ids: selectedCustomerIds,
@@ -151,8 +147,6 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
         const formData = new FormData();
         formData.append("name", name);
         formData.append("description", description);
-        formData.append("name_ar", nameAr);
-        formData.append("description_ar", descriptionAr);
         formData.append("tenant_id", parsed.id);
         formData.append("business_unit_id", String(selectedBusinessUnitId));
         formData.append("locales", JSON.stringify(payload.locales));
