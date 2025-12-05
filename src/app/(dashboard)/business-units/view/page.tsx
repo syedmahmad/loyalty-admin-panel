@@ -53,14 +53,18 @@ type BusinessUnit = {
 const fetchBusinessUnits = async (
   name: string = ""
 ): Promise<BusinessUnit[]> => {
-  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-  const response = await GET(
-    `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
-  );
-  if (response?.status !== 200) {
-    throw new Error("Failed to fetch business units");
+  if (typeof window === undefined) {
+    return [];
+  } else {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
+    const response = await GET(
+      `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
+    );
+    if (response?.status !== 200) {
+      throw new Error("Failed to fetch business units");
+    }
+    return response.data;
   }
-  return response.data;
 };
 
 const deleteBusinessUnit = async (id: number): Promise<void> => {

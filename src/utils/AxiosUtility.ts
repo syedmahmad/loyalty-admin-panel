@@ -2,8 +2,10 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const token = localStorage.getItem("token");
-const clientInfo = localStorage.getItem("client-info");
+const token =
+  typeof window !== undefined ? localStorage.getItem("token") : null;
+const clientInfo =
+  typeof window !== undefined ? localStorage.getItem("client-info") : null;
 const parsed = JSON.parse(clientInfo!);
 const axiosInstance = () =>
   axios.create({
