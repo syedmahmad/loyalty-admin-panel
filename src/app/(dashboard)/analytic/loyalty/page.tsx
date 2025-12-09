@@ -1,42 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { GET } from "@/utils/AxiosUtility"; // Axios wrapper
 import {
   Box,
-  Typography,
   Button,
-  Grid,
   Card,
+  Divider,
+  Grid,
+  List,
+  ListItemButton,
+  ListItemText,
+  Popover,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  Popover,
-  Divider,
-  List,
-  ListItemButton,
-  ListItemText,
+  Typography,
 } from "@mui/material";
+import { LocalizationProvider, StaticDatePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import dayjs, { Dayjs } from "dayjs";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import {
-  PieChart,
-  Pie,
+  Bar,
+  BarChart,
+  CartesianGrid,
   Cell,
   Legend,
-  BarChart,
-  Bar,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
-import { StaticDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
-import { PickersDay } from "@mui/x-date-pickers/PickersDay";
-import { GET } from "@/utils/AxiosUtility"; // Axios wrapper
-import { toast } from "react-toastify";
 
 const LoyaltyAnalyticsPage = () => {
   const [analyticsData, setAnalyticsData] = useState<any>({
@@ -60,18 +60,132 @@ const LoyaltyAnalyticsPage = () => {
   const open = Boolean(anchorEl);
   const months = [dayjs(), dayjs().add(1, "month")];
 
-  const fetchAnalytics = async () => {
+  const fetchPointSplits = async () => {
     try {
       setLoading(true);
-      const response = await GET("/loyalty/analytics/dashboard", {
+      const response = await GET("/loyalty/analytics/get-point-splits", {
         params: {
           startDate: startDate?.format("YYYY-MM-DD"),
           endDate: endDate?.format("YYYY-MM-DD"),
         },
       });
-      setAnalyticsData(response?.data);
+      setAnalyticsData((prev: any) => ({
+        ...prev,
+        pointSplits: response?.data?.pointSplits,
+      }));
     } catch (error: any) {
-      console.error("Error loading analytics data:", error);
+      console.error("Error loading point splits data:", error);
+      if (!toast.isActive("fetch-loyalty-analytics-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-loyalty-analytics-error",
+          }
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCustomerByPoints = async () => {
+    try {
+      setLoading(true);
+      const response = await GET("/loyalty/analytics/customer-by-points");
+      setAnalyticsData((prev: any) => ({
+        ...prev,
+        customerByPoints: response?.data?.customerByPoints,
+      }));
+    } catch (error: any) {
+      console.error("Error loading customer points data:", error);
+      if (!toast.isActive("fetch-loyalty-analytics-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-loyalty-analytics-error",
+          }
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPointSummary = async () => {
+    try {
+      setLoading(true);
+      const response = await GET("/loyalty/analytics/get-point-summary", {
+        params: {
+          startDate: startDate?.format("YYYY-MM-DD"),
+          endDate: endDate?.format("YYYY-MM-DD"),
+        },
+      });
+      setAnalyticsData((prev: any) => ({
+        ...prev,
+        summary: response?.data?.summary,
+      }));
+    } catch (error: any) {
+      console.error("Error loading points summary data:", error);
+      if (!toast.isActive("fetch-loyalty-analytics-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-loyalty-analytics-error",
+          }
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchItemUsage = async () => {
+    try {
+      setLoading(true);
+      const response = await GET("/loyalty/analytics/get-item-usage", {
+        params: {
+          startDate: startDate?.format("YYYY-MM-DD"),
+          endDate: endDate?.format("YYYY-MM-DD"),
+        },
+      });
+      setAnalyticsData((prev: any) => ({
+        ...prev,
+        itemUsage: response?.data?.itemUsage,
+      }));
+    } catch (error: any) {
+      console.error("Error loading item usage data:", error);
+      if (!toast.isActive("fetch-loyalty-analytics-error")) {
+        toast.error(
+          error?.response?.data?.message ||
+            "An error occurred while editing the rule",
+          {
+            toastId: "fetch-loyalty-analytics-error",
+          }
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBarChart = async () => {
+    try {
+      setLoading(true);
+      const response = await GET("/loyalty/analytics/get-bar-chart", {
+        params: {
+          startDate: startDate?.format("YYYY-MM-DD"),
+          endDate: endDate?.format("YYYY-MM-DD"),
+        },
+      });
+      setAnalyticsData((prev: any) => ({
+        ...prev,
+        barChart: response?.data?.barChart,
+      }));
+    } catch (error: any) {
+      console.error("Error loading barChart data:", error);
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message ||
@@ -87,7 +201,11 @@ const LoyaltyAnalyticsPage = () => {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    fetchPointSplits();
+    fetchCustomerByPoints();
+    fetchPointSummary();
+    fetchItemUsage();
+    fetchBarChart();
   }, []);
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -332,7 +450,11 @@ const LoyaltyAnalyticsPage = () => {
                 <Button
                   variant="outlined"
                   onClick={() => {
-                    handleClose(), fetchAnalytics();
+                    handleClose(), fetchPointSplits();
+                    fetchCustomerByPoints();
+                    fetchPointSummary();
+                    fetchItemUsage();
+                    fetchBarChart();
                   }}
                   disabled={!startDate || !endDate}
                 >
