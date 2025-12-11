@@ -386,6 +386,9 @@ const CreateCustomerSegment = ({ onSuccess, drawerType }: any) => {
                       </InputAdornment>
                     ),
                   }}
+                  inputProps={{
+                    dir: langCode === "ar" ? "rtl" : "ltr",
+                  }}
                 />
               </Grid>
             );

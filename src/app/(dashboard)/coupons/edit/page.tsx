@@ -17,7 +17,12 @@ import { tenantService } from "@/services/tenantService";
 import { Language } from "@/types/language.type";
 import { UploadingState } from "@/types/offer.type";
 import { GET, POST, PUT } from "@/utils/AxiosUtility";
-import { generateRandomCode, getYearsArray } from "@/utils/Index";
+import {
+  generateRandomCode,
+  getFileSizeFromUrl,
+  getImageNameFromUrl,
+  getYearsArray,
+} from "@/utils/Index";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -51,6 +56,7 @@ import {
   Model,
   Tier,
 } from "../types";
+import ImagePreviewDialog from "@/components/dialogs/ImagePreviewDialog";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 const selectAllVariants = { TrimId: "all", Trim: "Select All" };
@@ -98,6 +104,16 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     mobile: {},
   });
   /** images for Desktop and mobile end*/
+
+  /** image preview  */
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    url: "",
+    width: 0,
+    height: 0,
+    size: "", // optional
+    fileName: "",
+  });
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -717,7 +733,8 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
           term_and_condition: localization.term_and_condition,
           desktop_image: localization.desktop_image,
           mobile_image: localization.mobile_image,
-          benefits: localization.benefits,
+          // benefits: localization.benefits,
+          benefits: benefitsInputs,
           general_error: localization.general_error,
           exception_error: localization.exception_error,
         })
@@ -1021,6 +1038,31 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     }
   };
 
+  const handlePreviewImage = async (imageUrl: string) => {
+    if (!imageUrl) return;
+
+    const img = new Image();
+    img.src = imageUrl;
+
+    const size = await getFileSizeFromUrl(imageUrl);
+    const fileName = getImageNameFromUrl(imageUrl);
+
+    try {
+      await img.decode(); // waits even if image is cached
+      setPreviewData({
+        url: imageUrl,
+        width: img.width,
+        height: img.height,
+        size,
+        fileName,
+      });
+
+      setPreviewOpen(true);
+    } catch (err) {
+      console.error("Error decoding image", err);
+    }
+  };
+
   return (
     <>
       {couponData && (
@@ -1098,6 +1140,9 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             )}
                           </InputAdornment>
                         ),
+                      }}
+                      inputProps={{
+                        dir: langCode === "ar" ? "rtl" : "ltr",
                       }}
                     />
                   </Grid>
@@ -2137,13 +2182,30 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       </Button>
                       {input.icon && (
                         <Box mt={1}>
-                          <img
+                          {/* <img
                             src={input.icon}
                             alt="Benefit Icon"
                             style={{
                               width: 33,
                               height: 33,
                               borderRadius: 2,
+                            }}
+                          /> */}
+                          <Box
+                            component="img"
+                            src={input.icon}
+                            alt="Benefit Icon"
+                            onClick={() => handlePreviewImage(input.icon)}
+                            sx={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 0,
+                              cursor: "pointer",
+                              transition: "0.2s",
+                              "&:hover": {
+                                opacity: 0.8,
+                                transform: "scale(1.05)",
+                              },
                             }}
                           />
                         </Box>
@@ -2231,6 +2293,9 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 </InputAdornment>
                               ),
                             }}
+                            inputProps={{
+                              dir: langCode === "ar" ? "rtl" : "ltr",
+                            }}
                           />
                         );
                       })}
@@ -2297,14 +2362,31 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       {/* Image Preview + Remove */}
                       {values.couponBasicInfo.locales[langId]
                         ?.desktop_image && (
-                        <Box mt={1} display="flex" alignItems="center" gap={3}>
-                          <img
+                        <Box display="flex" alignItems="center" gap={3}>
+                          <Box
+                            component="img"
                             src={
                               values.couponBasicInfo.locales[langId]
                                 ?.desktop_image
                             }
                             alt={`Desktop ${singleLanguage.name} Image`}
-                            style={{ width: 33, height: 33, borderRadius: 2 }}
+                            onClick={() =>
+                              handlePreviewImage(
+                                values.couponBasicInfo.locales[langId]
+                                  ?.desktop_image
+                              )
+                            }
+                            sx={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 0,
+                              cursor: "pointer",
+                              transition: "0.2s",
+                              "&:hover": {
+                                opacity: 0.8,
+                                transform: "scale(1.05)",
+                              },
+                            }}
                           />
                         </Box>
                       )}
@@ -2353,13 +2435,30 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       {/* Image Preview + Remove */}
                       {values.couponBasicInfo.locales[langId]?.mobile_image && (
                         <Box mt={1} display="flex" alignItems="center" gap={3}>
-                          <img
+                          <Box
+                            component="img"
                             src={
                               values.couponBasicInfo.locales[langId]
                                 ?.mobile_image
                             }
                             alt={`Mobile ${singleLanguage.name} Image`}
-                            style={{ width: 33, height: 33, borderRadius: 2 }}
+                            onClick={() =>
+                              handlePreviewImage(
+                                values.couponBasicInfo.locales[langId]
+                                  ?.mobile_image
+                              )
+                            }
+                            sx={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 0,
+                              cursor: "pointer",
+                              transition: "0.2s",
+                              "&:hover": {
+                                opacity: 0.8,
+                                transform: "scale(1.05)",
+                              },
+                            }}
                           />
                         </Box>
                       )}
@@ -2538,6 +2637,15 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
               <br />
             </Grid>
           </Grid>
+          <ImagePreviewDialog
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            url={previewData.url}
+            width={previewData.width}
+            height={previewData.height}
+            size={previewData.size}
+            fileName={previewData.fileName}
+          />
         </form>
       )}
     </>

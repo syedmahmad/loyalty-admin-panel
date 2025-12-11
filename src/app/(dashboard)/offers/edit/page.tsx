@@ -30,6 +30,8 @@ import { tenantService } from "@/services/tenantService";
 import { Language } from "@/types/language.type";
 import { openAIService } from "@/services/openAiService";
 import { UploadingState } from "@/types/offer.type";
+import { getFileSizeFromUrl, getImageNameFromUrl } from "@/utils/Index";
+import ImagePreviewDialog from "@/components/dialogs/ImagePreviewDialog";
 
 type Benefit = {
   name_en: string;
@@ -71,6 +73,16 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
     mobile: {},
   });
   /** images for Desktop and mobile end*/
+
+  /** image preview  */
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    url: "",
+    width: 0,
+    height: 0,
+    size: "", // optional
+    fileName: "",
+  });
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -137,7 +149,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
     }
 
     const offerLocales: any = {};
-    let benefitFromLocale: any = [];
+    let benefitFromLocale: any = [{ name_en: "", name_ar: "", icon: "" }];
     res.data.locales.forEach((locale: any) => {
       const langId = locale.language?.id;
       if (langId) {
@@ -250,7 +262,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
           term_and_condition: localization.term_and_condition,
           desktop_image: localization.desktop_image,
           mobile_image: localization.mobile_image,
-          benefits: localization.benefits,
+          // benefits: localization.benefits, 
+          benefits: benefitsInputs,
         })
       ),
       show_in_app: values.show_in_app,
@@ -441,6 +454,31 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
     }
   };
 
+  const handlePreviewImage = async (imageUrl: string) => {
+    if (!imageUrl) return;
+
+    const img = new Image();
+    img.src = imageUrl;
+
+    const size = await getFileSizeFromUrl(imageUrl);
+    const fileName = getImageNameFromUrl(imageUrl);
+
+    try {
+      await img.decode(); // waits even if image is cached
+      setPreviewData({
+        url: imageUrl,
+        width: img.width,
+        height: img.height,
+        size,
+        fileName,
+      });
+
+      setPreviewOpen(true);
+    } catch (err) {
+      console.error("Error decoding image", err);
+    }
+  };
+
   return (
     <>
       {offerData && (
@@ -516,6 +554,9 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             )}
                           </InputAdornment>
                         ),
+                      }}
+                      inputProps={{
+                        dir: langCode === "ar" ? "rtl" : "ltr",
                       }}
                     />
                   </Grid>
@@ -596,6 +637,9 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             )}
                           </InputAdornment>
                         ),
+                      }}
+                      inputProps={{
+                        dir: langCode === "ar" ? "rtl" : "ltr",
                       }}
                     />
                   </Grid>
@@ -822,14 +866,32 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                         />
                       </Button>
                       {input.icon && (
-                        <Box mt={1} display="flex" alignItems="center" gap={3}>
-                          <img
+                        <Box display="flex" alignItems="center" gap={3}>
+                          {/* <img
                             src={input.icon}
                             alt="Benefit Icon"
                             style={{
                               width: 33,
                               height: 33,
                               borderRadius: 2,
+                            }}
+                          /> */}
+
+                          <Box
+                            component="img"
+                            src={input.icon}
+                            alt="Benefit Icon"
+                            onClick={() => handlePreviewImage(input.icon)}
+                            sx={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 0,
+                              cursor: "pointer",
+                              transition: "0.2s",
+                              "&:hover": {
+                                opacity: 0.8,
+                                transform: "scale(1.05)",
+                              },
                             }}
                           />
 
@@ -930,6 +992,9 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 </InputAdornment>
                               ),
                             }}
+                            inputProps={{
+                              dir: langCode === "ar" ? "rtl" : "ltr",
+                            }}
                           />
                         );
                       })}
@@ -995,14 +1060,31 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
                       {/* Image Preview + Remove */}
                       {values.offerBasicInfo.locales[langId]?.desktop_image && (
-                        <Box mt={1} display="flex" alignItems="center" gap={3}>
-                          <img
+                        <Box display="flex" alignItems="center" gap={3}>
+                          <Box
+                            component="img"
                             src={
                               values.offerBasicInfo.locales[langId]
                                 ?.desktop_image
                             }
                             alt={`Desktop ${singleLanguage.name} Image`}
-                            style={{ width: 33, height: 33, borderRadius: 2 }}
+                            onClick={() =>
+                              handlePreviewImage(
+                                values.offerBasicInfo.locales[langId]
+                                  ?.desktop_image
+                              )
+                            }
+                            sx={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 0,
+                              cursor: "pointer",
+                              transition: "0.2s",
+                              "&:hover": {
+                                opacity: 0.8,
+                                transform: "scale(1.05)",
+                              },
+                            }}
                           />
 
                           <Button
@@ -1065,14 +1147,31 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
                       {/* Image Preview + Remove */}
                       {values.offerBasicInfo.locales[langId]?.mobile_image && (
-                        <Box mt={1} display="flex" alignItems="center" gap={3}>
-                          <img
+                        <Box display="flex" alignItems="center" gap={3}>
+                          <Box
+                            component="img"
                             src={
                               values.offerBasicInfo.locales[langId]
                                 ?.mobile_image
                             }
                             alt={`Mobile ${singleLanguage.name} Image`}
-                            style={{ width: 33, height: 33, borderRadius: 2 }}
+                            onClick={() =>
+                              handlePreviewImage(
+                                values.offerBasicInfo.locales[langId]
+                                  ?.mobile_image
+                              )
+                            }
+                            sx={{
+                              width: 33,
+                              height: 33,
+                              borderRadius: 0,
+                              cursor: "pointer",
+                              transition: "0.2s",
+                              "&:hover": {
+                                opacity: 0.8,
+                                transform: "scale(1.05)",
+                              },
+                            }}
                           />
 
                           <Button
@@ -1265,6 +1364,16 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
               <br />
             </Grid>
           </Grid>
+
+          <ImagePreviewDialog
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            url={previewData.url}
+            width={previewData.width}
+            height={previewData.height}
+            size={previewData.size}
+            fileName={previewData.fileName}
+          />
         </form>
       )}
     </>

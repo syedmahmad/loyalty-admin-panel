@@ -114,9 +114,10 @@ const CouponAnalyticsPage = () => {
   const isEnd = (day: Dayjs) => endDate?.isSame(day, "day");
 
   const fetchCouponAnalytics = async () => {
+    const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
     try {
       setLoading(true);
-      const response = await GET("/loyalty/analytics/coupon", {
+      const response = await GET(`/loyalty/analytics/coupon/${clientInfo.id}`, {
         params: {
           startDate: startDate?.format("YYYY-MM-DD"),
           endDate: endDate?.format("YYYY-MM-DD"),
