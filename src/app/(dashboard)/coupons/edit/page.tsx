@@ -45,7 +45,7 @@ import {
 import { useFormik } from "formik";
 import { DateTime } from "luxon";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import {
@@ -56,7 +56,9 @@ import {
   Model,
   Tier,
 } from "../types";
-import ImagePreviewDialog from "@/components/dialogs/ImagePreviewDialog";
+import ImagePreviewDialog from "@/components/dialogs/ImageDetailPreviewDialog";
+import { compressImage } from "@/utils/imageCompressor";
+import ImageUploadPreviewDialog from "@/components/dialogs/ImageUploadPreviewDialog";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 const selectAllVariants = { TrimId: "all", Trim: "Select All" };
@@ -106,7 +108,11 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
   /** images for Desktop and mobile end*/
 
   /** image preview  */
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [benefitImageUploadPreview, setBenefitImageUploadPreview] =
+    useState(false);
+  const [deviceImageUploadPreview, setDeviceImageUploadPreview] =
+    useState(false);
+  const [imageDetailPreview, setImageDetailPreview] = useState(false);
   const [previewData, setPreviewData] = useState({
     url: "",
     width: 0,
@@ -114,6 +120,10 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     size: "", // optional
     fileName: "",
   });
+
+  const [benefitsInputsImageIndex, setBenefitsInputsImageIndex] = useState(0);
+  const [device, setDevice] = useState("");
+  const [langId, setLangId] = useState("");
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -149,6 +159,130 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0
       : 0;
+
+  const handleBenefitImageUpload = useCallback(
+    async (file: File, index: number = 0) => {
+      if (!file) return;
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+      const allowedExtensions = ["avif", "png", "jpg"];
+      const isValidType = allowedExtensions.includes(fileExtension);
+
+      if (!isValidType) {
+        toast.error("Please upload a valid image file (JPG or PNG)");
+        return;
+      }
+
+      setFile(file);
+      setBenefitsInputsImageIndex(index);
+      setBenefitImageUploadPreview(true);
+    },
+    []
+  );
+
+  const handleBenefitImageValidationAccept = useCallback(
+    async (file: File, imageIndex: number, aspectRatio: number) => {
+      setBenefitImageUploadPreview(false);
+      try {
+        let processedFile: File | Blob = file;
+        if (file.size > 5 * 1024 * 1024) {
+          const compressedBlob = await compressImage(file, 5, 1920);
+          processedFile = new File([compressedBlob], file.name, {
+            type: compressedBlob.type,
+            lastModified: Date.now(),
+          });
+          toast.info("Optimizing image size…");
+        }
+
+        const formData = new FormData();
+        formData.append("file", processedFile);
+
+        setUploadingIndex(imageIndex);
+        const res = await POST("/tiers/file", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (res?.data.success) {
+          setBenefitsInputs((prev) =>
+            prev.map((item, i) =>
+              i === imageIndex
+                ? { ...item, icon: res?.data.uploaded_url }
+                : item
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+      } finally {
+        setUploadingIndex(null);
+      }
+    },
+    [compressImage]
+  );
+
+  const handleDeviceImageUpload = useCallback(
+    async (file: File, device: "desktop" | "mobile", langId: string) => {
+      if (!file) return;
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+      const allowedExtensions = ["avif", "png", "jpg"];
+      const isValidType = allowedExtensions.includes(fileExtension);
+
+      if (!isValidType) {
+        toast.error("Please upload a valid image file (JPG or PNG)");
+        return;
+      }
+      setFile(file);
+      setDevice(device);
+      setLangId(langId);
+      setDeviceImageUploadPreview(true);
+    },
+    []
+  );
+
+  const handleDeviceImageValidationAccept = useCallback(
+    async (file: File, device: string, langId: string, aspectRatio: number) => {
+      setDeviceImageUploadPreview(false);
+      try {
+        let processedFile: File | Blob = file;
+        if (file.size > 5 * 1024 * 1024) {
+          const compressedBlob = await compressImage(file, 5, 1920);
+          processedFile = new File([compressedBlob], file.name, {
+            type: compressedBlob.type,
+            lastModified: Date.now(),
+          });
+          toast.info("Optimizing image size…");
+        }
+        const formData = new FormData();
+        formData.append("file", processedFile);
+
+        setUploading((prev: any) => ({
+          ...prev,
+          [device]: { ...prev[device], [langId]: true },
+        }));
+
+        const res = await POST("/coupons/upload-image-to-bucket", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        if (res?.data.success) {
+          setFieldValue(
+            `couponBasicInfo.locales.${langId}.${device}_image`,
+            res.data.uploaded_url
+          );
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+      } finally {
+        setUploading((prev: any) => ({
+          ...prev,
+          [device]: { ...prev[device], [langId]: false },
+        }));
+      }
+    },
+    [compressImage]
+  );
 
   useEffect(() => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -1038,7 +1172,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
     }
   };
 
-  const handlePreviewImage = async (imageUrl: string) => {
+  const handleImageDetailPreview = async (imageUrl: string) => {
     if (!imageUrl) return;
 
     const img = new Image();
@@ -1057,7 +1191,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
         fileName,
       });
 
-      setPreviewOpen(true);
+      setImageDetailPreview(true);
     } catch (err) {
       console.error("Error decoding image", err);
     }
@@ -2177,7 +2311,14 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                           type="file"
                           hidden
                           accept="image/*"
-                          onChange={(e) => handleFileChange(e, benefitIndex)}
+                          // onChange={(e) => handleFileChange(e, benefitIndex)}
+                          onChange={(e) =>
+                            e.target.files?.[0] &&
+                            handleBenefitImageUpload(
+                              e.target.files[0],
+                              benefitIndex
+                            )
+                          }
                         />
                       </Button>
                       {input.icon && (
@@ -2195,7 +2336,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             component="img"
                             src={input.icon}
                             alt="Benefit Icon"
-                            onClick={() => handlePreviewImage(input.icon)}
+                            onClick={() => handleImageDetailPreview(input.icon)}
                             sx={{
                               width: 33,
                               height: 33,
@@ -2353,8 +2494,16 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                           type="file"
                           hidden
                           accept="image/*"
+                          // onChange={(e) =>
+                          //   uploadImageToBucket(e, "desktop", langId)
+                          // }
                           onChange={(e) =>
-                            uploadImageToBucket(e, "desktop", langId)
+                            e.target.files?.[0] &&
+                            handleDeviceImageUpload(
+                              e.target.files[0],
+                              "desktop",
+                              langId
+                            )
                           }
                         />
                       </Button>
@@ -2371,7 +2520,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             }
                             alt={`Desktop ${singleLanguage.name} Image`}
                             onClick={() =>
-                              handlePreviewImage(
+                              handleImageDetailPreview(
                                 values.couponBasicInfo.locales[langId]
                                   ?.desktop_image
                               )
@@ -2426,8 +2575,16 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                           type="file"
                           hidden
                           accept="image/*"
+                          // onChange={(e) =>
+                          //   uploadImageToBucket(e, "mobile", langId)
+                          // }
                           onChange={(e) =>
-                            uploadImageToBucket(e, "mobile", langId)
+                            e.target.files?.[0] &&
+                            handleDeviceImageUpload(
+                              e.target.files[0],
+                              "mobile",
+                              langId
+                            )
                           }
                         />
                       </Button>
@@ -2443,7 +2600,7 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             }
                             alt={`Mobile ${singleLanguage.name} Image`}
                             onClick={() =>
-                              handlePreviewImage(
+                              handleImageDetailPreview(
                                 values.couponBasicInfo.locales[langId]
                                   ?.mobile_image
                               )
@@ -2638,14 +2795,43 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
             </Grid>
           </Grid>
           <ImagePreviewDialog
-            open={previewOpen}
-            onClose={() => setPreviewOpen(false)}
+            open={imageDetailPreview}
+            onClose={() => setImageDetailPreview(false)}
             url={previewData.url}
             width={previewData.width}
             height={previewData.height}
             size={previewData.size}
             fileName={previewData.fileName}
           />
+
+          {benefitImageUploadPreview && (
+            <ImageUploadPreviewDialog
+              open={benefitImageUploadPreview}
+              onClose={() => setBenefitImageUploadPreview(false)}
+              onAccept={(fileData, imageIndex) =>
+                handleBenefitImageValidationAccept(fileData, imageIndex, 1)
+              }
+              imageFile={file}
+              minWidth={100}
+              minHeight={100}
+              imageIndex={benefitsInputsImageIndex}
+            />
+          )}
+
+          {deviceImageUploadPreview && (
+            <ImageUploadPreviewDialog
+              open={deviceImageUploadPreview}
+              onClose={() => setDeviceImageUploadPreview(false)}
+              handleDeviceUpload={(fileData, device, langId) =>
+                handleDeviceImageValidationAccept(fileData, device, langId, 1)
+              }
+              imageFile={file}
+              minWidth={100}
+              minHeight={100}
+              device={device}
+              langId={langId}
+            />
+          )}
         </form>
       )}
     </>
