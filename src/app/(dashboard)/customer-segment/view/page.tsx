@@ -530,7 +530,7 @@ const CustomerSegmentList = () => {
                 ? "Upload Customer Segment"
                 : "Create Customer Segment"
             }
-            width={drawerType ? 800 : undefined}
+            width={drawerType ? 800 : 700}
             drawerType={drawerType}
             drawerFor="customerSegment"
           >

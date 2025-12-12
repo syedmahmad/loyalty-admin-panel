@@ -55,3 +55,30 @@ export const createSlug = (text: string) => {
     .replace(/\s+/g, "_") // replace spaces with underscores
     .replace(/[^\w\-]+/g, ""); // remove non-alphanumeric chars
 };
+
+export const getFileSizeFromUrl = async (url: string) => {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    const bytes = res.headers.get("content-length");
+
+    if (!bytes) return "";
+
+    const sizeKB = Number(bytes) / 1024;
+    const sizeMB = sizeKB / 1024;
+
+    if (sizeMB >= 1) {
+      return `${sizeMB.toFixed(2)} MB`;
+    } else {
+      return `${sizeKB.toFixed(2)} KB`;
+    }
+  } catch (err) {
+    console.error("Error getting file size:", err);
+    return "";
+  }
+};
+
+export const getImageNameFromUrl = (url: string) => {
+  if (!url) return "";
+  const cleanedUrl = url.split("?")[0]; // remove query params
+  return cleanedUrl.substring(cleanedUrl.lastIndexOf("/") + 1);
+};

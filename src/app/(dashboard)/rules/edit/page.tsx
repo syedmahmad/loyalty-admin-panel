@@ -546,6 +546,9 @@ const RuleEdit = ({ onSuccess }: any) => {
                         </InputAdornment>
                       ),
                     }}
+                    inputProps={{
+                      dir: langCode === "ar" ? "rtl" : "ltr",
+                    }}
                   />
                 </Grid>
               );

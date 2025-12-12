@@ -13,7 +13,12 @@ import {
   tooltipMessageUsageLimit,
 } from "@/constants/constants";
 import { GET, POST } from "@/utils/AxiosUtility";
-import { generateRandomCode, getYearsArray } from "@/utils/Index";
+import {
+  generateRandomCode,
+  getFileSizeFromUrl,
+  getImageNameFromUrl,
+  getYearsArray,
+} from "@/utils/Index";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -51,6 +56,7 @@ import { Language } from "@/types/language.type";
 import { tenantService } from "@/services/tenantService";
 import { openAIService } from "@/services/openAiService";
 import { UploadingState } from "@/types/offer.type";
+import ImagePreviewDialog from "@/components/dialogs/ImagePreviewDialog";
 
 const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
@@ -96,6 +102,16 @@ const CreateCouponForm = ({
     mobile: {},
   });
   /** images for Desktop and mobile end*/
+
+  /** image preview  */
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    url: "",
+    width: 0,
+    height: 0,
+    size: "", // optional
+    fileName: "",
+  });
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -570,7 +586,8 @@ const CreateCouponForm = ({
           title: localization.title,
           description: localization.description,
           term_and_condition: localization.term_and_condition,
-          benefits: localization.benefits,
+          // benefits: localization.benefits,
+          benefits: benefitsInputs,
           desktop_image: localization.desktop_image,
           mobile_image: localization.mobile_image,
           general_error: localization.general_error,
@@ -935,6 +952,31 @@ const CreateCouponForm = ({
     }
   };
 
+  const handlePreviewImage = async (imageUrl: string) => {
+    if (!imageUrl) return;
+
+    const img = new Image();
+    img.src = imageUrl;
+
+    const size = await getFileSizeFromUrl(imageUrl);
+    const fileName = getImageNameFromUrl(imageUrl);
+
+    try {
+      await img.decode(); // waits even if image is cached
+      setPreviewData({
+        url: imageUrl,
+        width: img.width,
+        height: img.height,
+        size,
+        fileName,
+      });
+
+      setPreviewOpen(true);
+    } catch (err) {
+      console.error("Error decoding image", err);
+    }
+  };
+
   return (
     <>
       <form onSubmit={formik.handleSubmit}>
@@ -1008,6 +1050,9 @@ const CreateCouponForm = ({
                           )}
                         </InputAdornment>
                       ),
+                    }}
+                    inputProps={{
+                      dir: langCode === "ar" ? "rtl" : "ltr",
                     }}
                   />
                 </Grid>
@@ -2036,10 +2081,22 @@ const CreateCouponForm = ({
                     </Button>
                     {input.icon && (
                       <Box mt={1}>
-                        <img
+                        <Box
+                          component="img"
                           src={input.icon}
                           alt="Benefit Icon"
-                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                          onClick={() => handlePreviewImage(input.icon)}
+                          sx={{
+                            width: 33,
+                            height: 33,
+                            borderRadius: 0,
+                            cursor: "pointer",
+                            transition: "0.2s",
+                            "&:hover": {
+                              opacity: 0.8,
+                              transform: "scale(1.05)",
+                            },
+                          }}
                         />
                       </Box>
                     )}
@@ -2157,6 +2214,9 @@ const CreateCouponForm = ({
                               </InputAdornment>
                             ),
                           }}
+                          inputProps={{
+                            dir: langCode === "ar" ? "rtl" : "ltr",
+                          }}
                         />
                       );
                     })}
@@ -2222,14 +2282,31 @@ const CreateCouponForm = ({
 
                     {/* Image Preview + Remove */}
                     {values.couponBasicInfo.locales[langId]?.desktop_image && (
-                      <Box mt={1} display="flex" alignItems="center" gap={3}>
-                        <img
+                      <Box  display="flex" alignItems="center" gap={3}>
+                        <Box
+                          component="img"
                           src={
                             values.couponBasicInfo.locales[langId]
                               ?.desktop_image
                           }
                           alt={`Desktop ${singleLanguage.name} Image`}
-                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                          onClick={() =>
+                            handlePreviewImage(
+                              values.couponBasicInfo.locales[langId]
+                                ?.desktop_image
+                            )
+                          }
+                          sx={{
+                            width: 33,
+                            height: 33,
+                            borderRadius: 0,
+                            cursor: "pointer",
+                            transition: "0.2s",
+                            "&:hover": {
+                              opacity: 0.8,
+                              transform: "scale(1.05)",
+                            },
+                          }}
                         />
                       </Box>
                     )}
@@ -2277,13 +2354,30 @@ const CreateCouponForm = ({
 
                     {/* Image Preview + Remove */}
                     {values.couponBasicInfo.locales[langId]?.mobile_image && (
-                      <Box mt={1} display="flex" alignItems="center" gap={3}>
-                        <img
+                      <Box  display="flex" alignItems="center" gap={3}>
+                        <Box
+                          component="img"
                           src={
                             values.couponBasicInfo.locales[langId]?.mobile_image
                           }
-                          alt={`Mobile ${singleLanguage.name} Image`}
-                          style={{ width: 33, height: 33, borderRadius: 2 }}
+                          alt={`Desktop ${singleLanguage.name} Image`}
+                          onClick={() =>
+                            handlePreviewImage(
+                              values.couponBasicInfo.locales[langId]
+                                ?.mobile_image
+                            )
+                          }
+                          sx={{
+                            width: 33,
+                            height: 33,
+                            borderRadius: 0,
+                            cursor: "pointer",
+                            transition: "0.2s",
+                            "&:hover": {
+                              opacity: 0.8,
+                              transform: "scale(1.05)",
+                            },
+                          }}
                         />
                       </Box>
                     )}
@@ -2455,6 +2549,15 @@ const CreateCouponForm = ({
           <br />
           <br />
         </Grid>
+        <ImagePreviewDialog
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          url={previewData.url}
+          width={previewData.width}
+          height={previewData.height}
+          size={previewData.size}
+          fileName={previewData.fileName}
+        />
       </form>
     </>
   );
