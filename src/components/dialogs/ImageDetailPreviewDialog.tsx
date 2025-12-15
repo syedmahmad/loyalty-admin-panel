@@ -6,7 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 
-interface ImagePreviewDialogProps {
+interface ImageDetailPreviewDialogProps {
   open: boolean;
   onClose: () => void;
   url: string | null;
@@ -16,7 +16,7 @@ interface ImagePreviewDialogProps {
   fileName?: string;
 }
 
-export default function ImagePreviewDialog({
+export default function ImageDetailPreviewDialog({
   open,
   onClose,
   url,
@@ -24,7 +24,7 @@ export default function ImagePreviewDialog({
   height,
   size,
   fileName,
-}: ImagePreviewDialogProps) {
+}: ImageDetailPreviewDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
