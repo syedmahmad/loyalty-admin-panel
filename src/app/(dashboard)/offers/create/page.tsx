@@ -581,6 +581,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
     [compressImage]
   );
 
+
   return (
     <>
       <form onSubmit={formik.handleSubmit}>

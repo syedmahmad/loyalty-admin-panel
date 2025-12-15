@@ -26,7 +26,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Form, Formik } from "formik";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 
@@ -44,9 +44,10 @@ const CreateTierForm = ({ onSuccess }: any) => {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   /** image preview  */
+  const benefitFileInputRefs = useRef<{
+    [key: number]: HTMLInputElement | null;
+  }>({});
   const [benefitImageUploadPreview, setBenefitImageUploadPreview] =
-    useState(false);
-  const [deviceImageUploadPreview, setDeviceImageUploadPreview] =
     useState(false);
   const [imageDetailPreview, setImageDetailPreview] = useState(false);
   const [previewData, setPreviewData] = useState({
@@ -85,6 +86,9 @@ const CreateTierForm = ({ onSuccess }: any) => {
 
       if (!isValidType) {
         toast.error("Please upload a valid image file (JPG or PNG)");
+        if (benefitFileInputRefs.current[index]) {
+          benefitFileInputRefs.current[index]!.value = "";
+        }
         return;
       }
 
@@ -130,6 +134,9 @@ const CreateTierForm = ({ onSuccess }: any) => {
         toast.error("Failed to upload image");
       } finally {
         setUploadingIndex(null);
+        if (benefitFileInputRefs.current[imageIndex]) {
+          benefitFileInputRefs.current[imageIndex]!.value = "";
+        }
       }
     },
     [compressImage]
@@ -525,9 +532,9 @@ const CreateTierForm = ({ onSuccess }: any) => {
                               type="file"
                               hidden
                               accept="image/*"
-                              // onChange={(e) =>
-                              //   handleFileChange(e, benefitIndex)
-                              // }
+                              ref={(el) => {
+                                benefitFileInputRefs.current[benefitIndex] = el;
+                              }}
                               onChange={(e) =>
                                 e.target.files?.[0] &&
                                 handleBenefitImageUpload(
@@ -793,7 +800,18 @@ const CreateTierForm = ({ onSuccess }: any) => {
               {benefitImageUploadPreview && (
                 <ImageUploadPreviewDialog
                   open={benefitImageUploadPreview}
-                  onClose={() => setBenefitImageUploadPreview(false)}
+                  onClose={() => {
+                    setFile(null);
+                    setBenefitImageUploadPreview(false);
+                    if (
+                      benefitsInputsImageIndex !== null &&
+                      benefitFileInputRefs.current[benefitsInputsImageIndex]
+                    ) {
+                      benefitFileInputRefs.current[
+                        benefitsInputsImageIndex
+                      ]!.value = "";
+                    }
+                  }}
                   onAccept={(fileData, imageIndex) =>
                     handleBenefitImageValidationAccept(fileData, imageIndex, 1)
                   }

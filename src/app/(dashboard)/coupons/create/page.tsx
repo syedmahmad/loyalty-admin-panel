@@ -39,7 +39,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import {
@@ -106,6 +106,15 @@ const CreateCouponForm = ({
   /** images for Desktop and mobile end*/
 
   /** image preview  */
+  const benefitFileInputRefs = useRef<{
+    [key: number]: HTMLInputElement | null;
+  }>({});
+  const desktopFileInputRefs = useRef<{
+    [key: string]: HTMLInputElement | null;
+  }>({});
+  const mobileFileInputRefs = useRef<{
+    [key: string]: HTMLInputElement | null;
+  }>({});
   const [benefitImageUploadPreview, setBenefitImageUploadPreview] =
     useState(false);
   const [deviceImageUploadPreview, setDeviceImageUploadPreview] =
@@ -997,6 +1006,9 @@ const CreateCouponForm = ({
 
       if (!isValidType) {
         toast.error("Please upload a valid image file (JPG or PNG)");
+        if (benefitFileInputRefs.current[index]) {
+          benefitFileInputRefs.current[index]!.value = "";
+        }
         return;
       }
 
@@ -1042,6 +1054,9 @@ const CreateCouponForm = ({
         toast.error("Failed to upload image");
       } finally {
         setUploadingIndex(null);
+        if (benefitFileInputRefs.current[imageIndex]) {
+          benefitFileInputRefs.current[imageIndex]!.value = "";
+        }
       }
     },
     [compressImage]
@@ -1057,6 +1072,15 @@ const CreateCouponForm = ({
 
       if (!isValidType) {
         toast.error("Please upload a valid image file (JPG or PNG)");
+        // Reset the file input
+        if (device && langId) {
+          if (device === "desktop" && desktopFileInputRefs.current[langId]) {
+            desktopFileInputRefs.current[langId]!.value = "";
+          }
+          if (device === "mobile" && mobileFileInputRefs.current[langId]) {
+            mobileFileInputRefs.current[langId]!.value = "";
+          }
+        }
         return;
       }
       setFile(file);
@@ -1106,6 +1130,13 @@ const CreateCouponForm = ({
           ...prev,
           [device]: { ...prev[device], [langId]: false },
         }));
+        // Reset the specific file input
+        if (device === "desktop" && desktopFileInputRefs.current[langId]) {
+          desktopFileInputRefs.current[langId]!.value = "";
+        }
+        if (device === "mobile" && mobileFileInputRefs.current[langId]) {
+          mobileFileInputRefs.current[langId]!.value = "";
+        }
       }
     },
     [compressImage]
@@ -2208,9 +2239,9 @@ const CreateCouponForm = ({
                         type="file"
                         hidden
                         accept="image/*"
-                        // onChange={(e) =>
-                        //   handleFileChange(e, benefitIndex, "icon")
-                        // }
+                        ref={(el) => {
+                          benefitFileInputRefs.current[benefitIndex] = el;
+                        }}
                         onChange={(e) =>
                           e.target.files?.[0] &&
                           handleBenefitImageUpload(
@@ -2415,9 +2446,9 @@ const CreateCouponForm = ({
                         type="file"
                         hidden
                         accept="image/*"
-                        // onChange={(e) =>
-                        //   uploadImageToBucket(e, "desktop", langId)
-                        // }
+                        ref={(el) => {
+                          desktopFileInputRefs.current[langId] = el;
+                        }}
                         onChange={(e) =>
                           e.target.files?.[0] &&
                           handleDeviceImageUpload(
@@ -2495,9 +2526,9 @@ const CreateCouponForm = ({
                         type="file"
                         hidden
                         accept="image/*"
-                        // onChange={(e) =>
-                        //   uploadImageToBucket(e, "mobile", langId)
-                        // }
+                        ref={(el) => {
+                          mobileFileInputRefs.current[langId] = el;
+                        }}
                         onChange={(e) =>
                           e.target.files?.[0] &&
                           handleDeviceImageUpload(
@@ -2719,7 +2750,17 @@ const CreateCouponForm = ({
         {benefitImageUploadPreview && (
           <ImageUploadPreviewDialog
             open={benefitImageUploadPreview}
-            onClose={() => setBenefitImageUploadPreview(false)}
+            onClose={() => {
+              setFile(null);
+              setBenefitImageUploadPreview(false);
+              if (
+                benefitsInputsImageIndex !== null &&
+                benefitFileInputRefs.current[benefitsInputsImageIndex]
+              ) {
+                benefitFileInputRefs.current[benefitsInputsImageIndex]!.value =
+                  "";
+              }
+            }}
             onAccept={(fileData, imageIndex) =>
               handleBenefitImageValidationAccept(fileData, imageIndex, 1)
             }
@@ -2733,7 +2774,25 @@ const CreateCouponForm = ({
         {deviceImageUploadPreview && (
           <ImageUploadPreviewDialog
             open={deviceImageUploadPreview}
-            onClose={() => setDeviceImageUploadPreview(false)}
+            onClose={() => {
+              setFile(null);
+              setDeviceImageUploadPreview(false);
+              // Reset BOTH file inputs to allow re-selection of the same file
+              if (device && langId) {
+                if (
+                  device === "desktop" &&
+                  desktopFileInputRefs.current[langId]
+                ) {
+                  desktopFileInputRefs.current[langId]!.value = "";
+                }
+                if (
+                  device === "mobile" &&
+                  mobileFileInputRefs.current[langId]
+                ) {
+                  mobileFileInputRefs.current[langId]!.value = "";
+                }
+              }
+            }}
             handleDeviceUpload={(fileData, device, langId) =>
               handleDeviceImageValidationAccept(fileData, device, langId, 1)
             }

@@ -78,8 +78,6 @@ export default function ImageUploadPreviewDialog({
   useEffect(() => {
     if (!imageFile) return;
 
-    console.log("imageFile::::", imageFile);
-
     const fileExtension = imageFile.name.split(".").pop()?.toLowerCase() || "";
     const isValidType = allowedTypes.some(
       (type) =>
