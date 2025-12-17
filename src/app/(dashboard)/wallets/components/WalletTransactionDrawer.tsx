@@ -17,6 +17,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   walletId: number;
+  wallet: any;
   onSuccess: any;
   selectedBU: number | null;
   fetchWallets: () => void;
@@ -29,6 +30,7 @@ export default function WalletTransactionDrawer({
   open,
   onClose,
   walletId,
+  wallet,
   onSuccess,
   fetchWallets,
 }: Props) {
@@ -49,11 +51,16 @@ export default function WalletTransactionDrawer({
       return;
     }
 
+    if (!selectedBU) {
+      toast.warn("BU is required");
+      return;
+    }
     try {
       const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
       await WalletService.addTransaction({
         business_unit_id: selectedBU,
         wallet_id: walletId,
+        points_balance: wallet.available_balance,
         amount: parseFloat(form.amount),
         status: form.status as "pending" | "active",
         type: "adjustment", // always adjustment

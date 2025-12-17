@@ -418,6 +418,7 @@ export default function WalletDetailDrawer({
             setTxDrawerOpen(false);
           }}
           walletId={wallet?.id || 0}
+          wallet={wallet}
           onSuccess={() =>
             fetchTransactions(wallet?.id || 0, page, searchValue)
           }
