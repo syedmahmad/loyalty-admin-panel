@@ -58,7 +58,7 @@ export default function WalletListPage() {
   useEffect(() => {
     WalletService.getBusinessUnits().then((res) => {
       setBusinessUnits(res?.data);
-      setSelectedBU(Number(res?.data[0].id));
+      setSelectedBU(Number(res?.data[0]?.id) || 0);
     });
   }, []);
 

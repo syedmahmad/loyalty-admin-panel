@@ -60,8 +60,8 @@ export default function WalletTransactionDrawer({
       await WalletService.addTransaction({
         business_unit_id: selectedBU,
         wallet_id: walletId,
-        points_balance: wallet.available_balance,
-        amount: parseFloat(form.amount),
+        points_balance: parseFloat(form.amount),
+        amount: 0,
         status: form.status as "pending" | "active",
         type: "adjustment", // always adjustment
         source_type: "admin",
