@@ -327,6 +327,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       all_users: offerData?.all_users,
       offerBasicInfo: { locales: { ...offerData?.offerBasicInfo?.localesObj } },
       show_in_app: offerData?.show_in_app,
+      enable_coupons: offerData?.enable_coupons || 0,
+      coupon_type: offerData?.coupon_type || "auto-generated",
     },
     validationSchema: Yup.object({
       offerBasicInfo: Yup.object().shape({
