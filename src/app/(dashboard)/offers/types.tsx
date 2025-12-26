@@ -23,6 +23,8 @@ export type OfferFormValues = {
   file?: any;
   station_type: string;
   show_in_app: number;
+  enable_coupons: number;
+  coupon_type: string;
 };
 
 export type BusinessUnit = {

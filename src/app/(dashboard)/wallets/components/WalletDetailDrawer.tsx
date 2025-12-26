@@ -100,8 +100,10 @@ export default function WalletDetailDrawer({
 
       const { totalEarnAmount, totalBurnAmount } = res?.data?.data.reduce(
         (acc: any, curr: any) => {
-          if (curr.type === "earn") acc.totalEarnAmount += Number(curr.amount);
-          if (curr.type === "burn") acc.totalBurnAmount += Number(curr.amount);
+          if (curr.type === "earn")
+            acc.totalEarnAmount += Number(curr.point_balance);
+          if (curr.type === "burn")
+            acc.totalBurnAmount += Number(curr.point_balance);
           return acc;
         },
         { totalEarnAmount: 0, totalBurnAmount: 0 }
