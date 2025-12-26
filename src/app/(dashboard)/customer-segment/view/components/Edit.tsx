@@ -251,7 +251,7 @@ const CustomerSegmentEditPage = ({
       toast.error("Name is required");
       return;
     }
-    
+
     try {
       const clientInfo = localStorage.getItem("client-info");
       if (!clientInfo)
@@ -473,11 +473,13 @@ const CustomerSegmentEditPage = ({
                             </InputAdornment>
                           ),
                         }}
+                        inputProps={{
+                          dir: langCode === "ar" ? "rtl" : "ltr",
+                        }}
                       />
                     </Grid>
                   );
                 })}
-
 
               {/* Description */}
               {languages.length > 0 &&

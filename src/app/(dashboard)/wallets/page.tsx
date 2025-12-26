@@ -58,11 +58,7 @@ export default function WalletListPage() {
   useEffect(() => {
     WalletService.getBusinessUnits().then((res) => {
       setBusinessUnits(res?.data);
-      const defaultBu = res?.data.find(
-        (singleBu: { location: string }) =>
-          singleBu.location === "system created"
-      );
-      setSelectedBU(Number(defaultBu?.id) || 0);
+      setSelectedBU(Number(res?.data[0]?.id) || 0);
     });
   }, []);
 

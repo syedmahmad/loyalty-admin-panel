@@ -1,5 +1,7 @@
 "use client";
 
+import ImagePreviewDialog from "@/components/dialogs/ImageDetailPreviewDialog";
+import ImageUploadPreviewDialog from "@/components/dialogs/ImageUploadPreviewDialog";
 import { RichTextEditor } from "@/components/TextEditor";
 import { openAIService } from "@/services/openAiService";
 import { tenantService } from "@/services/tenantService";
@@ -7,6 +9,8 @@ import { BusinessUnit } from "@/types/businessunit.type";
 import { Language } from "@/types/language.type";
 import { Tier, TierBenefit, TierData } from "@/types/tier.type";
 import { GET, POST, PUT } from "@/utils/AxiosUtility";
+import { compressImage } from "@/utils/imageCompressor";
+import { getFileSizeFromUrl, getImageNameFromUrl } from "@/utils/Index";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
@@ -22,7 +26,7 @@ import {
 } from "@mui/material";
 import { Form, Formik } from "formik";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 
@@ -47,6 +51,19 @@ const EditTierForm = ({ onSuccess }: any) => {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [tierLocales, setTierLocales] = useState<any>([]);
 
+  /** image preview  */
+  const [benefitImageUploadPreview, setBenefitImageUploadPreview] =
+    useState(false);
+  const [imageDetailPreview, setImageDetailPreview] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    url: "",
+    width: 0,
+    height: 0,
+    size: "", // optional
+    fileName: "",
+  });
+  const [benefitsInputsImageIndex, setBenefitsInputsImageIndex] = useState(0);
+
   const userId =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0
@@ -58,6 +75,66 @@ const EditTierForm = ({ onSuccess }: any) => {
       { name_en: "", name_ar: "", icon: "" },
     ]);
   };
+
+  const handleBenefitImageUpload = useCallback(
+    async (file: File, index: number = 0) => {
+      if (!file) return;
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+      const allowedExtensions = ["avif", "png", "jpg"];
+      const isValidType = allowedExtensions.includes(fileExtension);
+
+      if (!isValidType) {
+        toast.error("Please upload a valid image file (JPG or PNG)");
+        return;
+      }
+
+      setFile(file);
+      setBenefitsInputsImageIndex(index);
+      setBenefitImageUploadPreview(true);
+    },
+    []
+  );
+
+  const handleBenefitImageValidationAccept = useCallback(
+    async (file: File, imageIndex: number, aspectRatio: number) => {
+      setBenefitImageUploadPreview(false);
+      try {
+        let processedFile: File | Blob = file;
+        if (file.size > 5 * 1024 * 1024) {
+          const compressedBlob = await compressImage(file, 5, 1920);
+          processedFile = new File([compressedBlob], file.name, {
+            type: compressedBlob.type,
+            lastModified: Date.now(),
+          });
+          toast.info("Optimizing image size…");
+        }
+
+        const formData = new FormData();
+        formData.append("file", processedFile);
+
+        setUploadingIndex(imageIndex);
+        const res = await POST("/tiers/file", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (res?.data.success) {
+          setBenefitsInputs((prev) =>
+            prev.map((item, i) =>
+              i === imageIndex
+                ? { ...item, icon: res?.data.uploaded_url }
+                : item
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+      } finally {
+        setUploadingIndex(null);
+      }
+    },
+    [compressImage]
+  );
 
   useEffect(() => {
     const resolveAllPromises = async () => {
@@ -112,7 +189,7 @@ const EditTierForm = ({ onSuccess }: any) => {
 
     const resData = res.data;
     const tierLocales: any = {};
-    let benefitFromLocale: any = [];
+    let benefitFromLocale: any = [{ name_en: "", name_ar: "", icon: "" }];
     resData.locales.forEach((locale: any) => {
       const langId = locale.language?.id;
       if (langId) {
@@ -176,7 +253,8 @@ const EditTierForm = ({ onSuccess }: any) => {
           languageId,
           name: localization.name,
           description: localization.description,
-          benefits: localization.benefits,
+          // benefits: localization.benefits,
+          benefits: benefitsInputs,
         })
       ),
     };
@@ -245,6 +323,31 @@ const EditTierForm = ({ onSuccess }: any) => {
       return "";
     } finally {
       setTranslationLoading((prev) => ({ ...prev, [targetLang]: false }));
+    }
+  };
+
+  const handleImageDetailPreview = async (imageUrl: string) => {
+    if (!imageUrl) return;
+
+    const img = new Image();
+    img.src = imageUrl;
+
+    const size = await getFileSizeFromUrl(imageUrl);
+    const fileName = getImageNameFromUrl(imageUrl);
+
+    try {
+      await img.decode(); // waits even if image is cached
+      setPreviewData({
+        url: imageUrl,
+        width: img.width,
+        height: img.height,
+        size,
+        fileName,
+      });
+
+      setImageDetailPreview(true);
+    } catch (err) {
+      console.error("Error decoding image", err);
     }
   };
 
@@ -356,6 +459,9 @@ const EditTierForm = ({ onSuccess }: any) => {
                                   )}
                                 </InputAdornment>
                               ),
+                            }}
+                            inputProps={{
+                              dir: langCode === "ar" ? "rtl" : "ltr",
                             }}
                           />
                         </Grid>
@@ -482,20 +588,47 @@ const EditTierForm = ({ onSuccess }: any) => {
                                 type="file"
                                 hidden
                                 accept="image/*"
+                                // onChange={(e) =>
+                                //   handleFileChange(e, benefitIndex)
+                                // }
                                 onChange={(e) =>
-                                  handleFileChange(e, benefitIndex)
+                                  e.target.files?.[0] &&
+                                  handleBenefitImageUpload(
+                                    e.target.files[0],
+                                    benefitIndex
+                                  )
                                 }
                               />
                             </Button>
                             {input.icon && (
                               <Box mt={1}>
-                                <img
+                                {/* <img
                                   src={input.icon}
                                   alt="Benefit Icon"
                                   style={{
                                     width: 33,
                                     height: 33,
                                     borderRadius: 2,
+                                  }}
+                                /> */}
+
+                                <Box
+                                  component="img"
+                                  src={input?.icon}
+                                  alt="Benefit Icon"
+                                  onClick={() =>
+                                    handleImageDetailPreview(input?.icon || "")
+                                  }
+                                  sx={{
+                                    width: 33,
+                                    height: 33,
+                                    borderRadius: 0,
+                                    cursor: "pointer",
+                                    transition: "0.2s",
+                                    "&:hover": {
+                                      opacity: 0.8,
+                                      transform: "scale(1.05)",
+                                    },
                                   }}
                                 />
                               </Box>
@@ -594,6 +727,9 @@ const EditTierForm = ({ onSuccess }: any) => {
                                           ] && <CircularProgress size={20} />}
                                         </InputAdornment>
                                       ),
+                                    }}
+                                    inputProps={{
+                                      dir: langCode === "ar" ? "rtl" : "ltr",
                                     }}
                                   />
                                 );
@@ -728,6 +864,34 @@ const EditTierForm = ({ onSuccess }: any) => {
                     <br />
                   </Grid>
                 </Grid>
+
+                <ImagePreviewDialog
+                  open={imageDetailPreview}
+                  onClose={() => setImageDetailPreview(false)}
+                  url={previewData.url}
+                  width={previewData.width}
+                  height={previewData.height}
+                  size={previewData.size}
+                  fileName={previewData.fileName}
+                />
+
+                {benefitImageUploadPreview && (
+                  <ImageUploadPreviewDialog
+                    open={benefitImageUploadPreview}
+                    onClose={() => setBenefitImageUploadPreview(false)}
+                    onAccept={(fileData, imageIndex) =>
+                      handleBenefitImageValidationAccept(
+                        fileData,
+                        imageIndex,
+                        1
+                      )
+                    }
+                    imageFile={file}
+                    minWidth={100}
+                    minHeight={100}
+                    imageIndex={benefitsInputsImageIndex}
+                  />
+                )}
               </Form>
             );
           }}

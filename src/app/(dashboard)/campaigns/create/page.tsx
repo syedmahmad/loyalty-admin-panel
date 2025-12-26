@@ -434,6 +434,9 @@ const CampaignCreate = ({ onSuccess }: any) => {
                       </InputAdornment>
                     ),
                   }}
+                  inputProps={{
+                    dir: langCode === "ar" ? "rtl" : "ltr",
+                  }}
                 />
               </Grid>
             );
@@ -764,7 +767,7 @@ const CampaignCreate = ({ onSuccess }: any) => {
             })}
           </Grid>
         </Grid>
-        
+
         {/* Description */}
         {languages.length > 0 &&
           languages.map((singleLanguage: Language, index) => {
