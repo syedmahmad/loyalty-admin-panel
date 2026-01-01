@@ -20,7 +20,12 @@ import {
   Paper,
   Button,
   Pagination,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { useEffect, useState } from "react";
 import { WalletService } from "./service/wallet.service";
 import WalletDetailDrawer from "./components/WalletDetailDrawer";
@@ -55,6 +60,11 @@ export default function WalletListPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
 
+  // Filter states
+  const [customerName, setCustomerName] = useState("");
+  const [customerStatus, setCustomerStatus] = useState<number | "">("");
+  const [hashedNumber, setHashedNumber] = useState("");
+
   useEffect(() => {
     WalletService.getBusinessUnits().then((res) => {
       setBusinessUnits(res?.data);
@@ -64,20 +74,43 @@ export default function WalletListPage() {
 
   useEffect(() => {
     setPage(0);
-    fetchWallets(pageNumber);
+    if (selectedBU !== null) {
+      fetchWallets(1);
+    }
   }, [selectedBU]);
 
-  const fetchWallets = async (pageNumber: number = 1) => {
+  // Debounced filter effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (selectedBU !== null) {
+        fetchWallets(1, {
+          customer_name: customerName,
+          customer_status: customerStatus,
+          customer_hashed_number: hashedNumber,
+        });
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [customerName, customerStatus, hashedNumber]);
+
+  const fetchWallets = async (
+    pageNumber: number = 1,
+    filters?: {
+      customer_name?: string;
+      customer_status?: number | "";
+      customer_hashed_number?: string;
+    }
+  ) => {
     setLoading(true);
     try {
-      // if (!selectedBU) {
-      //   setWallets([]);
-      //   return;
-      // }
       const res = await WalletService.getWallets(
         pageNumber,
         pageSize,
-        selectedBU ?? undefined
+        selectedBU ?? undefined,
+        filters?.customer_name,
+        filters?.customer_status,
+        filters?.customer_hashed_number
       );
       setWallets(res?.data?.data || []);
       setTotalNumberOfPages(res?.data?.totalPages);
@@ -171,6 +204,64 @@ export default function WalletListPage() {
           ))}
         </Select>
       </Box>
+
+      {/* Filters Section */}
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={12} sm={6} md={4}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search by customer name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: "#fff",
+              borderRadius: 2,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search by hashed number"
+            value={hashedNumber}
+            onChange={(e) => setHashedNumber(e.target.value)}
+            sx={{
+              backgroundColor: "#fff",
+              borderRadius: 2,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Customer Status</InputLabel>
+            <Select
+              value={customerStatus}
+              onChange={(e) => setCustomerStatus(e.target.value as number | "")}
+              label="Customer Status"
+              sx={{
+                backgroundColor: "#fff",
+                borderRadius: 2,
+              }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value={1}>Active</MenuItem>
+              <MenuItem value={2}>Inactive</MenuItem>
+              <MenuItem value={3}>Deleted</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
 
       {/* {loading ? (
         <Box textAlign="center">
@@ -325,7 +416,13 @@ export default function WalletListPage() {
             {/* Previous Button */}
             <Button
               variant="outlined"
-              onClick={() => fetchWallets(Number(pageNumber) - 1)}
+              onClick={() =>
+                fetchWallets(Number(pageNumber) - 1, {
+                  customer_name: customerName,
+                  customer_status: customerStatus,
+                  customer_hashed_number: hashedNumber,
+                })
+              }
               disabled={Number(pageNumber) === 1}
               sx={{
                 textTransform: "none",
@@ -343,7 +440,11 @@ export default function WalletListPage() {
               page={Number(pageNumber)}
               onChange={(_, value) => {
                 setPageNumber(value);
-                fetchWallets(value);
+                fetchWallets(value, {
+                  customer_name: customerName,
+                  customer_status: customerStatus,
+                  customer_hashed_number: hashedNumber,
+                });
               }}
               shape="rounded"
               siblingCount={1}
@@ -363,7 +464,13 @@ export default function WalletListPage() {
             {/* Next Button */}
             <Button
               variant="outlined"
-              onClick={() => fetchWallets(Number(pageNumber) + 1)}
+              onClick={() =>
+                fetchWallets(Number(pageNumber) + 1, {
+                  customer_name: customerName,
+                  customer_status: customerStatus,
+                  customer_hashed_number: hashedNumber,
+                })
+              }
               disabled={Number(pageNumber) === Number(totalNumberOfPages)}
               sx={{
                 textTransform: "none",

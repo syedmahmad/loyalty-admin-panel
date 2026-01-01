@@ -1,11 +1,33 @@
 import { GET, POST } from "@/utils/AxiosUtility";
 
 export const WalletService = {
-  getWallets: (page: number, pageSize: number, businessUnitId?: number) => {
+  getWallets: (
+    page: number,
+    pageSize: number,
+    businessUnitId?: number,
+    customer_name?: string,
+    customer_status?: number | "",
+    customer_hashed_number?: string
+  ) => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
-    return GET(`/wallets/${clientInfo.id}?page=${page}&pageSize=${pageSize}`, {
-      params: businessUnitId ? { business_unit: businessUnitId } : {},
-    });
+    let queryString = `/wallets/${clientInfo.id}?page=${page}&pageSize=${pageSize}`;
+
+    if (businessUnitId) {
+      queryString += `&business_unit=${businessUnitId}`;
+    }
+    if (customer_name) {
+      queryString += `&customer_name=${encodeURIComponent(customer_name)}`;
+    }
+    if (customer_status !== "" && customer_status !== undefined) {
+      queryString += `&customer_status=${customer_status}`;
+    }
+    if (customer_hashed_number) {
+      queryString += `&customer_hashed_number=${encodeURIComponent(
+        customer_hashed_number
+      )}`;
+    }
+
+    return GET(queryString);
   },
 
   getWalletTransactions: (

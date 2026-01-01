@@ -19,6 +19,10 @@ import {
   Popover,
   MenuItem,
   Button,
+  Select,
+  FormControl,
+  InputLabel,
+  Grid,
 } from "@mui/material";
 import { GET, PATCH } from "@/utils/AxiosUtility";
 import SearchIcon from "@mui/icons-material/Search";
@@ -34,7 +38,7 @@ type Customer = {
   phone: string;
   gender: string;
   DOB: string;
-  status: 0 | 1;
+  status: number;
   city: string;
   address: string;
   business_unit: {
@@ -54,7 +58,9 @@ type FetchCustomersResponse = {
 const fetchCustomers = async (
   search = "",
   pageSize: number,
-  pageNumber: number
+  pageNumber: number,
+  hashedNumber = "",
+  status?: number
 ): Promise<FetchCustomersResponse> => {
   try {
     const clientInfoRaw = localStorage.getItem("client-info");
@@ -62,13 +68,21 @@ const fetchCustomers = async (
 
     const clientInfo = JSON.parse(clientInfoRaw);
 
-    const res = await GET(
-      `/customers/${
-        clientInfo.id
-      }?page=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
-        search
-      )}`
-    );
+    let url = `/customers/${
+      clientInfo.id
+    }?page=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
+      search
+    )}`;
+
+    if (hashedNumber) {
+      url += `&hashed_number=${encodeURIComponent(hashedNumber)}`;
+    }
+
+    if (status !== undefined && status !== null) {
+      url += `&status=${status}`;
+    }
+
+    const res = await GET(url);
 
     if (res?.status !== 200) throw new Error("Failed to fetch customers");
 
@@ -97,6 +111,8 @@ const CustomerList = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [hashedNumber, setHashedNumber] = useState("");
+  const [statusFilter, setStatusFilter] = useState<number | "">("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -116,11 +132,20 @@ const CustomerList = () => {
   const loadData = async (
     searchTerm = "",
     pageSize: number,
-    pageNumber: number
+    pageNumber: number,
+    hashedNumberParam = "",
+    statusParam?: number | ""
   ) => {
     setLoading(true);
     try {
-      const data = await fetchCustomers(searchTerm, pageSize, pageNumber);
+      const finalStatus = statusParam === "" ? undefined : statusParam;
+      const data = await fetchCustomers(
+        searchTerm,
+        pageSize,
+        pageNumber,
+        hashedNumberParam,
+        finalStatus
+      );
       setCustomers(data?.data || []);
       setTotalPages(Math.ceil((data?.total || 0) / pageSize));
       setPageNumber(data.page);
@@ -131,11 +156,18 @@ const CustomerList = () => {
 
   useEffect(() => {
     const delay = setTimeout(
-      () => loadData(search.trim(), pageSize, pageNumber),
+      () =>
+        loadData(
+          search.trim(),
+          pageSize,
+          pageNumber,
+          hashedNumber,
+          statusFilter
+        ),
       300
     );
     return () => clearTimeout(delay);
-  }, [search]);
+  }, [search, hashedNumber, statusFilter]);
 
   const paginated = customers.slice(
     page * rowsPerPage,
@@ -162,7 +194,7 @@ const CustomerList = () => {
         status: selectedCustomer.status === 1 ? 0 : 1,
       });
       handleCloseMenu();
-      loadData(search, pageSize, pageNumber);
+      loadData(search, pageSize, pageNumber, hashedNumber, statusFilter);
     } catch (error: any) {
       console.error("Failed to update status:", error);
       toast.error(error?.response?.data?.message || "Failed to update status");
@@ -179,41 +211,108 @@ const CustomerList = () => {
         </Typography>
       </Box>
 
-      <TextField
-        size="small"
-        placeholder="Search by name"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        sx={{
-          mb: 2,
-          backgroundColor: "#fff",
-          fontFamily: "Outfit",
-          fontWeight: 400,
-          fontStyle: "normal",
-          fontSize: "15px",
-          lineHeight: "22px",
-          borderBottom: "1px solid #e0e0e0",
-          borderRadius: 2,
-          "& .MuiInputBase-input": {
-            fontFamily: "Outfit",
-            fontWeight: 400,
-            fontSize: "15px",
-            lineHeight: "22px",
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ color: "#9e9e9e" }} />
-            </InputAdornment>
-          ),
-          sx: {
-            borderRadius: 2,
-            fontFamily: "Outfit",
-            fontWeight: 400,
-          },
-        }}
-      />
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={3}>
+          <TextField
+            size="small"
+            placeholder="Search by name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            fullWidth
+            sx={{
+              backgroundColor: "#fff",
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "15px",
+              lineHeight: "22px",
+              borderBottom: "1px solid #e0e0e0",
+              borderRadius: 2,
+              "& .MuiInputBase-input": {
+                fontFamily: "Outfit",
+                fontWeight: 400,
+                fontSize: "15px",
+                lineHeight: "22px",
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#9e9e9e" }} />
+                </InputAdornment>
+              ),
+              sx: {
+                borderRadius: 2,
+                fontFamily: "Outfit",
+                fontWeight: 400,
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <TextField
+            size="small"
+            placeholder="Filter by phone number"
+            value={hashedNumber}
+            onChange={(e) => setHashedNumber(e.target.value)}
+            fullWidth
+            sx={{
+              backgroundColor: "#fff",
+              fontFamily: "Outfit",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "15px",
+              lineHeight: "22px",
+              borderBottom: "1px solid #e0e0e0",
+              borderRadius: 2,
+              "& .MuiInputBase-input": {
+                fontFamily: "Outfit",
+                fontWeight: 400,
+                fontSize: "15px",
+                lineHeight: "22px",
+              },
+            }}
+            InputProps={{
+              sx: {
+                borderRadius: 2,
+                fontFamily: "Outfit",
+                fontWeight: 400,
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <FormControl
+            size="small"
+            fullWidth
+            sx={{
+              backgroundColor: "#fff",
+              borderRadius: 2,
+            }}
+          >
+            <InputLabel>Filter by Status</InputLabel>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as number | "")}
+              label="Filter by Status"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 400,
+                fontSize: "15px",
+                lineHeight: "22px",
+                borderRadius: 2,
+              }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value={1}>Active</MenuItem>
+              <MenuItem value={2}>Inactive</MenuItem>
+              <MenuItem value={3}>Deleted</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
 
       {loading ? (
         <Box mt={4} textAlign="center">
@@ -266,7 +365,11 @@ const CustomerList = () => {
                       </TableCell>
                       <TableCell>{c.city}</TableCell>
                       <TableCell>
-                        {c.status === 1 ? "Active" : "Inactive"}
+                        {c.status === 1
+                          ? "Active"
+                          : c.status === 2
+                          ? "Inactive"
+                          : "Deleted"}
                       </TableCell>
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
                       <TableCell>{c?.tenant?.name || "—"}</TableCell>
@@ -306,7 +409,13 @@ const CustomerList = () => {
               <Button
                 variant="outlined"
                 onClick={() =>
-                  loadData(search, pageSize, Number(pageNumber) - 1)
+                  loadData(
+                    search,
+                    pageSize,
+                    Number(pageNumber) - 1,
+                    hashedNumber,
+                    statusFilter
+                  )
                 }
                 disabled={Number(pageNumber) === 1}
               >
@@ -318,7 +427,7 @@ const CustomerList = () => {
                 page={Number(pageNumber)}
                 onChange={(_, value) => {
                   setPageNumber(value);
-                  loadData(search, pageSize, value);
+                  loadData(search, pageSize, value, hashedNumber, statusFilter);
                 }}
                 shape="rounded"
                 siblingCount={1}
@@ -338,7 +447,13 @@ const CustomerList = () => {
               <Button
                 variant="outlined"
                 onClick={() =>
-                  loadData(search, pageSize, Number(pageNumber) + 1)
+                  loadData(
+                    search,
+                    pageSize,
+                    Number(pageNumber) + 1,
+                    hashedNumber,
+                    statusFilter
+                  )
                 }
                 disabled={Number(pageNumber) === Number(totalPages)}
               >
