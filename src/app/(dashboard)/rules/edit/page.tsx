@@ -242,7 +242,7 @@ const RuleEdit = ({ onSuccess }: any) => {
   }, []);
 
   const handleSubmit = async () => {
-    const allNamesValid = Object.values(form.ruleBasicInfo.locales).every(
+    const allNamesValid = Object.values(form.ruleBasicInfo.locales).some(
       (locale) => locale.name && locale.name.trim() !== ""
     );
 

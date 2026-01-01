@@ -5,23 +5,30 @@ import { DELETE, GET, POST, PUT } from "@/utils/AxiosUtility";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import DownloadIcon from "@mui/icons-material/Download";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import {
   Autocomplete,
   Box,
   Button,
   CircularProgress,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
   MenuItem,
+  Radio,
+  RadioGroup,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { DateTime } from "luxon";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 import { BusinessUnit, OfferFormValues } from "../types";
@@ -93,6 +100,11 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
   const [benefitsInputsImageIndex, setBenefitsInputsImageIndex] = useState(0);
   const [device, setDevice] = useState("");
   const [langId, setLangId] = useState("");
+
+  // Coupon codes state
+  const [couponCodes, setCouponCodes] = useState<string[]>([]);
+  const [couponFileName, setCouponFileName] = useState<string>("");
+  const couponFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchCustomerSegments = async () => {
     const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
@@ -327,6 +339,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       all_users: offerData?.all_users,
       offerBasicInfo: { locales: { ...offerData?.offerBasicInfo?.localesObj } },
       show_in_app: offerData?.show_in_app,
+      enable_coupons: offerData?.enable_coupons || 0,
+      coupon_type: offerData?.coupon_type || "auto-generated",
     },
     validationSchema: Yup.object({
       offerBasicInfo: Yup.object().shape({
@@ -401,6 +415,11 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         })
       ),
       show_in_app: values.show_in_app,
+      enable_coupons: values.enable_coupons,
+      coupon_source: values.coupon_type,
+      ...(values.coupon_type === "uploaded" && couponCodes.length > 0
+        ? { coupon_codes: couponCodes }
+        : {}),
     }));
 
     const responses = await Promise.all(
@@ -444,6 +463,77 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       ...benefitsInputs,
       { name_en: "", name_ar: "", icon: "" },
     ]);
+  };
+
+  // Download sample CSV
+  const handleDownloadSampleCSV = () => {
+    const sampleData = "coupon_codes\nCOUPON123\nCOUPON456\nCOUPON789";
+    const blob = new Blob([sampleData], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sample_coupons.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Handle coupon CSV upload
+  const handleCouponFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".csv")) {
+      toast.error("Please upload a CSV file");
+      return;
+    }
+
+    setCouponFileName(file.name);
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split("\n").filter((line) => line.trim());
+
+        if (lines.length === 0) {
+          toast.error("CSV file is empty");
+          setCouponCodes([]);
+          return;
+        }
+
+        // Check if first line is header
+        const firstLine = lines[0].trim().toLowerCase();
+        const hasHeader = firstLine.includes("coupon_code");
+
+        // Extract coupon codes (skip header if present)
+        const codes = lines
+          .slice(hasHeader ? 1 : 0)
+          .map((line) => line.trim())
+          .filter((code) => code.length > 0);
+
+        if (codes.length === 0) {
+          toast.error("No coupon codes found in the CSV file");
+          setCouponCodes([]);
+          return;
+        }
+
+        setCouponCodes(codes);
+        toast.success(`${codes.length} coupon codes uploaded successfully`);
+      } catch (error) {
+        console.error("Error parsing CSV:", error);
+        toast.error("Error parsing CSV file");
+        setCouponCodes([]);
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Error reading file");
+      setCouponCodes([]);
+    };
+
+    reader.readAsText(file);
   };
 
   const handleFileChange = async (
@@ -957,6 +1047,171 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 </Grid>
               </Grid>
             </Grid>
+
+            {/* Enable Coupons for this offer */}
+            <Grid item xs={12}>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="subtitle1">
+                      Enable Coupons for this offer
+                    </Typography>
+                    <Tooltip
+                      title="Enable this option to add coupon functionality to your offer. You can either auto-generate unique coupon codes or upload your own pre-generated codes."
+                      arrow
+                      placement="top"
+                    >
+                      <InfoOutlinedIcon
+                        sx={{
+                          fontSize: 18,
+                          color: "text.secondary",
+                          cursor: "help",
+                        }}
+                      />
+                    </Tooltip>
+                  </Box>
+                </Grid>
+                <Grid item>
+                  <Switch
+                    name="enableCoupons"
+                    color="primary"
+                    checked={values.enable_coupons === 1}
+                    onChange={(e) =>
+                      setFieldValue("enable_coupons", e.target.checked ? 1 : 0)
+                    }
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+            {values.enable_coupons === 1 && (
+              <Grid item xs={12}>
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <Typography variant="subtitle1">Coupon Options</Typography>
+                  <Tooltip
+                    title="Choose how you want to manage coupon codes for this offer."
+                    arrow
+                    placement="top"
+                  >
+                    <InfoOutlinedIcon
+                      sx={{
+                        fontSize: 18,
+                        color: "text.secondary",
+                        cursor: "help",
+                      }}
+                    />
+                  </Tooltip>
+                </Box>
+                <RadioGroup
+                  row
+                  name="coupon_type"
+                  value={values.coupon_type || "auto-generated"}
+                  onChange={handleChange}
+                >
+                  <FormControlLabel
+                    value="auto-generated"
+                    control={<Radio />}
+                    label={
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <span>Auto-generate coupons</span>
+                        <Tooltip
+                          title="The system will automatically generate unique coupon codes for this offer."
+                          arrow
+                          placement="top"
+                        >
+                          <InfoOutlinedIcon
+                            sx={{
+                              fontSize: 16,
+                              color: "text.secondary",
+                              cursor: "help",
+                            }}
+                          />
+                        </Tooltip>
+                      </Box>
+                    }
+                  />
+                  <FormControlLabel
+                    value="uploaded"
+                    control={<Radio />}
+                    label={
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <span>Upload coupons</span>
+                        <Tooltip
+                          title="Upload your own pre-generated coupon codes via CSV file. The CSV should have a 'coupon_codes' column with one code per row."
+                          arrow
+                          placement="top"
+                        >
+                          <InfoOutlinedIcon
+                            sx={{
+                              fontSize: 16,
+                              color: "text.secondary",
+                              cursor: "help",
+                            }}
+                          />
+                        </Tooltip>
+                      </Box>
+                    }
+                  />
+                </RadioGroup>
+
+                {/* Upload Coupon CSV Section */}
+                {values.coupon_type === "uploaded" && (
+                  <Box mt={3}>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<UploadFileIcon />}
+                        component="label"
+                        sx={{ textTransform: "none" }}
+                      >
+                        Upload CSV File
+                        <input
+                          ref={couponFileInputRef}
+                          type="file"
+                          hidden
+                          accept=".csv"
+                          onChange={handleCouponFileUpload}
+                        />
+                      </Button>
+
+                      <Button
+                        variant="text"
+                        startIcon={<DownloadIcon />}
+                        onClick={handleDownloadSampleCSV}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Download Sample CSV
+                      </Button>
+
+                      <Tooltip
+                        title="Download a sample CSV file to see the correct format. Your CSV should have one column named 'coupon_codes' with each coupon code on a separate row."
+                        arrow
+                        placement="top"
+                      >
+                        <InfoOutlinedIcon
+                          sx={{
+                            fontSize: 18,
+                            color: "text.secondary",
+                            cursor: "help",
+                          }}
+                        />
+                      </Tooltip>
+                    </Box>
+
+                    {couponFileName && (
+                      <Typography variant="body2" color="text.secondary" mb={1}>
+                        Uploaded: {couponFileName}
+                      </Typography>
+                    )}
+
+                    {couponCodes.length > 0 && (
+                      <Typography variant="body2" color="success.main">
+                        ✓ {couponCodes.length} coupon code(s) loaded
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </Grid>
+            )}
 
             {/* Benefits */}
             <Grid item xs={12}>
