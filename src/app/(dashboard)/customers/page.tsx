@@ -136,7 +136,7 @@ const CustomerList = () => {
 
   const router = useRouter();
 
-  const handleRowClick = (id: number) => {
+  const handleRowClick = (id: number | undefined) => {
     router.push(`/customers/${id}`);
   };
   const loadData = async (
@@ -458,7 +458,7 @@ const CustomerList = () => {
             fullWidth
             onClick={handleApplyFilters}
             sx={{
-              height: "40px",
+              height: "37px",
               textTransform: "none",
               fontFamily: "Outfit",
               fontWeight: 500,
@@ -489,16 +489,12 @@ const CustomerList = () => {
                     <TableCell>Status</TableCell>
                     <TableCell>BU</TableCell>
                     <TableCell>Tenant</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {customers.map((c) => (
-                    <TableRow
-                      key={c.id}
-                      onClick={() => handleRowClick(c.id)}
-                      sx={{ cursor: "pointer" }}
-                    >
+                    <TableRow key={c.id} sx={{ cursor: "pointer" }}>
                       <TableCell>{c.name}</TableCell>
                       <TableCell
                         sx={{
@@ -530,15 +526,19 @@ const CustomerList = () => {
                       </TableCell>
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
                       <TableCell>{c?.tenant?.name || "—"}</TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMenuClick(e, c);
-                          }}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
+                      <TableCell align="center">
+                        {c.status === 1 ? (
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMenuClick(e, c);
+                            }}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        ) : (
+                          "N/A"
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -602,24 +602,25 @@ const CustomerList = () => {
             </Box>
           </>
           {/* Popover for Status Toggle */}
-          <Popover
-            open={Boolean(anchorEl)}
-            anchorEl={anchorEl}
-            onClose={handleCloseMenu}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-          >
-            <MenuItem onClick={handleToggleStatus}>
-              {selectedCustomer?.status === 1 ? "Deactivate" : "Activate"}{" "}
-              Customer
-            </MenuItem>
-          </Popover>
+          {selectedCustomer?.status === 1 && (
+            <Popover
+              open={Boolean(anchorEl)}
+              anchorEl={anchorEl}
+              onClose={handleCloseMenu}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+            >
+              <MenuItem onClick={() => handleRowClick(selectedCustomer?.id)}>
+                View Customer
+              </MenuItem>
+            </Popover>
+          )}
         </Paper>
       )}
     </Box>

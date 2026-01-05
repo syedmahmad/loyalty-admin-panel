@@ -394,7 +394,7 @@ export default function WalletListPage() {
             fullWidth
             onClick={handleApplyFilters}
             sx={{
-              height: "40px",
+              height: "32px",
               textTransform: "none",
               fontFamily: "Outfit",
               fontWeight: 500,
