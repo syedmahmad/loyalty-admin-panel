@@ -84,7 +84,7 @@ export default function CustomerDetail() {
       setCustomerUuid(response.data.uuid);
     } catch (error: any) {
       // console.error("Error fetching customer details:", error);
-      const msg = error.response.data.message || "Customer not found";
+      const msg = error?.response?.data?.message || "Customer not found";
       toast.error(msg);
       router.push("/customers");
     } finally {

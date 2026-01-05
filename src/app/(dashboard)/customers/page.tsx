@@ -23,10 +23,12 @@ import {
   FormControl,
   InputLabel,
   Grid,
+  Tooltip,
 } from "@mui/material";
 import { GET, PATCH } from "@/utils/AxiosUtility";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 type Customer = {
@@ -113,6 +115,14 @@ const CustomerList = () => {
   const [search, setSearch] = useState("");
   const [hashedNumber, setHashedNumber] = useState("");
   const [statusFilter, setStatusFilter] = useState<number | "">("");
+
+  // Applied filter states (used for actual API calls)
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedHashedNumber, setAppliedHashedNumber] = useState("");
+  const [appliedStatusFilter, setAppliedStatusFilter] = useState<number | "">(
+    ""
+  );
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -154,20 +164,35 @@ const CustomerList = () => {
     }
   };
 
+  // Handle Apply Filters button click
+  const handleApplyFilters = () => {
+    setAppliedSearch(search);
+    setAppliedHashedNumber(hashedNumber);
+    setAppliedStatusFilter(statusFilter);
+    setPageNumber(1); // Reset to first page when applying new filters
+  };
+
+  // Initial load
   useEffect(() => {
-    const delay = setTimeout(
-      () =>
-        loadData(
-          search.trim(),
-          pageSize,
-          pageNumber,
-          hashedNumber,
-          statusFilter
-        ),
-      300
+    loadData(
+      appliedSearch,
+      pageSize,
+      1,
+      appliedHashedNumber,
+      appliedStatusFilter
     );
-    return () => clearTimeout(delay);
-  }, [search, hashedNumber, statusFilter]);
+  }, []);
+
+  // Fetch data when applied filters change
+  useEffect(() => {
+    loadData(
+      appliedSearch.trim(),
+      pageSize,
+      pageNumber,
+      appliedHashedNumber,
+      appliedStatusFilter
+    );
+  }, [appliedSearch, appliedHashedNumber, appliedStatusFilter, pageNumber]);
 
   const paginated = customers.slice(
     page * rowsPerPage,
@@ -194,7 +219,13 @@ const CustomerList = () => {
         status: selectedCustomer.status === 1 ? 0 : 1,
       });
       handleCloseMenu();
-      loadData(search, pageSize, pageNumber, hashedNumber, statusFilter);
+      loadData(
+        appliedSearch,
+        pageSize,
+        pageNumber,
+        appliedHashedNumber,
+        appliedStatusFilter
+      );
     } catch (error: any) {
       console.error("Failed to update status:", error);
       toast.error(error?.response?.data?.message || "Failed to update status");
@@ -213,6 +244,33 @@ const CustomerList = () => {
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search by Name
+            </Typography>
+            <Tooltip
+              title="Search for customers by their full name or partial name"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             size="small"
             placeholder="Search by name"
@@ -251,6 +309,33 @@ const CustomerList = () => {
         </Grid>
 
         <Grid item xs={12} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Phone Number
+            </Typography>
+            <Tooltip
+              title="Filter customers by their phone number, you've to enter the complete number along with country code"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             size="small"
             placeholder="Filter by phone number"
@@ -284,6 +369,33 @@ const CustomerList = () => {
         </Grid>
 
         <Grid item xs={12} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Customer Status
+            </Typography>
+            <Tooltip
+              title="Filter customers by their account status: Active, Inactive, or Deleted"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <FormControl
             size="small"
             fullWidth
@@ -311,6 +423,51 @@ const CustomerList = () => {
               <MenuItem value={3}>Deleted</MenuItem>
             </Select>
           </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Actions
+            </Typography>
+            <Tooltip
+              title="Click to apply the selected filters to the customer list"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleApplyFilters}
+            sx={{
+              height: "40px",
+              textTransform: "none",
+              fontFamily: "Outfit",
+              fontWeight: 500,
+              fontSize: "15px",
+              borderRadius: 2,
+            }}
+          >
+            Apply Filters
+          </Button>
         </Grid>
       </Grid>
 
@@ -408,15 +565,7 @@ const CustomerList = () => {
             >
               <Button
                 variant="outlined"
-                onClick={() =>
-                  loadData(
-                    search,
-                    pageSize,
-                    Number(pageNumber) - 1,
-                    hashedNumber,
-                    statusFilter
-                  )
-                }
+                onClick={() => setPageNumber(Number(pageNumber) - 1)}
                 disabled={Number(pageNumber) === 1}
               >
                 ← Previous
@@ -427,7 +576,6 @@ const CustomerList = () => {
                 page={Number(pageNumber)}
                 onChange={(_, value) => {
                   setPageNumber(value);
-                  loadData(search, pageSize, value, hashedNumber, statusFilter);
                 }}
                 shape="rounded"
                 siblingCount={1}
@@ -446,15 +594,7 @@ const CustomerList = () => {
 
               <Button
                 variant="outlined"
-                onClick={() =>
-                  loadData(
-                    search,
-                    pageSize,
-                    Number(pageNumber) + 1,
-                    hashedNumber,
-                    statusFilter
-                  )
-                }
+                onClick={() => setPageNumber(Number(pageNumber) + 1)}
                 disabled={Number(pageNumber) === Number(totalPages)}
               >
                 Next →
