@@ -32,6 +32,8 @@ interface Wallet {
   total_balance: number;
   available_balance: number;
   locked_balance: number;
+  total_earned_points?: number;
+  total_burned_points?: number;
 }
 
 interface WalletTransaction {
@@ -60,6 +62,8 @@ export default function WalletDetailDrawer({
   selectedBU,
   fetchWallets,
 }: Props) {
+  console.log("wallet", wallet);
+
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [txDrawerOpen, setTxDrawerOpen] = useState(false);
@@ -73,6 +77,14 @@ export default function WalletDetailDrawer({
   const [page, setPage] = useState(1);
   const pageSize = 7;
   const [totalPages, setTotalPages] = useState(1);
+
+  // Update totals whenever wallet changes
+  useEffect(() => {
+    if (wallet) {
+      setTotalEarn(wallet?.total_earned_points || 0);
+      setTotalBurn(wallet?.total_burned_points || 0);
+    }
+  }, [wallet]);
 
   useEffect(() => {
     if (wallet?.id) {
@@ -108,8 +120,6 @@ export default function WalletDetailDrawer({
         },
         { totalEarnAmount: 0, totalBurnAmount: 0 }
       );
-      setTotalEarn(totalEarnAmount);
-      setTotalBurn(totalBurnAmount);
     } catch (err) {
       toast.error("Failed to load transactions");
     } finally {
@@ -185,7 +195,7 @@ export default function WalletDetailDrawer({
 
               <Box display="flex" justifyContent="space-between" mt="auto">
                 <Typography variant="body1" fontWeight={600}>
-                  Total Points
+                  Total Balance
                 </Typography>
                 <Typography variant="h6" fontWeight={700} color="primary.main">
                   {wallet?.total_balance ?? 0}

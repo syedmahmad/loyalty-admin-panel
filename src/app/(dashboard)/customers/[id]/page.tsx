@@ -2,6 +2,7 @@
 import GoBackButton from "@/components/buttons/GoBackButton";
 import { GET, POST } from "@/utils/AxiosUtility";
 import SearchIcon from "@mui/icons-material/Search";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   Box,
   Button,
@@ -19,6 +20,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -84,7 +86,7 @@ export default function CustomerDetail() {
       setCustomerUuid(response.data.uuid);
     } catch (error: any) {
       // console.error("Error fetching customer details:", error);
-      const msg = error.response.data.message || "Customer not found";
+      const msg = error?.response?.data?.message || "Customer not found";
       toast.error(msg);
       router.push("/customers");
     } finally {
@@ -276,6 +278,33 @@ export default function CustomerDetail() {
         </Typography>
 
         <Box mb={2} mt={1}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search Points Transactions
+            </Typography>
+            <Tooltip
+              title="Search for point transactions by description"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             placeholder="Search"
             value={pointSearchValue}
@@ -439,6 +468,33 @@ export default function CustomerDetail() {
         </Typography>
 
         <Box mb={2} mt={1}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search Coupon Usage History
+            </Typography>
+            <Tooltip
+              title="Search for used coupons by invoice number"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             placeholder="Search"
             value={usageCouponSearchQuery}
@@ -598,6 +654,33 @@ export default function CustomerDetail() {
         </Typography>
 
         <Box mb={2} mt={1}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search Assigned Coupons
+            </Typography>
+            <Tooltip
+              title="Search for assigned coupons by code"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             placeholder="Search"
             value={assignedCouponSearchQuery}

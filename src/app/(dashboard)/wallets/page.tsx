@@ -20,7 +20,14 @@ import {
   Paper,
   Button,
   Pagination,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Tooltip,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useEffect, useState } from "react";
 import { WalletService } from "./service/wallet.service";
 import WalletDetailDrawer from "./components/WalletDetailDrawer";
@@ -37,6 +44,8 @@ interface Wallet {
   total_balance: number;
   available_balance: number;
   locked_balance: number;
+  total_earned_points: number;
+  total_burned_points: number;
 }
 
 export default function WalletListPage() {
@@ -45,7 +54,7 @@ export default function WalletListPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
-  const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(7);
   const count = wallets.length;
@@ -54,6 +63,18 @@ export default function WalletListPage() {
   const [totalNumberOfPages, setTotalNumberOfPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
+
+  // Filter states
+  const [customerName, setCustomerName] = useState("");
+  const [customerStatus, setCustomerStatus] = useState<number | "">("");
+  const [hashedNumber, setHashedNumber] = useState("");
+
+  // Applied filter states (used for actual API calls)
+  const [appliedCustomerName, setAppliedCustomerName] = useState("");
+  const [appliedCustomerStatus, setAppliedCustomerStatus] = useState<
+    number | ""
+  >("");
+  const [appliedHashedNumber, setAppliedHashedNumber] = useState("");
 
   useEffect(() => {
     WalletService.getBusinessUnits().then((res) => {
@@ -64,20 +85,52 @@ export default function WalletListPage() {
 
   useEffect(() => {
     setPage(0);
-    fetchWallets(pageNumber);
+    if (selectedBU !== null) {
+      fetchWallets(1);
+    }
   }, [selectedBU]);
 
-  const fetchWallets = async (pageNumber: number = 1) => {
+  // Handle Apply Filters button click
+  const handleApplyFilters = () => {
+    setAppliedCustomerName(customerName);
+    setAppliedCustomerStatus(customerStatus);
+    setAppliedHashedNumber(hashedNumber);
+    setPageNumber(1); // Reset to first page when applying new filters
+  };
+
+  // Fetch data when applied filters or page number changes
+  useEffect(() => {
+    if (selectedBU !== null) {
+      fetchWallets(pageNumber, {
+        customer_name: appliedCustomerName,
+        customer_status: appliedCustomerStatus,
+        customer_hashed_number: appliedHashedNumber,
+      });
+    }
+  }, [
+    appliedCustomerName,
+    appliedCustomerStatus,
+    appliedHashedNumber,
+    pageNumber,
+  ]);
+
+  const fetchWallets = async (
+    pageNumber: number = 1,
+    filters?: {
+      customer_name?: string;
+      customer_status?: number | "";
+      customer_hashed_number?: string;
+    }
+  ) => {
     setLoading(true);
     try {
-      // if (!selectedBU) {
-      //   setWallets([]);
-      //   return;
-      // }
       const res = await WalletService.getWallets(
         pageNumber,
         pageSize,
-        selectedBU ?? undefined
+        selectedBU ?? undefined,
+        filters?.customer_name,
+        filters?.customer_status,
+        filters?.customer_hashed_number
       );
       setWallets(res?.data?.data || []);
       setTotalNumberOfPages(res?.data?.totalPages);
@@ -171,6 +224,190 @@ export default function WalletListPage() {
           ))}
         </Select>
       </Box>
+
+      {/* Filters Section */}
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Customer Name
+            </Typography>
+            <Tooltip
+              title="Search for wallets by customer name"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search by customer name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: "#fff",
+              borderRadius: 2,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Phone Number
+            </Typography>
+            <Tooltip
+              title="Filter customers by their phone number, you've to enter the complete number along with country code"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search by phone number"
+            value={hashedNumber}
+            onChange={(e) => setHashedNumber(e.target.value)}
+            sx={{
+              backgroundColor: "#fff",
+              borderRadius: 2,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Customer Status
+            </Typography>
+            <Tooltip
+              title="Filter wallets by customer account status: Active, Inactive, or Deleted"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
+          <FormControl fullWidth size="small">
+            <InputLabel>Customer Status</InputLabel>
+            <Select
+              value={customerStatus}
+              onChange={(e) => setCustomerStatus(e.target.value as number | "")}
+              label="Customer Status"
+              sx={{
+                backgroundColor: "#fff",
+                borderRadius: 2,
+              }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value={1}>Active</MenuItem>
+              <MenuItem value={2}>Inactive</MenuItem>
+              <MenuItem value={3}>Deleted</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Actions
+            </Typography>
+            <Tooltip
+              title="Click to apply the selected filters to the wallet list"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleApplyFilters}
+            sx={{
+              height: "32px",
+              textTransform: "none",
+              fontFamily: "Outfit",
+              fontWeight: 500,
+              fontSize: "15px",
+              borderRadius: 2,
+            }}
+          >
+            Apply Filters
+          </Button>
+        </Grid>
+      </Grid>
 
       {/* {loading ? (
         <Box textAlign="center">
@@ -325,7 +562,7 @@ export default function WalletListPage() {
             {/* Previous Button */}
             <Button
               variant="outlined"
-              onClick={() => fetchWallets(Number(pageNumber) - 1)}
+              onClick={() => setPageNumber(Number(pageNumber) - 1)}
               disabled={Number(pageNumber) === 1}
               sx={{
                 textTransform: "none",
@@ -343,7 +580,6 @@ export default function WalletListPage() {
               page={Number(pageNumber)}
               onChange={(_, value) => {
                 setPageNumber(value);
-                fetchWallets(value);
               }}
               shape="rounded"
               siblingCount={1}
@@ -363,7 +599,7 @@ export default function WalletListPage() {
             {/* Next Button */}
             <Button
               variant="outlined"
-              onClick={() => fetchWallets(Number(pageNumber) + 1)}
+              onClick={() => setPageNumber(Number(pageNumber) + 1)}
               disabled={Number(pageNumber) === Number(totalNumberOfPages)}
               sx={{
                 textTransform: "none",
