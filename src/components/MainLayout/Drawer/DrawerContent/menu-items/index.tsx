@@ -10,7 +10,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import WalletIcon from "@mui/icons-material/Wallet";
 import Groups3Icon from "@mui/icons-material/Groups3";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
+import NewReleasesIcon from "@mui/icons-material/NewReleases";
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -140,40 +140,40 @@ const menuItems: { items: NavItemType[] } = {
       privileges: [],
       icon: NewReleasesIcon,
     },
-    {
-      id: "campaigns",
-      title: "Campaigns",
-      type: "item",
-      url: "/campaigns/view",
-      // children: [
-      //   {
-      //    id: "view-campaigns",
-      //    title: "View",
-      //    type: "item",
-      //    url: "/campaigns/view",
-      //    privileges: [],
-      //    icon: FundViewOutlined,
-      //  },
-      //   {
-      //    id: "create-campaigns",
-      //    title: "Create",
-      //    type: "item",
-      //    url: "/campaigns/create",
-      //    privileges: [],
-      //    icon: FileAddFilled,
-      //   },
-      //   {
-      //    id: "edit-campaigns",
-      //    title: "Edit",
-      //    type: "item",
-      //    url: "/campaigns/edit",
-      //    privileges: [],
-      //    icon: EditFilled,
-      //   }
-      // ],
-      privileges: [],
-      icon: CampaignIcon,
-    },
+    // {
+    //   id: "campaigns",
+    //   title: "Campaigns",
+    //   type: "item",
+    //   url: "/campaigns/view",
+    //   // children: [
+    //   //   {
+    //   //    id: "view-campaigns",
+    //   //    title: "View",
+    //   //    type: "item",
+    //   //    url: "/campaigns/view",
+    //   //    privileges: [],
+    //   //    icon: FundViewOutlined,
+    //   //  },
+    //   //   {
+    //   //    id: "create-campaigns",
+    //   //    title: "Create",
+    //   //    type: "item",
+    //   //    url: "/campaigns/create",
+    //   //    privileges: [],
+    //   //    icon: FileAddFilled,
+    //   //   },
+    //   //   {
+    //   //    id: "edit-campaigns",
+    //   //    title: "Edit",
+    //   //    type: "item",
+    //   //    url: "/campaigns/edit",
+    //   //    privileges: [],
+    //   //    icon: EditFilled,
+    //   //   }
+    //   // ],
+    //   privileges: [],
+    //   icon: CampaignIcon,
+    // },
     // {
     //   id: "rewards",
     //   title: "Rewards",
