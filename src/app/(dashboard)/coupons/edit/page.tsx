@@ -1427,12 +1427,12 @@ const EditCouponForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                               }
                                               sx={{ minWidth: "95%" }}
                                             >
-                                              {tiers?.map((tier) => (
+                                              {tiers?.map((tier: any) => (
                                                 <MenuItem
                                                   key={tier.id}
                                                   value={tier.id}
                                                 >
-                                                  {tier.name} (
+                                                  {tier?.locales[0]?.name} (
                                                   {tier?.business_unit?.name})
                                                 </MenuItem>
                                               ))}
