@@ -494,7 +494,18 @@ const CustomerList = () => {
                 </TableHead>
                 <TableBody>
                   {customers.map((c) => (
-                    <TableRow key={c.id} sx={{ cursor: "pointer" }}>
+                    <TableRow
+                      key={c.id}
+                      sx={{
+                        cursor: "pointer",
+                        ...(c.status === 3 && {
+                          backgroundColor: "#ffebee",
+                          "&:hover": {
+                            backgroundColor: "#ffcdd2",
+                          },
+                        }),
+                      }}
+                    >
                       <TableCell>{c.name}</TableCell>
                       <TableCell
                         sx={{
@@ -522,7 +533,9 @@ const CustomerList = () => {
                           ? "Active"
                           : c.status === 2
                           ? "Inactive"
-                          : "Deleted"}
+                          : c.status === 3
+                          ? "Deleted"
+                          : "Unknown"}
                       </TableCell>
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
                       <TableCell>{c?.tenant?.name || "—"}</TableCell>

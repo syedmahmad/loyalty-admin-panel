@@ -44,6 +44,8 @@ interface Wallet {
   total_balance: number;
   available_balance: number;
   locked_balance: number;
+  total_earned_points: number;
+  total_burned_points: number;
 }
 
 export default function WalletListPage() {
