@@ -774,6 +774,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                 tooltip="Triggering event like signup or birthday."
               />
               <TextField
+                disabled
                 fullWidth
                 value={form.event_triggerer}
                 onChange={(e) =>
