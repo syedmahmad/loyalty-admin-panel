@@ -70,16 +70,18 @@ export default function CustomerDetail() {
   }) => {
     try {
       const response: any = await GET(
-        `/customers/${customerId}/details?pointPage=${pointPage}&couponPage=${couponPage}&pageSize=${pageSize}&point-search-query=${pointSearchValue}&coupon-search-query=${couponSearchValue}`
+        `/customers/${customerId}/details?pointPage=${pointPage}&couponPage=${couponPage}&pageSize=${pageSize}&point-search-query=${pointSearchValue}&coupon-search-query=${couponSearchValue}`,
       );
       setCustomer(response.data);
       setPointTotalPages(
-        Math.ceil((response.data?.transactions?.total || 0) / pageSize)
+        Math.ceil((response.data?.transactions?.total || 0) / pageSize),
       );
       setPointPage(Number(response.data?.transactions?.page));
 
       setCouponTotalPages(
-        Math.ceil((response.data?.couponTransactionInfo?.total || 0) / pageSize)
+        Math.ceil(
+          (response.data?.couponTransactionInfo?.total || 0) / pageSize,
+        ),
       );
       setCouponPage(Number(response.data?.couponTransactionInfo?.page));
       setbUId(response.data?.wallet?.business_unit.id);
@@ -99,7 +101,7 @@ export default function CustomerDetail() {
     bUId: number,
     assignedCouponPage: number,
     pageSize: number,
-    assignedCouponSearchQuery: string
+    assignedCouponSearchQuery: string,
   ) => {
     try {
       const response: any = await POST(
@@ -109,7 +111,7 @@ export default function CustomerDetail() {
           bUId,
           page: assignedCouponPage,
           limit: pageSize,
-        }
+        },
       );
       setAssignedCoupons(response?.data?.result?.data || []);
       setAssignedCouponTotalPages(response?.data?.result?.totalPages);
@@ -124,7 +126,7 @@ export default function CustomerDetail() {
     bUId: number,
     usageCouponPage: number,
     pageSize: number,
-    usageCouponSearchQuery: string
+    usageCouponSearchQuery: string,
   ) => {
     try {
       const response: any = await POST(
@@ -134,7 +136,7 @@ export default function CustomerDetail() {
           bUId,
           page: usageCouponPage,
           limit: pageSize,
-        }
+        },
       );
       setUsageCoupons(response?.data?.result?.data || []);
       setUsageCouponTotalPages(response?.data?.result?.totalPages);
@@ -162,7 +164,7 @@ export default function CustomerDetail() {
         bUId,
         assignedCouponPage,
         pageSize,
-        assignedCouponSearchQuery
+        assignedCouponSearchQuery,
       );
 
       fetchUsageCouponHistory(
@@ -170,7 +172,7 @@ export default function CustomerDetail() {
         bUId,
         usageCouponPage,
         pageSize,
-        usageCouponSearchQuery
+        usageCouponSearchQuery,
       );
     }
   }, [bUId, customerUuid, assignedCouponSearchQuery, usageCouponSearchQuery]);
@@ -346,6 +348,7 @@ export default function CustomerDetail() {
                 <TableCell>Amount</TableCell>
                 <TableCell>Points</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell>Date</TableCell>
               </TableRow>
             </TableHead>
@@ -358,6 +361,19 @@ export default function CustomerDetail() {
                   <TableCell>
                     <Chip
                       label={point.type}
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        backgroundColor: "#fff",
+                        fontFamily: "Outfit",
+                        fontWeight: 550,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={point.status}
                       color="primary"
                       size="small"
                       variant="outlined"
@@ -574,7 +590,7 @@ export default function CustomerDetail() {
                   bUId,
                   usageCouponPage - 1,
                   pageSize,
-                  usageCouponSearchQuery
+                  usageCouponSearchQuery,
                 );
               }
             }}
@@ -600,7 +616,7 @@ export default function CustomerDetail() {
                   bUId,
                   value,
                   pageSize,
-                  usageCouponSearchQuery
+                  usageCouponSearchQuery,
                 );
               }
             }}
@@ -629,7 +645,7 @@ export default function CustomerDetail() {
                   bUId,
                   usageCouponPage + 1,
                   pageSize,
-                  usageCouponSearchQuery
+                  usageCouponSearchQuery,
                 );
               }
             }}
@@ -772,7 +788,7 @@ export default function CustomerDetail() {
                   bUId,
                   assignedCouponPage - 1,
                   pageSize,
-                  assignedCouponSearchQuery
+                  assignedCouponSearchQuery,
                 );
               }
             }}
@@ -798,7 +814,7 @@ export default function CustomerDetail() {
                   bUId,
                   value,
                   pageSize,
-                  assignedCouponSearchQuery
+                  assignedCouponSearchQuery,
                 );
               }
             }}
@@ -827,7 +843,7 @@ export default function CustomerDetail() {
                   bUId,
                   assignedCouponPage + 1,
                   pageSize,
-                  assignedCouponSearchQuery
+                  assignedCouponSearchQuery,
                 );
               }
             }}
