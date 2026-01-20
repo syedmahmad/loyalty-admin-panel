@@ -99,9 +99,22 @@ const RuleList = () => {
       query += query ? `&bu=${selectedBU}` : `?bu=${selectedBU}`;
     }
 
-    const res = await GET(`/rules/${clientInfo.id}${query}`);
-    setRules(res?.data?.rules || []);
-    setLoading(false);
+    try {
+      const res = await GET(`/rules/${clientInfo.id}${query}`);
+      setRules(res?.data?.rules || []);
+      setLoading(false);
+    } catch (err: any) {
+      if (!toast.isActive("fetch-rules-error")) {
+        toast.error(
+          err?.response?.data?.message ||
+            "An error occurred while fetching rules",
+          {
+            toastId: "fetch-rules-error",
+          },
+        );
+      }
+      setLoading(false);
+    }
   };
 
   const fetchBusinessUnits = async () => {
@@ -155,7 +168,7 @@ const RuleList = () => {
   const handleChangePage = (_: unknown, newPage: number) =>
     setPage(newPage - 1);
   const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -371,7 +384,7 @@ const RuleList = () => {
                               handleClose();
                               if (selectedRule) {
                                 router.push(
-                                  `/rules/view?drawer=edit&uuid=${selectedRule.uuid}`
+                                  `/rules/view?drawer=edit&uuid=${selectedRule.uuid}`,
                                 );
                               }
                             }}
@@ -517,17 +530,17 @@ const RuleList = () => {
                         </TableCell>
                         <TableCell>
                           {rule.rule_type === "burn"
-                            ? rule.max_redeemption_points_limit ?? "-"
+                            ? (rule.max_redeemption_points_limit ?? "-")
                             : "-"}
                         </TableCell>
                         <TableCell>
                           {rule.rule_type === "burn"
-                            ? rule.points_conversion_factor ?? "-"
+                            ? (rule.points_conversion_factor ?? "-")
                             : "-"}
                         </TableCell>
                         <TableCell>
                           {rule.rule_type === "burn"
-                            ? rule.max_burn_percent_on_invoice ?? "-"
+                            ? (rule.max_burn_percent_on_invoice ?? "-")
                             : "-"}
                         </TableCell>
                         <TableCell align="right">
@@ -563,7 +576,7 @@ const RuleList = () => {
                                 handleClose();
                                 if (selectedRule) {
                                   router.push(
-                                    `/rules/view?drawer=edit&uuid=${selectedRule.uuid}`
+                                    `/rules/view?drawer=edit&uuid=${selectedRule.uuid}`,
                                   );
                                 }
                               }}

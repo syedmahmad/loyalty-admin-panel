@@ -37,12 +37,13 @@ type Customer = {
   external_customer_id: string;
   name: string;
   email: string;
-  phone: string;
+  hashed_number: string;
   gender: string;
   DOB: string;
   status: number;
   city: string;
   address: string;
+  created_at: string;
   business_unit: {
     name: string;
     tenant: {
@@ -62,7 +63,7 @@ const fetchCustomers = async (
   pageSize: number,
   pageNumber: number,
   hashedNumber = "",
-  status?: number
+  status?: number,
 ): Promise<FetchCustomersResponse> => {
   try {
     const clientInfoRaw = localStorage.getItem("client-info");
@@ -73,7 +74,7 @@ const fetchCustomers = async (
     let url = `/customers/${
       clientInfo.id
     }?page=${pageNumber}&pageSize=${pageSize}&search=${encodeURIComponent(
-      search
+      search,
     )}`;
 
     if (hashedNumber) {
@@ -96,7 +97,7 @@ const fetchCustomers = async (
           "An error occurred while fetching customers",
         {
           toastId: "fetch-customers-error",
-        }
+        },
       );
     }
 
@@ -120,14 +121,14 @@ const CustomerList = () => {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [appliedHashedNumber, setAppliedHashedNumber] = useState("");
   const [appliedStatusFilter, setAppliedStatusFilter] = useState<number | "">(
-    ""
+    "",
   );
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
+    null,
   );
 
   const [totalPages, setTotalPages] = useState(1);
@@ -144,7 +145,7 @@ const CustomerList = () => {
     pageSize: number,
     pageNumber: number,
     hashedNumberParam = "",
-    statusParam?: number | ""
+    statusParam?: number | "",
   ) => {
     setLoading(true);
     try {
@@ -154,7 +155,7 @@ const CustomerList = () => {
         pageSize,
         pageNumber,
         hashedNumberParam,
-        finalStatus
+        finalStatus,
       );
       setCustomers(data?.data || []);
       setTotalPages(Math.ceil((data?.total || 0) / pageSize));
@@ -179,7 +180,7 @@ const CustomerList = () => {
       pageSize,
       1,
       appliedHashedNumber,
-      appliedStatusFilter
+      appliedStatusFilter,
     );
   }, []);
 
@@ -190,18 +191,18 @@ const CustomerList = () => {
       pageSize,
       pageNumber,
       appliedHashedNumber,
-      appliedStatusFilter
+      appliedStatusFilter,
     );
   }, [appliedSearch, appliedHashedNumber, appliedStatusFilter, pageNumber]);
 
   const paginated = customers.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    page * rowsPerPage + rowsPerPage,
   );
 
   const handleMenuClick = (
     event: React.MouseEvent<HTMLElement>,
-    customer: Customer
+    customer: Customer,
   ) => {
     setAnchorEl(event.currentTarget);
     setSelectedCustomer(customer);
@@ -224,7 +225,7 @@ const CustomerList = () => {
         pageSize,
         pageNumber,
         appliedHashedNumber,
-        appliedStatusFilter
+        appliedStatusFilter,
       );
     } catch (error: any) {
       console.error("Failed to update status:", error);
@@ -483,12 +484,13 @@ const CustomerList = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
+                    {/* <TableCell>Email</TableCell> */}
                     <TableCell>Phone</TableCell>
                     <TableCell>City</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>BU</TableCell>
                     <TableCell>Tenant</TableCell>
+                    <TableCell>Created At</TableCell>
                     <TableCell align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -507,7 +509,7 @@ const CustomerList = () => {
                       }}
                     >
                       <TableCell>{c.name}</TableCell>
-                      <TableCell
+                      {/* <TableCell
                         sx={{
                           maxWidth: 150,
                           overflow: "hidden",
@@ -516,7 +518,7 @@ const CustomerList = () => {
                         }}
                       >
                         {c.email}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell
                         sx={{
                           maxWidth: 150,
@@ -525,20 +527,23 @@ const CustomerList = () => {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {c.phone}
+                        {c.hashed_number}
                       </TableCell>
                       <TableCell>{c.city}</TableCell>
                       <TableCell>
                         {c.status === 1
                           ? "Active"
                           : c.status === 2
-                          ? "Inactive"
-                          : c.status === 3
-                          ? "Deleted"
-                          : "Unknown"}
+                            ? "Inactive"
+                            : c.status === 3
+                              ? "Deleted"
+                              : "Unknown"}
                       </TableCell>
                       <TableCell>{c.business_unit?.name || "—"}</TableCell>
                       <TableCell>{c?.tenant?.name || "—"}</TableCell>
+                      <TableCell>
+                        {new Date(c?.created_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell align="center">
                         {c.status === 1 ? (
                           <IconButton
