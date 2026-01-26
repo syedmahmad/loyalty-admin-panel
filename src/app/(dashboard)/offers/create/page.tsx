@@ -40,6 +40,87 @@ import { toast } from "react-toastify";
 import * as Yup from "yup";
 import { BusinessUnit, OfferFormValues } from "../types";
 
+/* =====================================================
+   IMAGE RULES & HELPERS
+===================================================== */
+
+const IMAGE_RULES = {
+  desktop: {
+    minWidth: 1000,
+    minHeight: 450,
+    recommended: "1440 × 600 px",
+  },
+  mobile: {
+    minWidth: 700,
+    minHeight: 900,
+    recommended: "750 × 1000 px",
+  },
+};
+
+const sanitizeFileName = (file: File) => {
+  const ext = file.name.split(".").pop();
+  const baseName = file.name
+    .replace(/\.[^/.]+$/, "")
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .toLowerCase();
+
+  return new File([file], `${baseName}.${ext}`, {
+    type: file.type,
+    lastModified: Date.now(),
+  });
+};
+
+const convertWebpToPng = (file: File): Promise<File> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject("Canvas not supported");
+
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) return reject("Conversion failed");
+
+        resolve(
+          new File([blob], file.name.replace(/\.webp$/i, ".png"), {
+            type: "image/png",
+          })
+        );
+      }, "image/png");
+    };
+  });
+
+  const validateImageDimensions = (
+    file: File,
+    minWidth: number,
+    minHeight: number,
+    typeLabel: string
+  ): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+  
+      img.onload = () => {
+        if (img.width < minWidth || img.height < minHeight) {
+          reject(
+            `Image is too small for ${typeLabel}.
+  Minimum required: ${minWidth}×${minHeight}px.
+  Uploaded: ${img.width}×${img.height}px`
+          );
+        } else {
+          resolve();
+        }
+      };
+    }); 
+
 const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const [loading, setLoading] = useState(false);
   const [businessUnits, setBusinessUnits] = useState<BusinessUnit[]>([]);
@@ -597,38 +678,81 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
   const handleDeviceImageUpload = useCallback(
     async (file: File, device: "desktop" | "mobile", langId: string) => {
-      if (!file) return;
-
-      const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
-      const allowedExtensions = ["avif", "png", "jpg"];
-      const isValidType = allowedExtensions.includes(fileExtension);
-
-      if (!isValidType) {
-        toast.error("Please upload a valid image file (JPG or PNG)");
-        // Reset the file input
-        if (device && langId) {
-          if (device === "desktop" && desktopFileInputRefs.current[langId]) {
-            desktopFileInputRefs.current[langId]!.value = "";
-          }
-          if (device === "mobile" && mobileFileInputRefs.current[langId]) {
-            mobileFileInputRefs.current[langId]!.value = "";
-          }
+      try {
+        let processedFile = file;
+  
+        // 1️⃣ webp → png
+        if (file.type === "image/webp") {
+          processedFile = await convertWebpToPng(file);
         }
-        return;
+  
+        // 2️⃣ sanitize filename
+        processedFile = sanitizeFileName(processedFile);
+  
+        // 3️⃣ validate dimensions
+        const rule = IMAGE_RULES[device];
+        await validateImageDimensions(
+          processedFile,
+          rule.minWidth,
+          rule.minHeight,
+          device === "desktop" ? "Desktop image" : "Mobile image"
+        );
+  
+        setFile(processedFile);
+        setDevice(device);
+        setLangId(langId);
+        setDeviceImageUploadPreview(true);
+      } catch (err: any) {
+        toast.error(err.message || String(err));
+  
+        // reset input so same file can be re-selected
+        if (device === "desktop" && desktopFileInputRefs.current[langId]) {
+          desktopFileInputRefs.current[langId]!.value = "";
+        }
+        if (device === "mobile" && mobileFileInputRefs.current[langId]) {
+          mobileFileInputRefs.current[langId]!.value = "";
+        }
       }
-      setFile(file);
-      setDevice(device);
-      setLangId(langId);
-      setDeviceImageUploadPreview(true);
     },
     []
   );
+  
+  // const handleDeviceImageUpload = useCallback(
+  //   async (file: File, device: "desktop" | "mobile", langId: string) => {
+  //     if (!file) return;
+
+  //     const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
+  //     const allowedExtensions = ["avif", "png", "jpg"];
+  //     const isValidType = allowedExtensions.includes(fileExtension);
+
+  //     if (!isValidType) {
+  //       toast.error("Please upload a valid image file (JPG or PNG)");
+  //       // Reset the file input
+  //       if (device && langId) {
+  //         if (device === "desktop" && desktopFileInputRefs.current[langId]) {
+  //           desktopFileInputRefs.current[langId]!.value = "";
+  //         }
+  //         if (device === "mobile" && mobileFileInputRefs.current[langId]) {
+  //           mobileFileInputRefs.current[langId]!.value = "";
+  //         }
+  //       }
+  //       return;
+  //     }
+  //     setFile(file);
+  //     setDevice(device);
+  //     setLangId(langId);
+  //     setDeviceImageUploadPreview(true);
+  //   },
+  //   []
+  // );
 
   const handleDeviceImageValidationAccept = useCallback(
     async (file: File, device: string, langId: string, aspectRatio: number) => {
       setDeviceImageUploadPreview(false);
       try {
-        let processedFile: File | Blob = file;
+        // let processedFile: File | Blob = file;
+        let processedFile: File | Blob = sanitizeFileName(file);
+
         if (file.size > 5 * 1024 * 1024) {
           const compressedBlob = await compressImage(file, 5, 1920);
           processedFile = new File([compressedBlob], file.name, {
@@ -1396,8 +1520,15 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               return (
                 <Grid item xs={12} key={index}>
                   <Typography variant="subtitle1" gutterBottom>
-                    {`Desktop image (${singleLanguage.name})`}
+                    {`Desktop image (${singleLanguage.name})`}{" "}
+                    <Typography component="span" fontSize={12} color="text.secondary">
+                      – Recommended {IMAGE_RULES.desktop.recommended} (min {IMAGE_RULES.desktop.minWidth}×{IMAGE_RULES.desktop.minHeight}px)
+                    </Typography>
                   </Typography>
+
+                  {/* <Typography variant="subtitle1" gutterBottom>
+                    {`Desktop image (${singleLanguage.name})`}
+                  </Typography> */}
                   <Box display="flex" alignItems="center" gap={2}>
                     <Button
                       variant="outlined"
@@ -1489,8 +1620,15 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               return (
                 <Grid item xs={12} key={index}>
                   <Typography variant="subtitle1" gutterBottom>
-                    {`Mobile image (${singleLanguage.name})`}
+                    {`Mobile image (${singleLanguage.name})`}{" "}
+                    <Typography component="span" fontSize={12} color="text.secondary">
+                      – Recommended {IMAGE_RULES.mobile.recommended} (min {IMAGE_RULES.mobile.minWidth}×{IMAGE_RULES.mobile.minHeight}px)
+                    </Typography>
                   </Typography>
+
+                  {/* <Typography variant="subtitle1" gutterBottom>
+                    {`Mobile image (${singleLanguage.name})`}
+                  </Typography> */}
                   <Box display="flex" alignItems="center" gap={2}>
                     <Button
                       variant="outlined"

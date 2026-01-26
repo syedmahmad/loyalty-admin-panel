@@ -27,7 +27,7 @@ interface ImageUploadPreviewDialogProps {
   langId?: string;
 }
 
-const DEFAULT_ALLOWED_TYPES = ["svg", "avif", "png", "jpg"];
+const DEFAULT_ALLOWED_TYPES = ["svg", "avif", "png", "jpg", "jpeg"];
 
 export default function ImageUploadPreviewDialog({
   open,
