@@ -46,14 +46,14 @@ import { BusinessUnit, OfferFormValues } from "../types";
 
 const IMAGE_RULES = {
   desktop: {
-    minWidth: 1000,
-    minHeight: 450,
-    recommended: "1440 × 600 px",
+    minWidth: 800,
+    minHeight: 600,
+    recommended: "800 × 600 px",
   },
   mobile: {
-    minWidth: 700,
-    minHeight: 900,
-    recommended: "750 × 1000 px",
+    minWidth: 640,
+    minHeight: 360,
+    recommended: "640 × 360 px",
   },
 };
 
@@ -92,34 +92,34 @@ const convertWebpToPng = (file: File): Promise<File> =>
         resolve(
           new File([blob], file.name.replace(/\.webp$/i, ".png"), {
             type: "image/png",
-          })
+          }),
         );
       }, "image/png");
     };
   });
 
-  const validateImageDimensions = (
-    file: File,
-    minWidth: number,
-    minHeight: number,
-    typeLabel: string
-  ): Promise<void> =>
-    new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-  
-      img.onload = () => {
-        if (img.width < minWidth || img.height < minHeight) {
-          reject(
-            `Image is too small for ${typeLabel}.
+const validateImageDimensions = (
+  file: File,
+  minWidth: number,
+  minHeight: number,
+  typeLabel: string,
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+
+    img.onload = () => {
+      if (img.width < minWidth || img.height < minHeight) {
+        reject(
+          `Image is too small for ${typeLabel}.
   Minimum required: ${minWidth}×${minHeight}px.
-  Uploaded: ${img.width}×${img.height}px`
-          );
-        } else {
-          resolve();
-        }
-      };
-    }); 
+  Uploaded: ${img.width}×${img.height}px`,
+        );
+      } else {
+        resolve();
+      }
+    };
+  });
 
 const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const [loading, setLoading] = useState(false);
@@ -192,7 +192,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
   const created_by =
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0
+      ? (JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0)
       : 0;
 
   const formik = useFormik<OfferFormValues>({
@@ -218,19 +218,19 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
               lang.id,
               Yup.object().shape({
                 title: Yup.string().required(
-                  `Offer title (${lang.name}) is required`
+                  `Offer title (${lang.name}) is required`,
                 ),
                 subtitle: Yup.string().required(
-                  `Offer subtitle (${lang.name}) is required`
+                  `Offer subtitle (${lang.name}) is required`,
                 ),
               }),
-            ])
-          )
+            ]),
+          ),
         ),
       }),
       business_unit_ids: Yup.array().min(
         1,
-        "Select at least one business unit"
+        "Select at least one business unit",
       ),
       date_from: Yup.date().required("Start date is required"),
       date_to: Yup.date()
@@ -277,11 +277,11 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
           languageResponse?.languages?.map((cl: any) => cl?.language) || [];
 
         const english = allLanguages.find(
-          (lang: { code: string }) => lang.code === "en"
+          (lang: { code: string }) => lang.code === "en",
         );
 
         const others = allLanguages.filter(
-          (lang: { code: string }) => lang.code !== "en"
+          (lang: { code: string }) => lang.code !== "en",
         );
         const englishFirst = english ? [english, ...others] : allLanguages;
         setLanguages(englishFirst);
@@ -294,7 +294,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
   const handleSubmit = async (
     values: OfferFormValues,
-    resetForm: () => void
+    resetForm: () => void,
   ) => {
     setLoading(true);
     const payloads = values.business_unit_ids.map((buId: number) => ({
@@ -321,7 +321,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
           benefits: benefitsInputs,
           desktop_image: localization.desktop_image,
           mobile_image: localization.mobile_image,
-        })
+        }),
       ),
       show_in_app: values.show_in_app,
       enable_coupons: values.enable_coupons,
@@ -343,7 +343,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
             message: error?.response?.data?.message || "Unknown error",
           };
         }
-      })
+      }),
     );
     const anyFailed = responses.some((res) => res?.status !== 201);
     if (anyFailed) {
@@ -444,7 +444,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,
-    iconType: string
+    iconType: string,
   ) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
@@ -462,8 +462,8 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       if (res?.data.success) {
         setBenefitsInputs((prev) =>
           prev.map((item, i) =>
-            i === index ? { ...item, icon: res?.data.uploaded_url } : item
-          )
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item,
+          ),
         );
       }
     } catch (err) {
@@ -476,7 +476,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const uploadImageToBucket = async (
     e: React.ChangeEvent<HTMLInputElement>,
     device: "desktop" | "mobile",
-    langId: string
+    langId: string,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -503,7 +503,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       if (res?.data.success) {
         setFieldValue(
           `offerBasicInfo.locales.${langId}.${device}_image`,
-          res.data.uploaded_url
+          res.data.uploaded_url,
         );
       }
     } catch (err) {
@@ -519,7 +519,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
   const removeFileFromBucket = async (
     url: string,
     device: "desktop" | "mobile",
-    langId: string
+    langId: string,
   ) => {
     setRemoving(true);
     try {
@@ -550,8 +550,8 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
         if (response?.status == 200 && response?.data.url) {
           setBenefitsInputs((prev) =>
             prev.map((benefit, i) =>
-              i === index ? { ...benefit, icon: "" } : benefit
-            )
+              i === index ? { ...benefit, icon: "" } : benefit,
+            ),
           );
           toast.success("File removed successfully!");
         }
@@ -566,7 +566,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
   const handleTranslateText = async (
     targetLang: string,
-    englishText: string
+    englishText: string,
   ): Promise<string> => {
     try {
       const payload = {
@@ -630,7 +630,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
       setBenefitsInputsImageIndex(index);
       setBenefitImageUploadPreview(true);
     },
-    []
+    [],
   );
 
   const handleBenefitImageValidationAccept = useCallback(
@@ -659,8 +659,8 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
             prev.map((item, i) =>
               i === imageIndex
                 ? { ...item, icon: res?.data.uploaded_url }
-                : item
-            )
+                : item,
+            ),
           );
         }
       } catch (error) {
@@ -673,38 +673,38 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
         }
       }
     },
-    [compressImage]
+    [compressImage],
   );
 
   const handleDeviceImageUpload = useCallback(
     async (file: File, device: "desktop" | "mobile", langId: string) => {
       try {
         let processedFile = file;
-  
+
         // 1️⃣ webp → png
         if (file.type === "image/webp") {
           processedFile = await convertWebpToPng(file);
         }
-  
+
         // 2️⃣ sanitize filename
         processedFile = sanitizeFileName(processedFile);
-  
+
         // 3️⃣ validate dimensions
         const rule = IMAGE_RULES[device];
         await validateImageDimensions(
           processedFile,
           rule.minWidth,
           rule.minHeight,
-          device === "desktop" ? "Desktop image" : "Mobile image"
+          device === "desktop" ? "Desktop image" : "Mobile image",
         );
-  
+
         setFile(processedFile);
         setDevice(device);
         setLangId(langId);
         setDeviceImageUploadPreview(true);
       } catch (err: any) {
         toast.error(err.message || String(err));
-  
+
         // reset input so same file can be re-selected
         if (device === "desktop" && desktopFileInputRefs.current[langId]) {
           desktopFileInputRefs.current[langId]!.value = "";
@@ -714,9 +714,9 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
         }
       }
     },
-    []
+    [],
   );
-  
+
   // const handleDeviceImageUpload = useCallback(
   //   async (file: File, device: "desktop" | "mobile", langId: string) => {
   //     if (!file) return;
@@ -776,7 +776,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
         if (res?.data.success) {
           setFieldValue(
             `offerBasicInfo.locales.${langId}.${device}_image`,
-            res.data.uploaded_url
+            res.data.uploaded_url,
           );
         }
       } catch (error) {
@@ -797,7 +797,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
         }
       }
     },
-    [compressImage]
+    [compressImage],
   );
 
   return (
@@ -819,7 +819,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                     value={values.offerBasicInfo.locales[langId]?.title || ""}
                     onChange={handleChange}
                     error={Boolean(
-                      errors.offerBasicInfo?.locales?.[langId]?.title
+                      errors.offerBasicInfo?.locales?.[langId]?.title,
                     )}
                     helperText={
                       errors.offerBasicInfo?.locales?.[langId]?.title
@@ -843,16 +843,16 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
                               const translatedText = await handleTranslateText(
                                 targetLang,
-                                englishText
+                                englishText,
                               );
                               setFieldValue(
                                 `offerBasicInfo.locales.${targetLangId}.title`,
-                                translatedText
+                                translatedText,
                               );
                             } catch (err) {
                               console.error(
                                 `Translation failed for ${targetLang}`,
-                                err
+                                err,
                               );
                             } finally {
                               setTranslationLoading((prev) => ({
@@ -897,7 +897,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                     }
                     onChange={handleChange}
                     error={Boolean(
-                      errors.offerBasicInfo?.locales?.[langId]?.subtitle
+                      errors.offerBasicInfo?.locales?.[langId]?.subtitle,
                     )}
                     helperText={
                       errors.offerBasicInfo?.locales?.[langId]?.subtitle
@@ -921,16 +921,16 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
                               const translatedText = await handleTranslateText(
                                 targetLang,
-                                englishText
+                                englishText,
                               );
                               setFieldValue(
                                 `offerBasicInfo.locales.${targetLangId}.subtitle`,
-                                translatedText
+                                translatedText,
                               );
                             } catch (err) {
                               console.error(
                                 `Translation failed for ${targetLang}`,
-                                err
+                                err,
                               );
                             } finally {
                               setTranslationLoading((prev) => ({
@@ -1055,12 +1055,12 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                 options={segments}
                 getOptionLabel={(option: any) => option.name}
                 value={segments.filter((s: any) =>
-                  values.customer_segment_ids.includes(s.id)
+                  values.customer_segment_ids.includes(s.id),
                 )}
                 onChange={(event, newValue) => {
                   setFieldValue(
                     "customer_segment_ids",
-                    newValue.map((item: any) => item.id)
+                    newValue.map((item: any) => item.id),
                   );
                 }}
                 renderInput={(params) => (
@@ -1069,7 +1069,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                     label="Customer Segments"
                     error={Boolean(
                       touched.customer_segment_ids &&
-                        errors.customer_segment_ids
+                      errors.customer_segment_ids,
                     )}
                     helperText={
                       touched.customer_segment_ids &&
@@ -1330,7 +1330,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           e.target.files?.[0] &&
                           handleBenefitImageUpload(
                             e.target.files[0],
-                            benefitIndex
+                            benefitIndex,
                           )
                         }
                       />
@@ -1361,7 +1361,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           onClick={() =>
                             removeBenefitIconFromBucket(
                               benefitIndex,
-                              input.icon
+                              input.icon,
                             )
                           }
                         >
@@ -1441,14 +1441,13 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                                 try {
                                   setTranslationLoading((prev) => ({
                                     ...prev,
-                                    [`benefit_${targetLang}_${benefitIndex}`]:
-                                      true,
+                                    [`benefit_${targetLang}_${benefitIndex}`]: true,
                                   }));
 
                                   const translatedText =
                                     await handleTranslateText(
                                       targetLang,
-                                      englishText
+                                      englishText,
                                     );
 
                                   const newInputs: any = [...benefitsInputs];
@@ -1458,18 +1457,17 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
                                   setFieldValue(
                                     `offerBasicInfo.locales.${targetLangId}.benefits`,
-                                    newInputs
+                                    newInputs,
                                   );
                                 } catch (err) {
                                   console.error(
                                     `Translation failed for ${targetLang}`,
-                                    err
+                                    err,
                                   );
                                 } finally {
                                   setTranslationLoading((prev) => ({
                                     ...prev,
-                                    [`benefit_${targetLang}_${benefitIndex}`]:
-                                      false,
+                                    [`benefit_${targetLang}_${benefitIndex}`]: false,
                                   }));
                                 }
                               }
@@ -1503,7 +1501,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                       color="error"
                       onClick={() => {
                         setBenefitsInputs(
-                          benefitsInputs.filter((_, i) => i !== benefitIndex)
+                          benefitsInputs.filter((_, i) => i !== benefitIndex),
                         );
                       }}
                     />
@@ -1521,8 +1519,14 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                 <Grid item xs={12} key={index}>
                   <Typography variant="subtitle1" gutterBottom>
                     {`Desktop image (${singleLanguage.name})`}{" "}
-                    <Typography component="span" fontSize={12} color="text.secondary">
-                      – Recommended {IMAGE_RULES.desktop.recommended} (min {IMAGE_RULES.desktop.minWidth}×{IMAGE_RULES.desktop.minHeight}px)
+                    <Typography
+                      component="span"
+                      fontSize={12}
+                      color="text.secondary"
+                    >
+                      – Recommended {IMAGE_RULES.desktop.recommended} (min{" "}
+                      {IMAGE_RULES.desktop.minWidth}×
+                      {IMAGE_RULES.desktop.minHeight}px)
                     </Typography>
                   </Typography>
 
@@ -1557,7 +1561,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           handleDeviceImageUpload(
                             e.target.files[0],
                             "desktop",
-                            langId
+                            langId,
                           )
                         }
                       />
@@ -1575,7 +1579,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           onClick={() =>
                             handleImageDetailPreview(
                               values.offerBasicInfo.locales[langId]
-                                ?.desktop_image
+                                ?.desktop_image,
                             )
                           }
                           sx={{
@@ -1599,7 +1603,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                               values.offerBasicInfo.locales[langId]
                                 ?.desktop_image,
                               "desktop",
-                              langId
+                              langId,
                             )
                           }
                         >
@@ -1621,8 +1625,14 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                 <Grid item xs={12} key={index}>
                   <Typography variant="subtitle1" gutterBottom>
                     {`Mobile image (${singleLanguage.name})`}{" "}
-                    <Typography component="span" fontSize={12} color="text.secondary">
-                      – Recommended {IMAGE_RULES.mobile.recommended} (min {IMAGE_RULES.mobile.minWidth}×{IMAGE_RULES.mobile.minHeight}px)
+                    <Typography
+                      component="span"
+                      fontSize={12}
+                      color="text.secondary"
+                    >
+                      – Recommended {IMAGE_RULES.mobile.recommended} (min{" "}
+                      {IMAGE_RULES.mobile.minWidth}×
+                      {IMAGE_RULES.mobile.minHeight}px)
                     </Typography>
                   </Typography>
 
@@ -1660,7 +1670,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           handleDeviceImageUpload(
                             e.target.files[0],
                             "mobile",
-                            langId
+                            langId,
                           )
                         }
                       />
@@ -1678,7 +1688,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                           onClick={() =>
                             handleImageDetailPreview(
                               values.offerBasicInfo.locales[langId]
-                                ?.mobile_image
+                                ?.mobile_image,
                             )
                           }
                           sx={{
@@ -1702,7 +1712,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                               values.offerBasicInfo.locales[langId]
                                 ?.mobile_image,
                               "mobile",
-                              langId
+                              langId,
                             )
                           }
                         >
@@ -1733,7 +1743,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                     setValue={(value: string) => {
                       setFieldValue(
                         `offerBasicInfo.locales.${langId}.description`,
-                        value
+                        value,
                       );
                     }}
                     language={langCode}
@@ -1757,17 +1767,17 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
                               const translatedText = await handleTranslateText(
                                 targetLang,
-                                englishText
+                                englishText,
                               );
 
                               setFieldValue(
                                 `offerBasicInfo.locales.${targetLangId}.description`,
-                                translatedText
+                                translatedText,
                               );
                             } catch (err) {
                               console.error(
                                 `Translation failed for ${targetLang}`,
-                                err
+                                err,
                               );
                             } finally {
                               setTranslationLoading((prev) => ({
@@ -1806,7 +1816,7 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
                     setValue={(value: string) => {
                       setFieldValue(
                         `offerBasicInfo.locales.${langId}.term_and_condition`,
-                        value
+                        value,
                       );
                     }}
                     language={langCode}
@@ -1830,17 +1840,17 @@ const CreateOfferForm = ({ onSuccess, handleDrawerWidth, drawerType }: any) => {
 
                               const translatedText = await handleTranslateText(
                                 targetLang,
-                                englishText
+                                englishText,
                               );
 
                               setFieldValue(
                                 `offerBasicInfo.locales.${targetLangId}.term_and_condition`,
-                                translatedText
+                                translatedText,
                               );
                             } catch (err) {
                               console.error(
                                 `Translation failed for ${targetLang}`,
-                                err
+                                err,
                               );
                             } finally {
                               setTranslationLoading((prev) => ({

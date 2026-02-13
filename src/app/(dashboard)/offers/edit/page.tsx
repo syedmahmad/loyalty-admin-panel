@@ -48,14 +48,14 @@ import { compressImage } from "@/utils/imageCompressor";
 
 const IMAGE_RULES = {
   desktop: {
-    minWidth: 1000,
-    minHeight: 450,
-    recommended: "1440 × 600 px",
+    minWidth: 800,
+    minHeight: 600,
+    recommended: "800 × 600 px",
   },
   mobile: {
-    minWidth: 700,
-    minHeight: 900,
-    recommended: "750 × 1000 px",
+    minWidth: 640,
+    minHeight: 360,
+    recommended: "640 × 360 px",
   },
 };
 
@@ -94,35 +94,34 @@ const convertWebpToPng = (file: File): Promise<File> =>
         resolve(
           new File([blob], file.name.replace(/\.webp$/i, ".png"), {
             type: "image/png",
-          })
+          }),
         );
       }, "image/png");
     };
   });
 
-  const validateImageDimensions = (
-    file: File,
-    minWidth: number,
-    minHeight: number,
-    typeLabel: string
-  ): Promise<void> =>
-    new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-  
-      img.onload = () => {
-        if (img.width < minWidth || img.height < minHeight) {
-          reject(
-            `Image is too small for ${typeLabel}.
-  Minimum required: ${minWidth}×${minHeight}px.
-  Uploaded: ${img.width}×${img.height}px`
-          );
-        } else {
-          resolve();
-        }
-      };
-    }); 
+const validateImageDimensions = (
+  file: File,
+  minWidth: number,
+  minHeight: number,
+  typeLabel: string,
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
 
+    img.onload = () => {
+      if (img.width < minWidth || img.height < minHeight) {
+        reject(
+          `Image is too small for ${typeLabel}.
+  Minimum required: ${minWidth}×${minHeight}px.
+  Uploaded: ${img.width}×${img.height}px`,
+        );
+      } else {
+        resolve();
+      }
+    };
+  });
 
 type Benefit = {
   name_en: string;
@@ -196,7 +195,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
   const userId =
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0
+      ? (JSON.parse(localStorage.getItem("client-info") || "{}")?.id ?? 0)
       : 0;
 
   const handleBenefitImageUpload = useCallback(
@@ -216,7 +215,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       setBenefitsInputsImageIndex(index);
       setBenefitImageUploadPreview(true);
     },
-    []
+    [],
   );
 
   const handleBenefitImageValidationAccept = useCallback(
@@ -245,8 +244,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
             prev.map((item, i) =>
               i === imageIndex
                 ? { ...item, icon: res?.data.uploaded_url }
-                : item
-            )
+                : item,
+            ),
           );
         }
       } catch (error) {
@@ -256,31 +255,31 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         setUploadingIndex(null);
       }
     },
-    [compressImage]
+    [compressImage],
   );
 
   const handleDeviceImageUpload = useCallback(
     async (file: File, device: "desktop" | "mobile", langId: string) => {
       try {
         let processedFile = file;
-  
+
         // 1️⃣ Convert webp → png
         if (file.type === "image/webp") {
           processedFile = await convertWebpToPng(file);
         }
-  
+
         // 2️⃣ Remove spaces & normalize filename
         processedFile = sanitizeFileName(processedFile);
-  
+
         // 3️⃣ Validate dimensions
         const rule = IMAGE_RULES[device];
         await validateImageDimensions(
           processedFile,
           rule.minWidth,
           rule.minHeight,
-          device === "desktop" ? "Desktop image" : "Mobile image"
+          device === "desktop" ? "Desktop image" : "Mobile image",
         );
-  
+
         setFile(processedFile);
         setDevice(device);
         setLangId(langId);
@@ -289,9 +288,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         toast.error(err.message || String(err));
       }
     },
-    []
+    [],
   );
-  
 
   // const handleDeviceImageUpload = useCallback(
   //   async (file: File, device: "desktop" | "mobile", langId: string) => {
@@ -343,7 +341,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         if (res?.data.success) {
           setFieldValue(
             `offerBasicInfo.locales.${langId}.${device}_image`,
-            res.data.uploaded_url
+            res.data.uploaded_url,
           );
         }
       } catch (error) {
@@ -356,7 +354,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         }));
       }
     },
-    [compressImage]
+    [compressImage],
   );
 
   useEffect(() => {
@@ -365,7 +363,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       const fetchTiersAndBUs = async (name: string = "") => {
         const [buRes] = await Promise.all([
           GET(
-            `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`
+            `/business-units/${clientInfo.id}?name=${encodeURIComponent(name)}`,
           ),
         ]);
         setBusinessUnits(buRes?.data || []);
@@ -389,11 +387,11 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
           languageResponse?.languages?.map((cl: any) => cl?.language) || [];
 
         const english = allLanguages.find(
-          (lang: { code: string }) => lang.code === "en"
+          (lang: { code: string }) => lang.code === "en",
         );
 
         const others = allLanguages.filter(
-          (lang: { code: string }) => lang.code !== "en"
+          (lang: { code: string }) => lang.code !== "en",
         );
         const englishFirst = english ? [english, ...others] : allLanguages;
         setLanguages(englishFirst);
@@ -468,19 +466,19 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
               lang.id,
               Yup.object().shape({
                 title: Yup.string().required(
-                  `Offer title (${lang.name}) is required`
+                  `Offer title (${lang.name}) is required`,
                 ),
                 subtitle: Yup.string().required(
-                  `Offer subtitle (${lang.name}) is required`
+                  `Offer subtitle (${lang.name}) is required`,
                 ),
               }),
-            ])
-          )
+            ]),
+          ),
         ),
       }),
       business_unit_ids: Yup.array().min(
         1,
-        "Select at least one business unit"
+        "Select at least one business unit",
       ),
       date_from: Yup.date().required("Start date is required"),
       date_to: Yup.date()
@@ -530,7 +528,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
           mobile_image: localization.mobile_image,
           // benefits: localization.benefits,
           benefits: benefitsInputs,
-        })
+        }),
       ),
       show_in_app: values.show_in_app,
       enable_coupons: values.enable_coupons,
@@ -549,11 +547,11 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
           const res = await POST(`/offers`, payload);
           return { success: true, status: res?.status };
         }
-      })
+      }),
     );
 
     const anyFailed = !responses.some(
-      (res) => res.status === 201 || res.status === 200
+      (res) => res.status === 201 || res.status === 200,
     );
 
     if (anyFailed) {
@@ -656,7 +654,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    index: number
+    index: number,
   ) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
@@ -671,8 +669,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       if (res?.data.success) {
         setBenefitsInputs((prev) =>
           prev.map((item, i) =>
-            i === index ? { ...item, icon: res?.data.uploaded_url } : item
-          )
+            i === index ? { ...item, icon: res?.data.uploaded_url } : item,
+          ),
         );
       }
     } catch (err) {
@@ -685,7 +683,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
   const uploadImageToBucket = async (
     e: React.ChangeEvent<HTMLInputElement>,
     device: "desktop" | "mobile",
-    langId: string
+    langId: string,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -712,7 +710,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
       if (res?.data.success) {
         setFieldValue(
           `offerBasicInfo.locales.${langId}.${device}_image`,
-          res.data.uploaded_url
+          res.data.uploaded_url,
         );
       }
     } catch (err) {
@@ -728,7 +726,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
   const removeFileFromBucket = async (
     url: string,
     device: "desktop" | "mobile",
-    langId: string
+    langId: string,
   ) => {
     setRemoving(true);
     try {
@@ -759,8 +757,8 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
         if (response?.status == 200 && response?.data.url) {
           setBenefitsInputs((prev) =>
             prev.map((benefit, i) =>
-              i === index ? { ...benefit, icon: "" } : benefit
-            )
+              i === index ? { ...benefit, icon: "" } : benefit,
+            ),
           );
           toast.success("File removed successfully!");
         }
@@ -775,7 +773,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
   const handleTranslateText = async (
     targetLang: string,
-    englishText: string
+    englishText: string,
   ): Promise<string> => {
     try {
       setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
@@ -842,7 +840,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       value={values.offerBasicInfo.locales[langId]?.title || ""}
                       onChange={handleChange}
                       error={Boolean(
-                        errors.offerBasicInfo?.locales?.[langId]?.title
+                        errors.offerBasicInfo?.locales?.[langId]?.title,
                       )}
                       helperText={
                         errors.offerBasicInfo?.locales?.[langId]?.title
@@ -867,16 +865,16 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 const translatedText =
                                   await handleTranslateText(
                                     targetLang,
-                                    englishText
+                                    englishText,
                                   );
                                 setFieldValue(
                                   `offerBasicInfo.locales.${targetLangId}.title`,
-                                  translatedText
+                                  translatedText,
                                 );
                               } catch (err) {
                                 console.error(
                                   `Translation failed for ${targetLang}`,
-                                  err
+                                  err,
                                 );
                               } finally {
                                 setTranslationLoading((prev) => ({
@@ -923,12 +921,12 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       }
                       onChange={handleChange}
                       error={Boolean(
-                        errors.offerBasicInfo?.locales?.[langId]?.subtitle
+                        errors.offerBasicInfo?.locales?.[langId]?.subtitle,
                       )}
                       helperText={
                         errors.offerBasicInfo?.locales?.[langId]?.subtitle
                           ? String(
-                              errors.offerBasicInfo.locales[langId].subtitle
+                              errors.offerBasicInfo.locales[langId].subtitle,
                             )
                           : ""
                       }
@@ -950,16 +948,16 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 const translatedText =
                                   await handleTranslateText(
                                     targetLang,
-                                    englishText
+                                    englishText,
                                   );
                                 setFieldValue(
                                   `offerBasicInfo.locales.${targetLangId}.subtitle`,
-                                  translatedText
+                                  translatedText,
                                 );
                               } catch (err) {
                                 console.error(
                                   `Translation failed for ${targetLang}`,
-                                  err
+                                  err,
                                 );
                               } finally {
                                 setTranslationLoading((prev) => ({
@@ -1096,16 +1094,16 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                 <Autocomplete
                   multiple
                   options={segments.filter(
-                    (s: any) => !values.customer_segment_ids.includes(s.id)
+                    (s: any) => !values.customer_segment_ids.includes(s.id),
                   )}
                   getOptionLabel={(option: any) => option.name}
                   value={segments.filter((s: any) =>
-                    values.customer_segment_ids.includes(s.id)
+                    values.customer_segment_ids.includes(s.id),
                   )}
                   onChange={(event, newValue) => {
                     setFieldValue(
                       "customer_segment_ids",
-                      newValue.map((item: any) => item.id)
+                      newValue.map((item: any) => item.id),
                     );
                   }}
                   renderInput={(params) => (
@@ -1114,7 +1112,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       label="Customer Segments"
                       error={Boolean(
                         touched.customer_segment_ids &&
-                          errors.customer_segment_ids
+                        errors.customer_segment_ids,
                       )}
                       helperText={
                         touched.customer_segment_ids &&
@@ -1374,7 +1372,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             e.target.files?.[0] &&
                             handleBenefitImageUpload(
                               e.target.files[0],
-                              benefitIndex
+                              benefitIndex,
                             )
                           }
                         />
@@ -1415,7 +1413,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             onClick={() =>
                               removeBenefitIconFromBucket(
                                 benefitIndex,
-                                input.icon
+                                input.icon,
                               )
                             }
                           >
@@ -1460,14 +1458,13 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                     try {
                                       setTranslationLoading((prev) => ({
                                         ...prev,
-                                        [`benefit_${targetLang}_${benefitIndex}`]:
-                                          true,
+                                        [`benefit_${targetLang}_${benefitIndex}`]: true,
                                       }));
 
                                       const translatedText =
                                         await handleTranslateText(
                                           targetLang,
-                                          englishText
+                                          englishText,
                                         );
 
                                       const newInputs: any = [
@@ -1479,18 +1476,17 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
 
                                       setFieldValue(
                                         `offerBasicInfo.locales.${targetLangId}.benefits`,
-                                        newInputs
+                                        newInputs,
                                       );
                                     } catch (err) {
                                       console.error(
                                         `Translation failed for ${targetLang}`,
-                                        err
+                                        err,
                                       );
                                     } finally {
                                       setTranslationLoading((prev) => ({
                                         ...prev,
-                                        [`benefit_${targetLang}_${benefitIndex}`]:
-                                          false,
+                                        [`benefit_${targetLang}_${benefitIndex}`]: false,
                                       }));
                                     }
                                   }
@@ -1525,7 +1521,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                         color="error"
                         onClick={() => {
                           setBenefitsInputs(
-                            benefitsInputs.filter((_, i) => i !== benefitIndex)
+                            benefitsInputs.filter((_, i) => i !== benefitIndex),
                           );
                         }}
                       />
@@ -1545,8 +1541,14 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                   <Grid item xs={12} key={index}>
                     <Typography variant="subtitle1" gutterBottom>
                       {`Desktop image (${singleLanguage.name})`}{" "}
-                      <Typography component="span" fontSize={12} color="text.secondary">
-                        – Recommended {IMAGE_RULES.desktop.recommended} (min {IMAGE_RULES.desktop.minWidth}×{IMAGE_RULES.desktop.minHeight}px)
+                      <Typography
+                        component="span"
+                        fontSize={12}
+                        color="text.secondary"
+                      >
+                        – Recommended {IMAGE_RULES.desktop.recommended} (min{" "}
+                        {IMAGE_RULES.desktop.minWidth}×
+                        {IMAGE_RULES.desktop.minHeight}px)
                       </Typography>
                     </Typography>
 
@@ -1581,7 +1583,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             handleDeviceImageUpload(
                               e.target.files[0],
                               "desktop",
-                              langId
+                              langId,
                             )
                           }
                         />
@@ -1600,7 +1602,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             onClick={() =>
                               handleImageDetailPreview(
                                 values.offerBasicInfo.locales[langId]
-                                  ?.desktop_image
+                                  ?.desktop_image,
                               )
                             }
                             sx={{
@@ -1624,7 +1626,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 values.offerBasicInfo.locales[langId]
                                   ?.desktop_image,
                                 "desktop",
-                                langId
+                                langId,
                               )
                             }
                           >
@@ -1650,8 +1652,14 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                     </Typography> */}
                     <Typography variant="subtitle1" gutterBottom>
                       {`Mobile image (${singleLanguage.name})`}{" "}
-                      <Typography component="span" fontSize={12} color="text.secondary">
-                        – Recommended {IMAGE_RULES.mobile.recommended} (min {IMAGE_RULES.mobile.minWidth}×{IMAGE_RULES.mobile.minHeight}px)
+                      <Typography
+                        component="span"
+                        fontSize={12}
+                        color="text.secondary"
+                      >
+                        – Recommended {IMAGE_RULES.mobile.recommended} (min{" "}
+                        {IMAGE_RULES.mobile.minWidth}×
+                        {IMAGE_RULES.mobile.minHeight}px)
                       </Typography>
                     </Typography>
 
@@ -1683,7 +1691,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             handleDeviceImageUpload(
                               e.target.files[0],
                               "mobile",
-                              langId
+                              langId,
                             )
                           }
                         />
@@ -1702,7 +1710,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                             onClick={() =>
                               handleImageDetailPreview(
                                 values.offerBasicInfo.locales[langId]
-                                  ?.mobile_image
+                                  ?.mobile_image,
                               )
                             }
                             sx={{
@@ -1726,7 +1734,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 values.offerBasicInfo.locales[langId]
                                   ?.mobile_image,
                                 "mobile",
-                                langId
+                                langId,
                               )
                             }
                           >
@@ -1758,7 +1766,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       setValue={(value: string) => {
                         setFieldValue(
                           `offerBasicInfo.locales.${langId}.description`,
-                          value
+                          value,
                         );
                       }}
                       language={langCode}
@@ -1783,17 +1791,17 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 const translatedText =
                                   await handleTranslateText(
                                     targetLang,
-                                    englishText
+                                    englishText,
                                   );
 
                                 setFieldValue(
                                   `offerBasicInfo.locales.${targetLangId}.description`,
-                                  translatedText
+                                  translatedText,
                                 );
                               } catch (err) {
                                 console.error(
                                   `Translation failed for ${targetLang}`,
-                                  err
+                                  err,
                                 );
                               } finally {
                                 setTranslationLoading((prev) => ({
@@ -1833,7 +1841,7 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                       setValue={(value: string) => {
                         setFieldValue(
                           `offerBasicInfo.locales.${langId}.term_and_condition`,
-                          value
+                          value,
                         );
                       }}
                       language={langCode}
@@ -1858,17 +1866,17 @@ const EditOfferForm = ({ onSuccess, handleDrawerWidth }: any) => {
                                 const translatedText =
                                   await handleTranslateText(
                                     targetLang,
-                                    englishText
+                                    englishText,
                                   );
 
                                 setFieldValue(
                                   `offerBasicInfo.locales.${targetLangId}.term_and_condition`,
-                                  translatedText
+                                  translatedText,
                                 );
                               } catch (err) {
                                 console.error(
                                   `Translation failed for ${targetLang}`,
-                                  err
+                                  err,
                                 );
                               } finally {
                                 setTranslationLoading((prev) => ({
