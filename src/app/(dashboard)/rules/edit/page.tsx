@@ -95,7 +95,7 @@ const RuleEdit = ({ onSuccess }: any) => {
     eOrName:
       | string
       | ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-    maybeValue?: any
+    maybeValue?: any,
   ) => {
     let name: string;
     let value: any;
@@ -178,12 +178,12 @@ const RuleEdit = ({ onSuccess }: any) => {
         rule.tiers.map((t: any) => ({
           tier_id: t.tier.id,
           point_conversion_rate: parseFloat(t.point_conversion_rate) || 1,
-        }))
+        })),
       );
       setDescription(rule.description || "");
       setDescriptionAr(rule.description_ar || "");
       const burnType: any = BURN_TYPES.find(
-        (singleBurnType) => singleBurnType.value === rule.burn_type
+        (singleBurnType) => singleBurnType.value === rule.burn_type,
       );
       // setSelectedBurnType(burnType);
     }
@@ -226,11 +226,11 @@ const RuleEdit = ({ onSuccess }: any) => {
           languageResponse?.languages?.map((cl: any) => cl?.language) || [];
 
         const english = allLanguages.find(
-          (lang: { code: string }) => lang.code === "en"
+          (lang: { code: string }) => lang.code === "en",
         );
 
         const others = allLanguages.filter(
-          (lang: { code: string }) => lang.code !== "en"
+          (lang: { code: string }) => lang.code !== "en",
         );
         const englishFirst = english ? [english, ...others] : allLanguages;
         setLanguages(englishFirst);
@@ -243,7 +243,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
   const handleSubmit = async () => {
     const allNamesValid = Object.values(form.ruleBasicInfo.locales).some(
-      (locale) => locale.name && locale.name.trim() !== ""
+      (locale) => locale.name && locale.name.trim() !== "",
     );
 
     if (!allNamesValid || !form.rule_type || !form.business_unit_id) {
@@ -274,20 +274,20 @@ const RuleEdit = ({ onSuccess }: any) => {
 
     for (const t of tiers) {
       const tierInfo = allTiers.find(
-        (singleTier) => singleTier.id === t.tier_id
+        (singleTier) => singleTier.id === t.tier_id,
       );
 
       const rate = Number(t.point_conversion_rate);
       if (isNaN(rate)) {
         toast.error(
-          `The point conversion rate for the ${tierInfo.name} tier is required.`
+          `The point conversion rate for the ${tierInfo.name} tier is required.`,
         );
         return;
       }
 
       if (rate < 0) {
         toast.error(
-          `The point conversion rate for the ${tierInfo.name} tier cannot be negative`
+          `The point conversion rate for the ${tierInfo.name} tier cannot be negative`,
         );
         return;
       }
@@ -343,7 +343,7 @@ const RuleEdit = ({ onSuccess }: any) => {
           languageId,
           name: localization.name,
           description: localization.description,
-        })
+        }),
       ),
     };
 
@@ -363,7 +363,7 @@ const RuleEdit = ({ onSuccess }: any) => {
             "An error occurred while editing the rule",
           {
             toastId: "fetch-rules-error",
-          }
+          },
         );
       }
     }
@@ -373,7 +373,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
   const handleConditionTypeDropdownChange = (
     index: number,
-    newValue: string
+    newValue: string,
   ) => {
     const updated = [...form.conditions];
     updated[index].condition_type = newValue;
@@ -393,8 +393,8 @@ const RuleEdit = ({ onSuccess }: any) => {
   const handleConversionRateChange = (tierId: number, value?: number) => {
     setTiers((prev) =>
       prev.map((t) =>
-        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
-      )
+        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t,
+      ),
     );
   };
 
@@ -403,7 +403,7 @@ const RuleEdit = ({ onSuccess }: any) => {
       try {
         const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
         const response = await GET(
-          `/tiers/${clientInfo.id}?bu=${form.business_unit_id}`
+          `/tiers/${clientInfo.id}?bu=${form.business_unit_id}`,
         );
         if (response?.status === 200) {
           setAllTiers(response.data.tiers || []);
@@ -422,7 +422,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
   const handleTranslateText = async (
     targetLang: string,
-    englishText: string
+    englishText: string,
   ): Promise<string> => {
     try {
       setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
@@ -504,7 +504,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
                               const translatedText = await handleTranslateText(
                                 targetLang,
-                                englishText
+                                englishText,
                               );
 
                               setForm((prev) => ({
@@ -525,7 +525,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                             } catch (err) {
                               console.error(
                                 `Translation failed for ${targetLang}`,
-                                err
+                                err,
                               );
                             } finally {
                               setTranslationLoading((prev) => ({
@@ -670,7 +670,32 @@ const RuleEdit = ({ onSuccess }: any) => {
                     }
                   />
 
-                  {/* Condition Operator */}
+                  {/* Any-checkbox */}
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={
+                          eachCondition.condition_operator === "ANY" ||
+                          eachCondition.condition_value === "*"
+                        }
+                        onChange={(e) => {
+                          const updated = [...form.conditions];
+                          if (e.target.checked) {
+                            updated[index].condition_operator = "ANY";
+                            updated[index].condition_value = "*";
+                          } else {
+                            // revert to empty so admin can set operator/value
+                            updated[index].condition_operator = "";
+                            updated[index].condition_value = "";
+                          }
+                          handleChange("conditions", updated);
+                        }}
+                      />
+                    }
+                    label="Any"
+                  />
+
+                  {/* Condition Operator (disabled when Any is checked) */}
                   <TextField
                     select
                     fullWidth
@@ -681,6 +706,10 @@ const RuleEdit = ({ onSuccess }: any) => {
                       updated[index].condition_operator = e.target.value;
                       handleChange("conditions", updated);
                     }}
+                    disabled={
+                      eachCondition.condition_operator === "ANY" ||
+                      eachCondition.condition_value === "*"
+                    }
                   >
                     <MenuItem value="==">Equal To (==)</MenuItem>
                     <MenuItem value="!=">Not Equal (!=)</MenuItem>
@@ -690,9 +719,15 @@ const RuleEdit = ({ onSuccess }: any) => {
                     </MenuItem>
                     <MenuItem value="<">Less Than (&lt;)</MenuItem>
                     <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+                    <MenuItem value="contains">Contains</MenuItem>
+                    <MenuItem value="not_contains">Does Not Contain</MenuItem>
+                    <MenuItem value="in">In</MenuItem>
+                    <MenuItem value="not_in">Not In</MenuItem>
+                    {/* optional operator alternative for explicit ANY */}
+                    <MenuItem value="ANY">Any</MenuItem>
                   </TextField>
 
-                  {/* Value */}
+                  {/* Value (disabled when Any is checked) */}
                   <TextField
                     label="Value"
                     fullWidth
@@ -702,9 +737,16 @@ const RuleEdit = ({ onSuccess }: any) => {
                       updated[index].condition_value = e.target.value;
                       handleChange("conditions", updated);
                     }}
+                    disabled={
+                      eachCondition.condition_operator === "ANY" ||
+                      eachCondition.condition_value === "*"
+                    }
+                    placeholder={
+                      eachCondition.condition_operator === "ANY" ? "*" : ""
+                    }
                   />
 
-                  {/* Add and Remove buttons */}
+                  {/* Add/Remove buttons unchanged */}
                   {index === 0 ? (
                     <IconButton
                       onClick={() => {
@@ -726,7 +768,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                     <IconButton
                       onClick={() => {
                         const updated = form.conditions.filter(
-                          (_, i) => i !== index
+                          (_, i) => i !== index,
                         );
                         handleChange("conditions", updated);
                       }}
@@ -1023,7 +1065,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                           const val = e.target.value;
                           handleConversionRateChange(
                             tier.id,
-                            val === "" ? undefined : Number(val)
+                            val === "" ? undefined : Number(val),
                           );
                         }}
                         sx={{ mb: 2 }}
@@ -1088,7 +1130,7 @@ const RuleEdit = ({ onSuccess }: any) => {
 
                               const translatedText = await handleTranslateText(
                                 targetLang,
-                                englishText
+                                englishText,
                               );
 
                               setForm((prev) => ({
@@ -1109,7 +1151,7 @@ const RuleEdit = ({ onSuccess }: any) => {
                             } catch (err) {
                               console.error(
                                 `Translation failed for ${targetLang}`,
-                                err
+                                err,
                               );
                             } finally {
                               setTranslationLoading((prev) => ({
