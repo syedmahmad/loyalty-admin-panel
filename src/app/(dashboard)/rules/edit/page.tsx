@@ -1012,73 +1012,73 @@ const RuleEdit = ({ onSuccess }: any) => {
               />
             </Grid>
           )}
-
-          <Grid
-            item
-            xs={12}
-            marginLeft="16px"
-            marginTop="16px"
-            border={`1px solid ${theme.palette.secondary.light}`}
-            borderRadius={2}
-            paddingRight={2}
-          >
-            <Typography variant="h4" color="primary">
-              Tiers
-            </Typography>
-            <Alert>
-              <Typography variant="body1">
-                You can select multiple tiers, once you select one you will see
-                point conversion factor, you can change that point conversion
-                fatcor for each tier customers so they get different benefits
-                according to there tier
+          {allTiers.length > 0 && (
+            <Grid
+              item
+              xs={12}
+              marginLeft="16px"
+              marginTop="16px"
+              border={`1px solid ${theme.palette.secondary.light}`}
+              borderRadius={2}
+              paddingRight={2}
+            >
+              <Typography variant="h4" color="primary">
+                Tiers
               </Typography>
-            </Alert>
-            <br />
+              <Alert>
+                <Typography variant="body1">
+                  You can select multiple tiers, once you select one you will
+                  see point conversion factor, you can change that point
+                  conversion fatcor for each tier customers so they get
+                  different benefits according to there tier
+                </Typography>
+              </Alert>
+              <br />
 
-            <Grid container>
-              {allTiers.map((tier, index) => {
-                const selected = isTierSelected(tier.id);
-                const current = tiers.find((t) => t.tier_id === tier.id);
-                return (
-                  <React.Fragment key={index}>
-                    <Grid item xs={4}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={selected}
-                            onChange={() => handleTierToggle(tier.id)}
-                          />
-                        }
-                        sx={{ mb: 2 }}
-                        label={tier?.locales?.[0]?.name}
-                      />
-                    </Grid>
+              <Grid container>
+                {allTiers.map((tier, index) => {
+                  const selected = isTierSelected(tier.id);
+                  const current = tiers.find((t) => t.tier_id === tier.id);
+                  return (
+                    <React.Fragment key={index}>
+                      <Grid item xs={4}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={selected}
+                              onChange={() => handleTierToggle(tier.id)}
+                            />
+                          }
+                          sx={{ mb: 2 }}
+                          label={tier?.locales?.[0]?.name}
+                        />
+                      </Grid>
 
-                    <Grid item xs={8}>
-                      {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="Point Conversion Rate"
-                        value={current?.point_conversion_rate ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleConversionRateChange(
-                            tier.id,
-                            val === "" ? undefined : Number(val),
-                          );
-                        }}
-                        sx={{ mb: 2 }}
-                        inputProps={{ step: 0.01, min: 0 }}
-                      />
-                      {/* )} */}
-                    </Grid>
-                  </React.Fragment>
-                );
-              })}
+                      <Grid item xs={8}>
+                        {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Point Conversion Rate"
+                          value={current?.point_conversion_rate ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleConversionRateChange(
+                              tier.id,
+                              val === "" ? undefined : Number(val),
+                            );
+                          }}
+                          sx={{ mb: 2 }}
+                          inputProps={{ step: 0.01, min: 0 }}
+                        />
+                        {/* )} */}
+                      </Grid>
+                    </React.Fragment>
+                  );
+                })}
+              </Grid>
             </Grid>
-          </Grid>
-
+          )}
           {/* Description */}
           {languages.length > 0 &&
             languages.map((singleLanguage: Language, index) => {
