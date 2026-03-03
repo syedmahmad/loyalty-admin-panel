@@ -11,6 +11,7 @@ import WalletIcon from "@mui/icons-material/Wallet";
 import Groups3Icon from "@mui/icons-material/Groups3";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -213,6 +214,14 @@ const menuItems: { items: NavItemType[] } = {
       url: "/wallet-settings",
       privileges: [],
       icon: SettingsIcon,
+    },
+    {
+      id: "integrations",
+      title: "Integrations",
+      type: "item",
+      url: "/integrations/view",
+      privileges: [],
+      icon: IntegrationInstructionsIcon,
     },
     {
       id: "analytics",
