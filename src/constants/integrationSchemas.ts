@@ -1,13 +1,91 @@
-import type { SchemaField, IntegrationType } from "@/types/integration.types";
+import type { SchemaField } from "@/types/integration.types";
 
-export const INTEGRATION_SCHEMAS: Record<IntegrationType, SchemaField[]> = {
-  QITAF: [
+/**
+ * Config form schemas keyed by partner ID.
+ * When a new partner is added to the DB, add its ID here with the matching fields.
+ */
+export const INTEGRATION_SCHEMAS: Record<number, SchemaField[]> = {
+  // Partner ID 1 — STC Qitaf
+  1: [
+    // ─── CSR Generation ──────────────────────────────────────────────────────
+    {
+      key: "qitafPartnerId",
+      label: "Qitaf Partner ID",
+      type: "text",
+      required: false,
+      sectionTitle: "CSR Generation",
+      helperText: "Unique partner identifier assigned by STC (used in certificate CN)",
+    },
+    {
+      key: "country",
+      label: "Country Code",
+      type: "text",
+      required: false,
+      helperText: "Two-letter ISO country code (e.g. SA)",
+    },
+    {
+      key: "city",
+      label: "City",
+      type: "text",
+      required: false,
+      helperText: "City used in the certificate CSR",
+    },
+    {
+      key: "organisation",
+      label: "Organisation",
+      type: "text",
+      required: false,
+      helperText: "Organisation name used in the certificate CSR",
+    },
+
+    // ─── STC Credentials ─────────────────────────────────────────────────────
+    {
+      key: "secretToken",
+      label: "Secret Token (X-Secret-Token)",
+      type: "text",
+      required: true,
+      sectionTitle: "STC Credentials",
+      helperText: "Base64-encoded JWT provided by STC — sent as X-Secret-Token header",
+    },
+    {
+      key: "authUsername",
+      label: "Auth Username",
+      type: "text",
+      required: true,
+      helperText: "Basic Auth username provided by STC",
+    },
+    {
+      key: "authPassword",
+      label: "Auth Password",
+      type: "text",
+      required: true,
+      helperText: "Basic Auth password provided by STC",
+    },
+    {
+      key: "certificateFile",
+      label: "SSL Client Certificate",
+      type: "file",
+      accept: ".pem,.crt,.cer",
+      required: false,
+      helperText: "Upload the signed certificate (.pem/.crt) received from STC after submitting your CSR",
+    },
+    {
+      key: "privateKeyFile",
+      label: "Private Key",
+      type: "file",
+      accept: ".pem,.key",
+      required: false,
+      helperText: "Upload the private key file (.pem/.key) generated during CSR creation",
+    },
+
+    // ─── Operational Settings ─────────────────────────────────────────────────
     {
       key: "environment",
       label: "Environment",
       type: "select",
       options: ["test", "production"],
       required: true,
+      sectionTitle: "Operational Settings",
       helperText: "Select 'test' during development and UAT phases",
     },
     {
@@ -16,20 +94,6 @@ export const INTEGRATION_SCHEMAS: Record<IntegrationType, SchemaField[]> = {
       type: "text",
       required: true,
       helperText: "STC Qitaf web service endpoint URL",
-    },
-    {
-      key: "branchId",
-      label: "Branch ID",
-      type: "text",
-      required: true,
-      helperText: "Provided by STC Qitaf after registration",
-    },
-    {
-      key: "terminalId",
-      label: "Terminal ID (Teller ID)",
-      type: "text",
-      required: true,
-      helperText: "Provided by STC Qitaf after registration",
     },
     {
       key: "timeoutSeconds",
@@ -61,18 +125,13 @@ export const INTEGRATION_SCHEMAS: Record<IntegrationType, SchemaField[]> = {
       required: true,
       helperText: "Points are posted after this refund window expires",
     },
-    {
-      key: "certificate",
-      label: "SSL Certificate (.pem / .crt)",
-      type: "file",
-      accept: ".pem,.crt,.cer",
-      required: false,
-      helperText: "Certificate Signing Request (CSR) file provided by STC",
-    },
+
+    // ─── Test Settings ────────────────────────────────────────────────────────
     {
       key: "testMsisdn",
       label: "Test Mobile Number (STC GSM)",
       type: "text",
+      sectionTitle: "Test Settings",
       showWhen: { key: "environment", value: "test" },
       helperText: "Consumer STC number (without 966 country code)",
     },
@@ -84,7 +143,9 @@ export const INTEGRATION_SCHEMAS: Record<IntegrationType, SchemaField[]> = {
       helperText: "18-digit serial printed on SIM card (from mySTC app)",
     },
   ],
-  AL_FURSAN: [
+
+  // Partner ID 2 — Al Fursan
+  2: [
     {
       key: "environment",
       label: "Environment",
@@ -130,9 +191,4 @@ export const INTEGRATION_SCHEMAS: Record<IntegrationType, SchemaField[]> = {
       helperText: "Maximum wait time before considering a request failed",
     },
   ],
-};
-
-export const INTEGRATION_TYPE_LABELS: Record<IntegrationType, string> = {
-  QITAF: "STC Qitaf",
-  AL_FURSAN: "Al Fursan",
 };

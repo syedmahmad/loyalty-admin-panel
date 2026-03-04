@@ -1,9 +1,6 @@
-export type IntegrationType = "QITAF" | "AL_FURSAN";
-
 export interface GlobalIntegration {
   id: number;
   name: string;
-  type: IntegrationType;
   description?: string;
   logoUrl?: string;
   isActive: boolean;
@@ -23,17 +20,42 @@ export interface TenantIntegrationConfig {
 }
 
 export interface QitafConfig {
+  // CSR Generation (stored for reference)
+  qitafPartnerId?: string;
+  country?: string;
+  city?: string;
+  organisation?: string;
+
+  // Credentials from STC
+  secretToken?: string;
+  authUsername?: string;
+  authPassword?: string;
+  certificateUrl?: string;
+  privateKeyUrl?: string;
+
+  // Operational
   environment: "test" | "production";
   apiBaseUrl: string;
-  branchId: string;
-  terminalId: string;
   timeoutSeconds: number;
   otpValidityMinutes: number;
   pointToAmountRatio: number;
   refundPeriodDays: number;
-  certificateUrl?: string; // stored URL after file upload
+
+  // Test only
   testMsisdn?: string;
   simCardSerial?: string;
+}
+
+export interface TerminalMapping {
+  id: number;
+  uuid: string;
+  tenantPartnerIntegrationId: number;
+  branchId: string;
+  terminalId: string;
+  label?: string;
+  isActive: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type SchemaFieldType = "text" | "number" | "select" | "file" | "textarea";
@@ -44,8 +66,9 @@ export interface SchemaField {
   type: SchemaFieldType;
   required?: boolean;
   default?: string | number;
-  options?: string[]; // for type: "select"
-  accept?: string; // for type: "file"
-  showWhen?: { key: string; value: string }; // conditional display
+  options?: string[];
+  accept?: string;
+  showWhen?: { key: string; value: string };
   helperText?: string;
+  sectionTitle?: string;
 }

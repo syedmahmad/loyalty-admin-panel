@@ -1,11 +1,10 @@
 import { GET, POST, PATCH, DELETE } from "@/utils/AxiosUtility";
-import type { GlobalIntegration, IntegrationType } from "@/types/integration.types";
+import type { GlobalIntegration } from "@/types/integration.types";
 
 // Map backend snake_case Partner entity → frontend GlobalIntegration
 const toGlobal = (p: any): GlobalIntegration => ({
   id: p.id,
   name: p.name,
-  type: p.type as IntegrationType,
   description: p.description,
   logoUrl: p.logo_url,
   isActive: p.is_active === 1,
@@ -23,7 +22,6 @@ export const integrationService = {
   create: async (payload: Partial<GlobalIntegration>): Promise<GlobalIntegration> => {
     const response = await POST("/partners", {
       name: payload.name,
-      type: payload.type,
       description: payload.description,
       logo_url: payload.logoUrl,
     });
@@ -34,7 +32,6 @@ export const integrationService = {
   update: async (id: number, payload: Partial<GlobalIntegration>): Promise<GlobalIntegration> => {
     const response = await PATCH(`/partners/${id}`, {
       ...(payload.name !== undefined && { name: payload.name }),
-      ...(payload.type !== undefined && { type: payload.type }),
       ...(payload.description !== undefined && { description: payload.description }),
       ...(payload.logoUrl !== undefined && { logo_url: payload.logoUrl }),
       ...(payload.isActive !== undefined && { is_active: payload.isActive ? 1 : 0 }),

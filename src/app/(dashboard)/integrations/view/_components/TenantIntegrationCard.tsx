@@ -19,7 +19,6 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { toast } from "react-toastify";
 import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 import ConfigureIntegrationDrawer from "./ConfigureIntegrationDrawer";
-import { INTEGRATION_TYPE_LABELS } from "@/constants/integrationSchemas";
 import type { GlobalIntegration, TenantIntegrationConfig } from "@/types/integration.types";
 
 interface Props {
@@ -104,13 +103,6 @@ const TenantIntegrationCard = ({
               <Typography fontWeight={700} fontSize="16px" color={theme.palette.primary.dark}>
                 {integration.name}
               </Typography>
-              <Chip
-                label={INTEGRATION_TYPE_LABELS[integration.type] ?? integration.type}
-                size="small"
-                color="primary"
-                variant="outlined"
-                sx={{ mt: 0.25 }}
-              />
             </Box>
             {/* Configured status indicator */}
             <Box>

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Button, Box, Typography, CircularProgress } from "@mui/material";
+import { Button, Box, Typography, CircularProgress, Tabs, Tab } from "@mui/material";
 import Grid2 from "@mui/material/Unstable_Grid2";
 import BaseDrawer from "@/components/drawer/basedrawer";
 import QitafConfigForm from "./QitafConfigForm";
+import TerminalMappingTab from "./TerminalMappingTab";
 import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
@@ -20,35 +21,24 @@ interface Props {
   reFetch: () => void;
 }
 
-// Yup schema for Qitaf config validation
-const qitafSchema = yup.object().shape({
+const configSchema = yup.object().shape({
   environment: yup.string().required("Environment is required"),
   apiBaseUrl: yup.string().url("Must be a valid URL").required("API Base URL is required"),
-  branchId: yup.string().required("Branch ID is required"),
-  terminalId: yup.string().required("Terminal ID is required"),
-  timeoutSeconds: yup
-    .number()
-    .min(1)
-    .required("Timeout is required"),
-  otpValidityMinutes: yup
-    .number()
-    .min(1)
-    .required("OTP validity is required"),
-  pointToAmountRatio: yup
-    .number()
-    .min(0.01)
-    .required("Points to SAR ratio is required"),
-  refundPeriodDays: yup
-    .number()
-    .min(0)
-    .required("Refund period is required"),
+  secretToken: yup.string().required("Secret Token is required"),
+  authUsername: yup.string().required("Auth Username is required"),
+  authPassword: yup.string().required("Auth Password is required"),
+  timeoutSeconds: yup.number().min(1).required("Timeout is required"),
+  otpValidityMinutes: yup.number().min(1).required("OTP validity is required"),
+  pointToAmountRatio: yup.number().min(0.01).required("Points to SAR ratio is required"),
+  refundPeriodDays: yup.number().min(0).required("Refund period is required"),
 });
 
-const defaultQitafValues: QitafConfig = {
+const defaultValues: Record<string, any> = {
   environment: "test",
   apiBaseUrl: "",
-  branchId: "",
-  terminalId: "",
+  secretToken: "",
+  authUsername: "",
+  authPassword: "",
   timeoutSeconds: 60,
   otpValidityMinutes: 3,
   pointToAmountRatio: 0,
@@ -64,46 +54,66 @@ const ConfigureIntegrationDrawer = ({
   integrationName,
   reFetch,
 }: Props) => {
-  const [values, setValues] = useState<Record<string, any>>(defaultQitafValues);
+  const [activeTab, setActiveTab] = useState(0);
+  const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  // Generic file map: { certificateFile: File|null, privateKeyFile: File|null }
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File | null>>({});
   const [saving, setSaving] = useState(false);
 
-  // Pre-populate from existing config
   useEffect(() => {
-    if (tenantConfig?.configuration) {
-      setValues({ ...defaultQitafValues, ...tenantConfig.configuration });
-    } else {
-      setValues(defaultQitafValues);
+    if (open) {
+      setActiveTab(0);
+      setValues(
+        tenantConfig?.configuration
+          ? { ...defaultValues, ...tenantConfig.configuration }
+          : defaultValues,
+      );
+      setPendingFiles({});
+      setErrors({});
     }
-    setCertificateFile(null);
-    setErrors({});
   }, [tenantConfig, open]);
 
   const handleChange = (key: string, value: any) => {
     setValues((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) {
-      setErrors((prev) => { const next = { ...prev }; delete next[key]; return next; });
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
     }
+  };
+
+  const handleFileChange = (fieldKey: string, file: File | null) => {
+    setPendingFiles((prev) => ({ ...prev, [fieldKey]: file }));
   };
 
   const handleSave = async () => {
     try {
-      await qitafSchema.validate(values, { abortEarly: false });
+      await configSchema.validate(values, { abortEarly: false });
       setErrors({});
       setSaving(true);
 
-      let certificateUrl = (tenantConfig?.configuration as QitafConfig)?.certificateUrl;
+      const existingConfig = tenantConfig?.configuration as QitafConfig | undefined;
 
-      // Upload certificate file if a new one was selected
-      if (certificateFile) {
-        const uploaded = await tenantIntegrationService.uploadCertificate(certificateFile);
-        certificateUrl = uploaded.url;
+      // Upload any pending files to OCI
+      let certificateUrl = existingConfig?.certificateUrl;
+      let privateKeyUrl = existingConfig?.privateKeyUrl;
+
+      if (pendingFiles.certificateFile) {
+        const res = await tenantIntegrationService.uploadCertificate(pendingFiles.certificateFile);
+        certificateUrl = res.url;
+      }
+      if (pendingFiles.privateKeyFile) {
+        const res = await tenantIntegrationService.uploadCertificate(pendingFiles.privateKeyFile);
+        privateKeyUrl = res.url;
       }
 
       const configuration = {
         ...values,
         ...(certificateUrl ? { certificateUrl } : {}),
+        ...(privateKeyUrl ? { privateKeyUrl } : {}),
       };
 
       if (tenantConfig?.id) {
@@ -128,6 +138,7 @@ const ConfigureIntegrationDrawer = ({
           fieldErrors[e.path] = e.message;
         });
         setErrors(fieldErrors);
+        setActiveTab(0);
       } else {
         toast.error(err?.response?.data?.message || "Failed to save configuration");
       }
@@ -136,45 +147,88 @@ const ConfigureIntegrationDrawer = ({
     }
   };
 
+  const existingConfig = tenantConfig?.configuration as QitafConfig | undefined;
+  const existingFileUrls: Record<string, string | undefined> = {
+    certificateFile: existingConfig?.certificateUrl,
+    privateKeyFile: existingConfig?.privateKeyUrl,
+  };
+
+  const terminalTabDisabled = !tenantConfig?.id;
+
   return (
     <BaseDrawer
       open={open}
       onClose={onClose}
       title={`Configure ${integrationName}`}
-      width={480}
+      width={560}
     >
-      <Grid2 container spacing={3}>
-        <Grid2 xs={12}>
-          <Typography variant="body2" color="text.secondary">
-            Set the credentials and parameters for this integration. Configuration is stored per tenant.
+      <Box>
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
+        >
+          <Tab label="General Config" value={0} />
+          <Tab label="Branch & Terminal Mapping" value={1} disabled={terminalTabDisabled} />
+        </Tabs>
+
+        {terminalTabDisabled ? (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 0.5, mb: 2 }}
+          >
+            Save general config first to enable branch mapping.
           </Typography>
-        </Grid2>
+        ) : (
+          <Box mb={2} />
+        )}
 
-        <Grid2 xs={12}>
-          <QitafConfigForm
-            values={values}
-            errors={errors}
-            onChange={handleChange}
-            certificateFile={certificateFile}
-            onCertificateChange={setCertificateFile}
-            existingCertificateUrl={(tenantConfig?.configuration as QitafConfig)?.certificateUrl}
-          />
-        </Grid2>
+        {activeTab === 0 && (
+          <Grid2 container spacing={3}>
+            <Grid2 xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Set the credentials and parameters for this integration. Configuration is stored
+                per tenant.
+              </Typography>
+            </Grid2>
 
-        <Grid2 xs={12}>
-          <Box display="flex" justifyContent="center" mt={1}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleSave}
-              disabled={saving}
-              startIcon={saving ? <CircularProgress size={16} /> : undefined}
-            >
-              {tenantConfig?.id ? "Update Configuration" : "Save & Enable"}
-            </Button>
-          </Box>
-        </Grid2>
-      </Grid2>
+            <Grid2 xs={12}>
+              <QitafConfigForm
+                partnerId={integrationId}
+                values={values}
+                errors={errors}
+                onChange={handleChange}
+                files={pendingFiles}
+                onFileChange={handleFileChange}
+                existingFileUrls={existingFileUrls}
+              />
+            </Grid2>
+
+            <Grid2 xs={12}>
+              <Box display="flex" justifyContent="center" mt={1}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleSave}
+                  disabled={saving}
+                  startIcon={saving ? <CircularProgress size={16} /> : undefined}
+                >
+                  {saving
+                    ? "Saving…"
+                    : tenantConfig?.id
+                      ? "Update Configuration"
+                      : "Save & Enable"}
+                </Button>
+              </Box>
+            </Grid2>
+          </Grid2>
+        )}
+
+        {activeTab === 1 && tenantConfig?.id && (
+          <TerminalMappingTab integrationId={tenantConfig.id} />
+        )}
+      </Box>
     </BaseDrawer>
   );
 };

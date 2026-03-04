@@ -58,8 +58,13 @@ export const tenantIntegrationService = {
     if (response?.status !== 200) throw new Error("Failed to remove tenant integration");
   },
 
-  // Certificate upload — no file storage backend yet; kept as a stub
   uploadCertificate: async (file: File): Promise<{ url: string }> => {
-    return { url: `pending_upload://${file.name}` };
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await POST("/tenant-integrations/upload-certificate", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    if (response?.status !== 201) throw new Error("Failed to upload certificate");
+    return response.data;
   },
 };

@@ -17,7 +17,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import { DeleteIntegrationModal } from "./DeleteIntegrationModal";
 import type { GlobalIntegration } from "@/types/integration.types";
-import { INTEGRATION_TYPE_LABELS } from "@/constants/integrationSchemas";
 
 interface Props {
   integration: GlobalIntegration;
@@ -90,23 +89,12 @@ const IntegrationCard = ({ integration, reFetch, onEdit }: Props) => {
           </Typography>
         </Grid2>
 
-        {/* Type badge */}
-        <Grid2 xs={12} sx={{ mb: 1 }}>
-          <Chip
-            label={INTEGRATION_TYPE_LABELS[integration.type] ?? integration.type}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-          {!integration.isActive && (
-            <Chip
-              label="Inactive"
-              size="small"
-              color="default"
-              sx={{ ml: 1 }}
-            />
-          )}
-        </Grid2>
+        {/* Status badge */}
+        {!integration.isActive && (
+          <Grid2 xs={12} sx={{ mb: 1 }}>
+            <Chip label="Inactive" size="small" color="default" />
+          </Grid2>
+        )}
 
         {/* Description */}
         {integration.description && (
