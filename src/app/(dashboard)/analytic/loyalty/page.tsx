@@ -220,15 +220,15 @@ const LoyaltyAnalyticsPage = () => {
     startDate && endDate && day.isAfter(startDate) && day.isBefore(endDate);
 
   const handleDateClick = (day: Dayjs | null) => {
+    if (!day) return;
     if (!startDate || (startDate && endDate)) {
       setStartDate(day);
       setEndDate(null);
     } else if (startDate && !endDate) {
-      if (day && day.isBefore(startDate)) {
+      if (day.isBefore(startDate)) {
         setStartDate(day);
       } else {
         setEndDate(day);
-        handleClose();
       }
     }
   };
@@ -409,8 +409,9 @@ const LoyaltyAnalyticsPage = () => {
                     <StaticDatePicker
                       key={idx}
                       displayStaticWrapperAs="desktop"
-                      value={month}
-                      onChange={handleDateClick}
+                      value={null}
+                      referenceDate={month}
+                      onChange={() => {}}
                       slots={{
                         day: (props) => {
                           const d = props.day as Dayjs;
@@ -567,7 +568,11 @@ const LoyaltyAnalyticsPage = () => {
             <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
               <Box>
                 <Typography fontWeight={600}>{item.label}</Typography>
-                <Typography variant="h6">{item.count}</Typography>
+                <Typography variant="h6">
+                  {Number(item.count).toLocaleString("en-US", {
+                    maximumFractionDigits: 0,
+                  })}
+                </Typography>
               </Box>
             </Card>
           </Grid>
