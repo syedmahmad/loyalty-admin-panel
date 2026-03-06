@@ -46,6 +46,7 @@ const LoyaltyAnalyticsPage = () => {
     summary: {
       totalEarnedPoints: 0,
       totalBurntPoints: 0,
+      totalNotConfirmedBurntPoints: 0,
       totalLoyaltyPoints: 0,
       totalRemainingPoints: 0,
     },
@@ -292,6 +293,10 @@ const LoyaltyAnalyticsPage = () => {
       count: analyticsData.summary.totalBurntPoints,
     },
     {
+      label: "Not Confirmed Burnt Points",
+      count: analyticsData.summary.totalNotConfirmedBurntPoints,
+    },
+    {
       label: "Remaining Points in Wallets",
       count: analyticsData.summary.totalRemainingPoints,
     },
@@ -312,6 +317,7 @@ const LoyaltyAnalyticsPage = () => {
     csvSections.push(["Label", "Value"]);
     csvSections.push(["Total Earned Points", summary.totalEarnedPoints]);
     csvSections.push(["Total Burnt Points", summary.totalBurntPoints]);
+    csvSections.push(["Not Confirmed Burnt Points", summary.totalNotConfirmedBurntPoints]);
     csvSections.push(["Net Loyalty Points", summary.totalLoyaltyPoints]);
     csvSections.push([
       "Remaining Points in Wallets",
