@@ -119,7 +119,7 @@ const LoyaltyAnalyticsPage = () => {
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message || "Failed to load point splits",
-          { toastId: "fetch-loyalty-analytics-error" }
+          { toastId: "fetch-loyalty-analytics-error" },
         );
       }
     } finally {
@@ -140,7 +140,7 @@ const LoyaltyAnalyticsPage = () => {
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message || "Failed to load customer by points",
-          { toastId: "fetch-loyalty-analytics-error" }
+          { toastId: "fetch-loyalty-analytics-error" },
         );
       }
     } finally {
@@ -166,7 +166,7 @@ const LoyaltyAnalyticsPage = () => {
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message || "Failed to load point summary",
-          { toastId: "fetch-loyalty-analytics-error" }
+          { toastId: "fetch-loyalty-analytics-error" },
         );
       }
     } finally {
@@ -192,7 +192,7 @@ const LoyaltyAnalyticsPage = () => {
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message || "Failed to load earn activity",
-          { toastId: "fetch-loyalty-analytics-error" }
+          { toastId: "fetch-loyalty-analytics-error" },
         );
       }
     } finally {
@@ -218,7 +218,7 @@ const LoyaltyAnalyticsPage = () => {
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message || "Failed to load bar chart",
-          { toastId: "fetch-loyalty-analytics-error" }
+          { toastId: "fetch-loyalty-analytics-error" },
         );
       }
     } finally {
@@ -244,7 +244,7 @@ const LoyaltyAnalyticsPage = () => {
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
           error?.response?.data?.message || "Failed to load non-claimed points",
-          { toastId: "fetch-loyalty-analytics-error" }
+          { toastId: "fetch-loyalty-analytics-error" },
         );
       }
     } finally {
@@ -335,11 +335,13 @@ const LoyaltyAnalyticsPage = () => {
   ];
 
   const pieData =
-    analyticsData?.pointSplits?.map((split: any, idx: number) => ({
-      name: split.sourceType,
-      value: Number(split.totalPoints),
-      color: chartColors[idx % chartColors.length],
-    })) || [];
+    analyticsData?.pointSplits
+      ?.filter((split: any) => Number(split.totalPoints) > 0)
+      ?.map((split: any, idx: number) => ({
+        name: split.sourceType,
+        value: Number(split.totalPoints),
+        color: chartColors[idx % chartColors.length],
+      })) || [];
 
   const customerPointsData = analyticsData.customerByPoints || [];
 
@@ -375,7 +377,10 @@ const LoyaltyAnalyticsPage = () => {
     csvSections.push(["Label", "Value"]);
     csvSections.push(["Total Earned Points", summary.totalEarnedPoints]);
     csvSections.push(["Total Burnt Points", summary.totalBurntPoints]);
-    csvSections.push(["Not Confirmed Burnt Points", summary.totalNotConfirmedBurntPoints]);
+    csvSections.push([
+      "Not Confirmed Burnt Points",
+      summary.totalNotConfirmedBurntPoints,
+    ]);
     csvSections.push(["Net Loyalty Points", summary.totalLoyaltyPoints]);
     csvSections.push([
       "Remaining Points in Wallets",
@@ -403,7 +408,11 @@ const LoyaltyAnalyticsPage = () => {
     csvSections.push(["Earn Activity by Source Type"]);
     csvSections.push(["Source Type", "Transactions", "Total Points"]);
     itemUsage.forEach((item: any) => {
-      csvSections.push([item.sourceType, item.transactionCount, item.totalPoints]);
+      csvSections.push([
+        item.sourceType,
+        item.transactionCount,
+        item.totalPoints,
+      ]);
     });
     csvSections.push([]);
 
@@ -428,7 +437,13 @@ const LoyaltyAnalyticsPage = () => {
   };
 
   const SectionLoader = () => (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100%" minHeight={100}>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      height="100%"
+      minHeight={100}
+    >
       <CircularProgress size={28} />
     </Box>
   );
@@ -547,8 +562,15 @@ const LoyaltyAnalyticsPage = () => {
         Total Earn Points Splits
       </Typography>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
-          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1, overflow: "visible" }}>
+        <Grid
+          item
+          xs={12}
+          md={4}
+          sx={{ display: "flex", flexDirection: "column" }}
+        >
+          <Card
+            sx={{ borderRadius: 3, boxShadow: 3, flex: 1, overflow: "visible" }}
+          >
             {loadingPointSplits ? (
               <SectionLoader />
             ) : (
@@ -579,8 +601,21 @@ const LoyaltyAnalyticsPage = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
-          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1, display: "flex", flexDirection: "column" }}>
+        <Grid
+          item
+          xs={12}
+          md={4}
+          sx={{ display: "flex", flexDirection: "column" }}
+        >
+          <Card
+            sx={{
+              borderRadius: 3,
+              boxShadow: 3,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Box px={2} pt={2}>
               <Typography variant="h4" color="secondary" mb={1}>
                 Customer by Points
@@ -613,8 +648,21 @@ const LoyaltyAnalyticsPage = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
-          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1, display: "flex", flexDirection: "column" }}>
+        <Grid
+          item
+          xs={12}
+          md={4}
+          sx={{ display: "flex", flexDirection: "column" }}
+        >
+          <Card
+            sx={{
+              borderRadius: 3,
+              boxShadow: 3,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Box px={2} pt={2}>
               <Typography variant="h4" color="secondary" mb={1}>
                 Earn Activity by Source Type
@@ -690,37 +738,7 @@ const LoyaltyAnalyticsPage = () => {
       </Grid>
 
       <Typography variant="h4" color="secondary" p={1}>
-        Total Earn & Burn Points
-      </Typography>
-      <Box
-        p={2}
-        sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff", minHeight: 120 }}
-      >
-        {loadingBarChart ? (
-          <SectionLoader />
-        ) : !analyticsData.barChart?.length ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height={100}>
-            <Typography variant="body2" color="text.secondary">
-              No chart data available
-            </Typography>
-          </Box>
-        ) : (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={analyticsData.barChart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="earned" fill="#4caf50" name="Earned Points" />
-              <Bar dataKey="burnt" fill="#f44336" name="Burnt Points" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </Box>
-
-      <Typography variant="h4" color="secondary" p={1} mt={2}>
-        Non Claimed Points
+        Non Claimed Points For App Users
       </Typography>
       <Grid container spacing={2} mb={2}>
         {[
@@ -751,7 +769,11 @@ const LoyaltyAnalyticsPage = () => {
                 <SectionLoader />
               ) : (
                 <Box>
-                  <Typography fontWeight={600} color="text.secondary" fontSize={13}>
+                  <Typography
+                    fontWeight={600}
+                    color="text.secondary"
+                    fontSize={13}
+                  >
                     {item.label}
                   </Typography>
                   <Typography variant="h6" fontWeight={700}>
@@ -761,12 +783,12 @@ const LoyaltyAnalyticsPage = () => {
                           maximumFractionDigits: 2,
                         })
                       : item.format === "rate"
-                      ? `${Number(item.value).toLocaleString("en-US", {
-                          maximumFractionDigits: 2,
-                        })} pts / SAR`
-                      : Number(item.value).toLocaleString("en-US", {
-                          maximumFractionDigits: 0,
-                        })}
+                        ? `${Number(item.value).toLocaleString("en-US", {
+                            maximumFractionDigits: 2,
+                          })} pts / SAR`
+                        : Number(item.value).toLocaleString("en-US", {
+                            maximumFractionDigits: 0,
+                          })}
                   </Typography>
                 </Box>
               )}
@@ -774,6 +796,46 @@ const LoyaltyAnalyticsPage = () => {
           </Grid>
         ))}
       </Grid>
+
+      <Typography variant="h4" color="secondary" p={1}>
+        Total Earn & Burn Points
+      </Typography>
+      <Box
+        p={2}
+        sx={{
+          borderRadius: 3,
+          boxShadow: 3,
+          backgroundColor: "#fff",
+          minHeight: 120,
+        }}
+      >
+        {loadingBarChart ? (
+          <SectionLoader />
+        ) : !analyticsData.barChart?.length ? (
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height={100}
+          >
+            <Typography variant="body2" color="text.secondary">
+              No chart data available
+            </Typography>
+          </Box>
+        ) : (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={analyticsData.barChart}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="earned" fill="#4caf50" name="Earned Points" />
+              <Bar dataKey="burnt" fill="#f44336" name="Burnt Points" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Box>
     </Box>
   );
 };
