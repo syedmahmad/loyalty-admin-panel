@@ -266,6 +266,20 @@ const LoyaltyAnalyticsPage = () => {
     "#441e75ff",
     "#160f04ff",
     "#d8cacaff",
+    "#2196F3",
+    "#E91E63",
+    "#00BCD4",
+    "#FF5722",
+    "#9C27B0",
+    "#4CAF50",
+    "#FFC107",
+    "#3F51B5",
+    "#009688",
+    "#F44336",
+    "#607D8B",
+    "#FFEB3B",
+    "#795548",
+    "#673AB7",
   ];
 
   const pieData =
@@ -277,11 +291,7 @@ const LoyaltyAnalyticsPage = () => {
 
   const customerPointsData = analyticsData.customerByPoints || [];
 
-  const itemusage = analyticsData.itemUsage.map((item: any) => ({
-    itemName: item.itemName,
-    Invoice: item.invoiceCount,
-    percentage: item.percentage,
-  }));
+  const itemusage = analyticsData.itemUsage || [];
 
   const points = [
     {
@@ -341,11 +351,11 @@ const LoyaltyAnalyticsPage = () => {
     });
     csvSections.push([]);
 
-    // Item Usage
-    csvSections.push(["Item Usage"]);
-    csvSections.push(["Item Name", "Invoice Count", "Percentage"]);
+    // Earn Activity by Source Type
+    csvSections.push(["Earn Activity by Source Type"]);
+    csvSections.push(["Source Type", "Transactions", "Total Points"]);
     itemUsage.forEach((item: any) => {
-      csvSections.push([item.itemName, item.invoiceCount, item.percentage]);
+      csvSections.push([item.sourceType, item.transactionCount, item.totalPoints]);
     });
     csvSections.push([]);
 
@@ -476,31 +486,46 @@ const LoyaltyAnalyticsPage = () => {
         </Box>
       </Box>
 
-      <Typography variant="h4" color="secondary">
+      <Typography variant="h4" color="secondary" mb={1}>
         Total Earn Points Splits
       </Typography>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
-            <ResponsiveContainer width="100%" height={300}>
+        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1 }}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
-                <Pie data={pieData} dataKey="value" outerRadius={100} label>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  outerRadius={110}
+                  label={false}
+                >
                   {pieData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any) => [
+                    Number(value).toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    }),
+                    name,
+                  ]}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Typography variant="h4" color="secondary" mt={-3.5}>
-            Customer by Points
-          </Typography>
-          <Card sx={{ borderRadius: 3, boxShadow: 3, height: 300 }}>
-            <Box sx={{ height: "100%", overflow: "auto" }}>
+        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1, display: "flex", flexDirection: "column" }}>
+            <Box px={2} pt={2}>
+              <Typography variant="h4" color="secondary" mb={1}>
+                Customer by Points
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1, overflow: "auto" }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -523,12 +548,14 @@ const LoyaltyAnalyticsPage = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Typography variant="h4" color="secondary" mt={-3.5}>
-            Item Usage (Data Mart)
-          </Typography>
-          <Card sx={{ borderRadius: 3, boxShadow: 3, height: 300 }}>
-            <Box sx={{ height: "100%", overflow: "auto" }}>
+        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1, display: "flex", flexDirection: "column" }}>
+            <Box px={2} pt={2}>
+              <Typography variant="h4" color="secondary" mb={1}>
+                Earn Activity by Source Type
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1, overflow: "auto" }}>
               {itemusage.length === 0 ? (
                 <Box
                   display="flex"
@@ -544,17 +571,23 @@ const LoyaltyAnalyticsPage = () => {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Item Name</TableCell>
-                      <TableCell>Invoice</TableCell>
-                      <TableCell>Percentage</TableCell>
+                      <TableCell>Source Type</TableCell>
+                      <TableCell align="right">Transactions</TableCell>
+                      <TableCell align="right">Points</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {itemusage.map((row: any, idx: number) => (
                       <TableRow key={idx}>
-                        <TableCell>{row.itemName}</TableCell>
-                        <TableCell>{row.Invoice}</TableCell>
-                        <TableCell>{row.percentage}</TableCell>
+                        <TableCell>{row.sourceType}</TableCell>
+                        <TableCell align="right">
+                          {Number(row.transactionCount).toLocaleString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          {Number(row.totalPoints).toLocaleString("en-US", {
+                            maximumFractionDigits: 0,
+                          })}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
