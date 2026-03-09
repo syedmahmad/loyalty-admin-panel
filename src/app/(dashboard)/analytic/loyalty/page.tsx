@@ -66,6 +66,27 @@ const LoyaltyAnalyticsPage = () => {
   const open = Boolean(anchorEl);
   const months = [dayjs(), dayjs().add(1, "month")];
 
+  const resetData = () => {
+    setAnalyticsData({
+      pointSplits: [],
+      customerByPoints: [],
+      itemUsage: [],
+      summary: {
+        totalEarnedPoints: 0,
+        totalBurntPoints: 0,
+        totalNotConfirmedBurntPoints: 0,
+        totalLoyaltyPoints: 0,
+        totalRemainingPoints: 0,
+      },
+      barChart: [],
+    });
+    setLoadingPointSplits(true);
+    setLoadingCustomerByPoints(true);
+    setLoadingItemUsage(true);
+    setLoadingSummary(true);
+    setLoadingBarChart(true);
+  };
+
   const fetchPointSplits = async () => {
     try {
       setLoadingPointSplits(true);
@@ -459,7 +480,9 @@ const LoyaltyAnalyticsPage = () => {
                 <Button
                   variant="outlined"
                   onClick={() => {
-                    handleClose(), fetchPointSplits();
+                    handleClose();
+                    resetData();
+                    fetchPointSplits();
                     fetchCustomerByPoints();
                     fetchPointSummary();
                     fetchItemUsage();
