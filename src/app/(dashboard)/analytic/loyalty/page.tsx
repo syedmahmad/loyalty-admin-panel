@@ -51,6 +51,12 @@ const LoyaltyAnalyticsPage = () => {
       totalLoyaltyPoints: 0,
       totalRemainingPoints: 0,
     },
+    nonClaimed: {
+      unclaimedCount: 0,
+      totalAmount: 0,
+      estimatedPoints: 0,
+      pointsPerSar: 0,
+    },
   });
 
   const [loadingPointSplits, setLoadingPointSplits] = useState(true);
@@ -58,6 +64,7 @@ const LoyaltyAnalyticsPage = () => {
   const [loadingItemUsage, setLoadingItemUsage] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingBarChart, setLoadingBarChart] = useState(true);
+  const [loadingNonClaimed, setLoadingNonClaimed] = useState(true);
   const [startDate, setStartDate] = useState<Dayjs | null>(null);
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [hoverDate, setHoverDate] = useState<Dayjs | null>(null);
@@ -79,12 +86,19 @@ const LoyaltyAnalyticsPage = () => {
         totalRemainingPoints: 0,
       },
       barChart: [],
+      nonClaimed: {
+        unclaimedCount: 0,
+        totalAmount: 0,
+        estimatedPoints: 0,
+        pointsPerSar: 0,
+      },
     });
     setLoadingPointSplits(true);
     setLoadingCustomerByPoints(true);
     setLoadingItemUsage(true);
     setLoadingSummary(true);
     setLoadingBarChart(true);
+    setLoadingNonClaimed(true);
   };
 
   const fetchPointSplits = async () => {
@@ -212,12 +226,39 @@ const LoyaltyAnalyticsPage = () => {
     }
   };
 
+  const fetchNonClaimedPoints = async () => {
+    try {
+      setLoadingNonClaimed(true);
+      const response = await GET("/loyalty/analytics/non-claimed-points", {
+        params: {
+          startDate: startDate?.format("YYYY-MM-DD"),
+          endDate: endDate?.format("YYYY-MM-DD"),
+        },
+      });
+      setAnalyticsData((prev: any) => ({
+        ...prev,
+        nonClaimed: response?.data,
+      }));
+    } catch (error: any) {
+      console.error("Error loading non-claimed points data:", error);
+      if (!toast.isActive("fetch-loyalty-analytics-error")) {
+        toast.error(
+          error?.response?.data?.message || "Failed to load non-claimed points",
+          { toastId: "fetch-loyalty-analytics-error" }
+        );
+      }
+    } finally {
+      setLoadingNonClaimed(false);
+    }
+  };
+
   useEffect(() => {
     fetchPointSplits();
     fetchCustomerByPoints();
     fetchPointSummary();
     fetchItemUsage();
     fetchBarChart();
+    fetchNonClaimedPoints();
   }, []);
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -487,6 +528,7 @@ const LoyaltyAnalyticsPage = () => {
                     fetchPointSummary();
                     fetchItemUsage();
                     fetchBarChart();
+                    fetchNonClaimedPoints();
                   }}
                   disabled={!startDate || !endDate}
                 >
@@ -676,6 +718,62 @@ const LoyaltyAnalyticsPage = () => {
           </ResponsiveContainer>
         )}
       </Box>
+
+      <Typography variant="h4" color="secondary" p={1} mt={2}>
+        Non Claimed Points
+      </Typography>
+      <Grid container spacing={2} mb={2}>
+        {[
+          {
+            label: "Unclaimed Invoices",
+            value: analyticsData.nonClaimed?.unclaimedCount ?? 0,
+            format: "count",
+          },
+          {
+            label: "Total Invoice Amount (SAR)",
+            value: analyticsData.nonClaimed?.totalAmount ?? 0,
+            format: "decimal",
+          },
+          {
+            label: "Estimated Unclaimed Points",
+            value: analyticsData.nonClaimed?.estimatedPoints ?? 0,
+            format: "count",
+          },
+          {
+            label: "Earning Rate",
+            value: analyticsData.nonClaimed?.pointsPerSar ?? 0,
+            format: "rate",
+          },
+        ].map((item, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card sx={{ p: 2, borderRadius: 3, boxShadow: 3, minHeight: 80 }}>
+              {loadingNonClaimed ? (
+                <SectionLoader />
+              ) : (
+                <Box>
+                  <Typography fontWeight={600} color="text.secondary" fontSize={13}>
+                    {item.label}
+                  </Typography>
+                  <Typography variant="h6" fontWeight={700}>
+                    {item.format === "decimal"
+                      ? Number(item.value).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      : item.format === "rate"
+                      ? `${Number(item.value).toLocaleString("en-US", {
+                          maximumFractionDigits: 2,
+                        })} pts / SAR`
+                      : Number(item.value).toLocaleString("en-US", {
+                          maximumFractionDigits: 0,
+                        })}
+                  </Typography>
+                </Box>
+              )}
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 };
