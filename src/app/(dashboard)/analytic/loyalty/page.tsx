@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Card,
+  CircularProgress,
   Divider,
   Grid,
   List,
@@ -52,7 +53,11 @@ const LoyaltyAnalyticsPage = () => {
     },
   });
 
-  const [loading, setLoading] = useState(true);
+  const [loadingPointSplits, setLoadingPointSplits] = useState(true);
+  const [loadingCustomerByPoints, setLoadingCustomerByPoints] = useState(true);
+  const [loadingItemUsage, setLoadingItemUsage] = useState(true);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingBarChart, setLoadingBarChart] = useState(true);
   const [startDate, setStartDate] = useState<Dayjs | null>(null);
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [hoverDate, setHoverDate] = useState<Dayjs | null>(null);
@@ -63,7 +68,7 @@ const LoyaltyAnalyticsPage = () => {
 
   const fetchPointSplits = async () => {
     try {
-      setLoading(true);
+      setLoadingPointSplits(true);
       const response = await GET("/loyalty/analytics/get-point-splits", {
         params: {
           startDate: startDate?.format("YYYY-MM-DD"),
@@ -78,21 +83,18 @@ const LoyaltyAnalyticsPage = () => {
       console.error("Error loading point splits data:", error);
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
-          error?.response?.data?.message ||
-            "An error occurred while editing the rule",
-          {
-            toastId: "fetch-loyalty-analytics-error",
-          }
+          error?.response?.data?.message || "Failed to load point splits",
+          { toastId: "fetch-loyalty-analytics-error" }
         );
       }
     } finally {
-      setLoading(false);
+      setLoadingPointSplits(false);
     }
   };
 
   const fetchCustomerByPoints = async () => {
     try {
-      setLoading(true);
+      setLoadingCustomerByPoints(true);
       const response = await GET("/loyalty/analytics/customer-by-points");
       setAnalyticsData((prev: any) => ({
         ...prev,
@@ -102,21 +104,18 @@ const LoyaltyAnalyticsPage = () => {
       console.error("Error loading customer points data:", error);
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
-          error?.response?.data?.message ||
-            "An error occurred while editing the rule",
-          {
-            toastId: "fetch-loyalty-analytics-error",
-          }
+          error?.response?.data?.message || "Failed to load customer by points",
+          { toastId: "fetch-loyalty-analytics-error" }
         );
       }
     } finally {
-      setLoading(false);
+      setLoadingCustomerByPoints(false);
     }
   };
 
   const fetchPointSummary = async () => {
     try {
-      setLoading(true);
+      setLoadingSummary(true);
       const response = await GET("/loyalty/analytics/get-point-summary", {
         params: {
           startDate: startDate?.format("YYYY-MM-DD"),
@@ -131,21 +130,18 @@ const LoyaltyAnalyticsPage = () => {
       console.error("Error loading points summary data:", error);
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
-          error?.response?.data?.message ||
-            "An error occurred while editing the rule",
-          {
-            toastId: "fetch-loyalty-analytics-error",
-          }
+          error?.response?.data?.message || "Failed to load point summary",
+          { toastId: "fetch-loyalty-analytics-error" }
         );
       }
     } finally {
-      setLoading(false);
+      setLoadingSummary(false);
     }
   };
 
   const fetchItemUsage = async () => {
     try {
-      setLoading(true);
+      setLoadingItemUsage(true);
       const response = await GET("/loyalty/analytics/get-item-usage", {
         params: {
           startDate: startDate?.format("YYYY-MM-DD"),
@@ -160,21 +156,18 @@ const LoyaltyAnalyticsPage = () => {
       console.error("Error loading item usage data:", error);
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
-          error?.response?.data?.message ||
-            "An error occurred while editing the rule",
-          {
-            toastId: "fetch-loyalty-analytics-error",
-          }
+          error?.response?.data?.message || "Failed to load earn activity",
+          { toastId: "fetch-loyalty-analytics-error" }
         );
       }
     } finally {
-      setLoading(false);
+      setLoadingItemUsage(false);
     }
   };
 
   const fetchBarChart = async () => {
     try {
-      setLoading(true);
+      setLoadingBarChart(true);
       const response = await GET("/loyalty/analytics/get-bar-chart", {
         params: {
           startDate: startDate?.format("YYYY-MM-DD"),
@@ -189,15 +182,12 @@ const LoyaltyAnalyticsPage = () => {
       console.error("Error loading barChart data:", error);
       if (!toast.isActive("fetch-loyalty-analytics-error")) {
         toast.error(
-          error?.response?.data?.message ||
-            "An error occurred while editing the rule",
-          {
-            toastId: "fetch-loyalty-analytics-error",
-          }
+          error?.response?.data?.message || "Failed to load bar chart",
+          { toastId: "fetch-loyalty-analytics-error" }
         );
       }
     } finally {
-      setLoading(false);
+      setLoadingBarChart(false);
     }
   };
 
@@ -312,10 +302,6 @@ const LoyaltyAnalyticsPage = () => {
     },
   ];
 
-  if (loading) {
-    return <Typography>Loading Loyalty Analytics...</Typography>;
-  }
-
   const handleExport = () => {
     const { summary, pointSplits, customerByPoints, itemUsage, barChart } =
       analyticsData;
@@ -378,6 +364,12 @@ const LoyaltyAnalyticsPage = () => {
     link.click();
     document.body.removeChild(link);
   };
+
+  const SectionLoader = () => (
+    <Box display="flex" justifyContent="center" alignItems="center" height="100%" minHeight={100}>
+      <CircularProgress size={28} />
+    </Box>
+  );
 
   return (
     <Box mt={-2}>
@@ -491,30 +483,34 @@ const LoyaltyAnalyticsPage = () => {
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
-          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1 }}>
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  outerRadius={110}
-                  label={false}
-                >
-                  {pieData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any, name: any) => [
-                    Number(value).toLocaleString("en-US", {
-                      maximumFractionDigits: 0,
-                    }),
-                    name,
-                  ]}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+          <Card sx={{ borderRadius: 3, boxShadow: 3, flex: 1, overflow: "visible" }}>
+            {loadingPointSplits ? (
+              <SectionLoader />
+            ) : (
+              <ResponsiveContainer width="100%" height={350}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    outerRadius={110}
+                    label={false}
+                  >
+                    {pieData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: any, name: any) => [
+                      Number(value).toLocaleString("en-US", {
+                        maximumFractionDigits: 0,
+                      }),
+                      name,
+                    ]}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </Card>
         </Grid>
 
@@ -526,24 +522,28 @@ const LoyaltyAnalyticsPage = () => {
               </Typography>
             </Box>
             <Box sx={{ flex: 1, overflow: "auto" }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Range</TableCell>
-                    <TableCell>Count</TableCell>
-                    <TableCell>Percentage</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {customerPointsData.map((row: any, idx: number) => (
-                    <TableRow key={idx}>
-                      <TableCell>{row.range}</TableCell>
-                      <TableCell>{row.count}</TableCell>
-                      <TableCell>{row.percentage}</TableCell>
+              {loadingCustomerByPoints ? (
+                <SectionLoader />
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Range</TableCell>
+                      <TableCell>Count</TableCell>
+                      <TableCell>Percentage</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {customerPointsData.map((row: any, idx: number) => (
+                      <TableRow key={idx}>
+                        <TableCell>{row.range}</TableCell>
+                        <TableCell>{row.count}</TableCell>
+                        <TableCell>{row.percentage}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </Box>
           </Card>
         </Grid>
@@ -556,7 +556,9 @@ const LoyaltyAnalyticsPage = () => {
               </Typography>
             </Box>
             <Box sx={{ flex: 1, overflow: "auto" }}>
-              {itemusage.length === 0 ? (
+              {loadingItemUsage ? (
+                <SectionLoader />
+              ) : itemusage.length === 0 ? (
                 <Box
                   display="flex"
                   justifyContent="center"
@@ -604,62 +606,53 @@ const LoyaltyAnalyticsPage = () => {
       <Grid container spacing={2} mb={2}>
         {points.map((item, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3 }}>
-              <Box>
-                <Typography fontWeight={600}>{item.label}</Typography>
-                <Typography variant="h6">
-                  {Number(item.count).toLocaleString("en-US", {
-                    maximumFractionDigits: 0,
-                  })}
-                </Typography>
-              </Box>
+            <Card sx={{ p: 1, borderRadius: 3, boxShadow: 3, minHeight: 72 }}>
+              {loadingSummary ? (
+                <SectionLoader />
+              ) : (
+                <Box>
+                  <Typography fontWeight={600}>{item.label}</Typography>
+                  <Typography variant="h6">
+                    {Number(item.count).toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    })}
+                  </Typography>
+                </Box>
+              )}
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {analyticsData.barChart?.length > 0 ? (
-        <Grid item xs={12}>
-          <Typography variant="h4" color="secondary" p={1}>
-            Total Earn & Burn Points
-          </Typography>
-          <Box
-            p={2}
-            sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff" }}
-          >
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={analyticsData.barChart}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="earned" fill="#4caf50" name="Earned Points" />
-                <Bar dataKey="burnt" fill="#f44336" name="Burnt Points" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Box>
-        </Grid>
-      ) : (
-        <Grid item xs={12}>
-          <Typography variant="h4" color="secondary" p={1}>
-            Total Earn & Burn Points
-          </Typography>
-          <Box
-            p={2}
-            sx={{
-              borderRadius: 3,
-              boxShadow: 3,
-              backgroundColor: "#fff",
-              textAlign: "center",
-            }}
-          >
+      <Typography variant="h4" color="secondary" p={1}>
+        Total Earn & Burn Points
+      </Typography>
+      <Box
+        p={2}
+        sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff", minHeight: 120 }}
+      >
+        {loadingBarChart ? (
+          <SectionLoader />
+        ) : !analyticsData.barChart?.length ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height={100}>
             <Typography variant="body2" color="text.secondary">
               No chart data available
             </Typography>
           </Box>
-        </Grid>
-      )}
+        ) : (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={analyticsData.barChart}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="earned" fill="#4caf50" name="Earned Points" />
+              <Bar dataKey="burnt" fill="#f44336" name="Burnt Points" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Box>
     </Box>
   );
 };
