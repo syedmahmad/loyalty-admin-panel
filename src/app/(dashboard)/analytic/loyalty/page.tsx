@@ -65,8 +65,10 @@ const LoyaltyAnalyticsPage = () => {
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingBarChart, setLoadingBarChart] = useState(true);
   const [loadingNonClaimed, setLoadingNonClaimed] = useState(true);
-  const [startDate, setStartDate] = useState<Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<Dayjs | null>(null);
+  const [startDate, setStartDate] = useState<Dayjs | null>(
+    dayjs().subtract(1, "year"),
+  );
+  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
   const [hoverDate, setHoverDate] = useState<Dayjs | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -367,73 +369,104 @@ const LoyaltyAnalyticsPage = () => {
   ];
 
   const handleExport = () => {
-    const { summary, pointSplits, customerByPoints, itemUsage, barChart } =
+    const { summary, pointSplits, customerByPoints, itemUsage, barChart, nonClaimed } =
       analyticsData;
 
-    const csvSections = [];
+    const q = (val: any) => `"${String(val ?? "").replace(/"/g, '""')}"`;
+    const fmt = (n: any) =>
+      Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
+    const fmtDec = (n: any) =>
+      Number(n).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+    const dateRangeLabel =
+      startDate && endDate
+        ? `${startDate.format("YYYY-MM-DD")} to ${endDate.format("YYYY-MM-DD")}`
+        : "All Time";
+
+    const csvSections: any[][] = [];
+
+    // Export metadata
+    csvSections.push([q("Loyalty Analytics Export")]);
+    csvSections.push([q("Exported On"), q(dayjs().format("YYYY-MM-DD HH:mm:ss"))]);
+    csvSections.push([q("Date Range"), q(dateRangeLabel)]);
+    csvSections.push([]);
 
     // Summary
-    csvSections.push(["Summary"]);
-    csvSections.push(["Label", "Value"]);
-    csvSections.push(["Total Earned Points", summary.totalEarnedPoints]);
-    csvSections.push(["Total Burnt Points", summary.totalBurntPoints]);
+    csvSections.push([q("Loyalty Point Summary")]);
+    csvSections.push([q("Label"), q("Value")]);
+    csvSections.push([q("Total Earned Points"), fmt(summary.totalEarnedPoints)]);
+    csvSections.push([q("Total Burnt Points"), fmt(summary.totalBurntPoints)]);
+    csvSections.push([q("Not Confirmed Burnt Points"), fmt(summary.totalNotConfirmedBurntPoints)]);
+    csvSections.push([q("Net Loyalty Points"), fmt(summary.totalLoyaltyPoints)]);
+    csvSections.push([q("Remaining Points in Wallets"), fmt(summary.totalRemainingPoints)]);
+    csvSections.push([]);
+
+    // Non Claimed Points
+    csvSections.push([q("Non Claimed Points (App Users)")]);
+    csvSections.push([q("Label"), q("Value")]);
+    csvSections.push([q("Unclaimed Invoices"), fmt(nonClaimed?.unclaimedCount)]);
+    csvSections.push([q("Total Invoice Amount (SAR)"), fmtDec(nonClaimed?.totalAmount)]);
+    csvSections.push([q("Estimated Unclaimed Points"), fmt(nonClaimed?.estimatedPoints)]);
     csvSections.push([
-      "Not Confirmed Burnt Points",
-      summary.totalNotConfirmedBurntPoints,
+      q("Earning Rate"),
+      q(`${Number(nonClaimed?.pointsPerSar ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} pts / SAR`),
     ]);
-    csvSections.push(["Net Loyalty Points", summary.totalLoyaltyPoints]);
-    csvSections.push([
-      "Remaining Points in Wallets",
-      summary.totalRemainingPoints,
-    ]);
-    csvSections.push([]); // Empty line
+    csvSections.push([]);
 
     // Point Splits
-    csvSections.push(["Point Splits"]);
-    csvSections.push(["Source Type", "Total Points"]);
+    csvSections.push([q("Point Splits by Source Type")]);
+    csvSections.push([q("Source Type"), q("Total Points")]);
     pointSplits.forEach((ps: any) => {
-      csvSections.push([ps.sourceType, ps.totalPoints]);
+      csvSections.push([q(ps.sourceType), fmt(ps.totalPoints)]);
     });
     csvSections.push([]);
 
     // Customer by Points
-    csvSections.push(["Customer by Points"]);
-    csvSections.push(["Range", "Count", "Percentage"]);
+    csvSections.push([q("Customer by Points")]);
+    csvSections.push([q("Range"), q("Count"), q("Percentage")]);
     customerByPoints.forEach((cp: any) => {
-      csvSections.push([cp.range, cp.count, cp.percentage]);
+      const pct =
+        typeof cp.percentage === "number"
+          ? `${cp.percentage.toFixed(2)}%`
+          : cp.percentage;
+      csvSections.push([q(cp.range), fmt(cp.count), q(pct)]);
     });
     csvSections.push([]);
 
     // Earn Activity by Source Type
-    csvSections.push(["Earn Activity by Source Type"]);
-    csvSections.push(["Source Type", "Transactions", "Total Points"]);
+    csvSections.push([q("Earn Activity by Source Type")]);
+    csvSections.push([q("Source Type"), q("Transactions"), q("Total Points")]);
     itemUsage.forEach((item: any) => {
-      csvSections.push([
-        item.sourceType,
-        item.transactionCount,
-        item.totalPoints,
-      ]);
+      csvSections.push([q(item.sourceType), fmt(item.transactionCount), fmt(item.totalPoints)]);
     });
     csvSections.push([]);
 
-    // Bar Chart
-    csvSections.push(["Bar Chart (Earn & Burn Points)"]);
-    csvSections.push(["Date", "Earned", "Burnt"]);
+    // Earn & Burn Bar Chart
+    csvSections.push([q("Earn & Burn Points Over Time")]);
+    csvSections.push([q("Date"), q("Earned Points"), q("Burnt Points")]);
     barChart?.forEach((entry: any) => {
-      csvSections.push([entry.date, entry.earned, entry.burnt]);
+      csvSections.push([q(entry.date), fmt(entry.earned), fmt(entry.burnt)]);
     });
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      csvSections.map((row) => row.join(",")).join("\n");
+    const BOM = "\uFEFF";
+    const csvString = BOM + csvSections.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
 
-    const encodedUri = encodeURI(csvContent);
+    const fromLabel = startDate ? startDate.format("YYYY-MM-DD") : "all";
+    const toLabel = endDate ? endDate.format("YYYY-MM-DD") : "all";
+    const filename = `loyalty-analytics_${fromLabel}_${toLabel}.csv`;
+
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "loyalty-analytics-export.csv");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const SectionLoader = () => (
