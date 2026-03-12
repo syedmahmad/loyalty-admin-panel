@@ -10,6 +10,8 @@ import {
   Box,
   Container,
   useTheme,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import CreateClient from "./CreateClient";
 import ClientInfo from "./ClientInfo";
@@ -17,24 +19,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import BaseDrawer from "@/components/drawer/basedrawer";
 
 import EditClient from "./EditClient";
-import EditClientModal from "./EditClientModal";
+import IntegrationsQuery from "./integrations/IntegrationsQuery";
 
 export const ClientsTableData = ({
   clientData,
   reFetchNewClientToken,
 }: any) => {
   const theme = useTheme();
+  const [activeTab, setActiveTab] = useState(0);
 
-  // const user = JSON.parse(
-  //   localStorage.getItem("user") || "{}"
-  // )
-  // const ALLOWED_EMAILS = [
-  //   'muzaffar.uzaman@petromin.com',
-  //   'amit.joshi@petromin.com',
-  //   'syed.muhammed@petromin.com',
-  // ];
-
-  // const isAllowed = ALLOWED_EMAILS.includes(user?.email?.toLowerCase() || '');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -49,28 +42,9 @@ export const ClientsTableData = ({
     router.push(currentUrl);
   };
 
-  if (clientData.length === 0) {
-    return (
-      <Container maxWidth="md">
-        <Grid2 xs={12} md={6} mdOffset={3} marginTop="20px">
-          <Card>
-            <CardContent>
-              <CreateClient
-                reFetch={reFetchNewClientToken}
-                openModal={true} // Always show create if no clients
-                setOpenModal={() => {}}
-              />
-            </CardContent>
-          </Card>
-        </Grid2>
-      </Container>
-    );
-  }
-
-  return (
+  const tenantsContent = (
     <Box>
-      <Container maxWidth="lg">
-        <Grid2 container spacing={3}>
+      <Grid2 container spacing={3}>
           <Grid2 xs={12}>
             <Box
               sx={{
@@ -111,57 +85,106 @@ export const ClientsTableData = ({
             </Box>
           </Grid2>
 
-          {/* List of Tenants */}
-          {clientData.map((client: any, index: number) => (
-            <Grid2 key={client?.clientId || index} xs={12} sm={6} md={4}>
-              <Card
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
+          {clientData.length === 0 ? (
+            <Grid2 xs={12} md={6} mdOffset={3}>
+              <Card>
                 <CardContent>
-                  <ClientInfo
-                    clientInfo={client}
+                  <CreateClient
                     reFetch={reFetchNewClientToken}
+                    openModal={true}
+                    setOpenModal={() => {}}
                   />
                 </CardContent>
               </Card>
             </Grid2>
-          ))}
-
-          <BaseDrawer
-            open={drawerOpen === "create"}
-            onClose={handleCloseDrawer}
-            title="Create Tenant"
-          >
-            <CreateClient
-              reFetch={() => {
-                reFetchNewClientToken();
-                handleCloseDrawer();
-              }}
-              setOpenModal={() => {}}
-            />
-          </BaseDrawer>
-          {drawerOpen === "edit" && drawerId && (
-            <BaseDrawer
-              open={true}
-              onClose={handleCloseDrawer}
-              title="Update Tenants info"
-            >
-              <EditClient
-                itemToBeEdited={selectedClient}
-                reFetch={() => {
-                  reFetchNewClientToken();
-                  handleCloseDrawer();
-                }}
-                setOpenEditClientInfoModal={handleCloseDrawer}
-              />
-            </BaseDrawer>
+          ) : (
+            clientData.map((client: any, index: number) => (
+              <Grid2 key={client?.clientId || index} xs={12} sm={6} md={4}>
+                <Card
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <CardContent>
+                    <ClientInfo
+                      clientInfo={client}
+                      reFetch={reFetchNewClientToken}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid2>
+            ))
           )}
         </Grid2>
+
+      <BaseDrawer
+        open={drawerOpen === "create"}
+        onClose={handleCloseDrawer}
+        title="Create Tenant"
+      >
+        <CreateClient
+          reFetch={() => {
+            reFetchNewClientToken();
+            handleCloseDrawer();
+          }}
+          setOpenModal={() => {}}
+        />
+      </BaseDrawer>
+      {drawerOpen === "edit" && drawerId && (
+        <BaseDrawer
+          open={true}
+          onClose={handleCloseDrawer}
+          title="Update Tenants info"
+        >
+          <EditClient
+            itemToBeEdited={selectedClient}
+            reFetch={() => {
+              reFetchNewClientToken();
+              handleCloseDrawer();
+            }}
+            setOpenEditClientInfoModal={handleCloseDrawer}
+          />
+        </BaseDrawer>
+      )}
+    </Box>
+  );
+
+  return (
+    <Box>
+      <Container maxWidth="lg">
+        {/* Tab header */}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            aria-label="tenants and integrations tabs"
+          >
+            <Tab label="Tenants" id="tab-tenants" aria-controls="tabpanel-tenants" />
+            <Tab label="Partners" id="tab-partners" aria-controls="tabpanel-partners" />
+          </Tabs>
+        </Box>
+
+        {/* Tab panels */}
+        <Box
+          role="tabpanel"
+          hidden={activeTab !== 0}
+          id="tabpanel-tenants"
+          aria-labelledby="tab-tenants"
+        >
+          {activeTab === 0 && tenantsContent}
+        </Box>
+
+        <Box
+          role="tabpanel"
+          hidden={activeTab !== 1}
+          id="tabpanel-partners"
+          aria-labelledby="tab-partners"
+        >
+          {activeTab === 1 && <IntegrationsQuery />}
+        </Box>
       </Container>
     </Box>
   );
