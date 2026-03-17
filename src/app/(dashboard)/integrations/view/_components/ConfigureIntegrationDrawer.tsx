@@ -9,7 +9,8 @@ import TerminalMappingTab from "./TerminalMappingTab";
 import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
-import type { TenantIntegrationConfig, QitafConfig } from "@/types/integration.types";
+import type { TenantIntegrationConfig } from "@/types/integration.types";
+import { INTEGRATION_SCHEMAS } from "@/constants/integrationSchemas";
 
 interface Props {
   open: boolean;
@@ -21,28 +22,27 @@ interface Props {
   reFetch: () => void;
 }
 
-const configSchema = yup.object().shape({
-  environment: yup.string().required("Environment is required"),
-  apiBaseUrl: yup.string().url("Must be a valid URL").required("API Base URL is required"),
-  secretToken: yup.string().required("Secret Token is required"),
-  authUsername: yup.string().required("Auth Username is required"),
-  authPassword: yup.string().required("Auth Password is required"),
-  timeoutSeconds: yup.number().min(1).required("Timeout is required"),
-  otpValidityMinutes: yup.number().min(1).required("OTP validity is required"),
-  pointToAmountRatio: yup.number().min(0.01).required("Points to SAR ratio is required"),
-  refundPeriodDays: yup.number().min(0).required("Refund period is required"),
-});
+const buildSchemaAndDefaults = (integrationId: number) => {
+  const fields = INTEGRATION_SCHEMAS[integrationId] ?? [];
+  const shape: Record<string, yup.AnySchema> = {};
+  const defaults: Record<string, any> = {};
 
-const defaultValues: Record<string, any> = {
-  environment: "test",
-  apiBaseUrl: "",
-  secretToken: "",
-  authUsername: "",
-  authPassword: "",
-  timeoutSeconds: 60,
-  otpValidityMinutes: 3,
-  pointToAmountRatio: 0,
-  refundPeriodDays: 0,
+  for (const field of fields) {
+    // Default value
+    defaults[field.key] = field.type === "number" ? (field.default ?? 0) : (field.default ?? "");
+
+    // Validation — only required fields
+    if (!field.required) continue;
+    if (field.type === "number") {
+      shape[field.key] = yup.number().min(0).required(`${field.label} is required`);
+    } else if (field.format === "url") {
+      shape[field.key] = yup.string().url("Must be a valid URL").required(`${field.label} is required`);
+    } else {
+      shape[field.key] = yup.string().required(`${field.label} is required`);
+    }
+  }
+
+  return { schema: yup.object().shape(shape), defaults };
 };
 
 const ConfigureIntegrationDrawer = ({
@@ -54,11 +54,14 @@ const ConfigureIntegrationDrawer = ({
   integrationName,
   reFetch,
 }: Props) => {
+  const { schema: configSchema, defaults: defaultValues } = React.useMemo(
+    () => buildSchemaAndDefaults(integrationId),
+    [integrationId],
+  );
+
   const [activeTab, setActiveTab] = useState(0);
   const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // Generic file map: { certificateFile: File|null, privateKeyFile: File|null }
-  const [pendingFiles, setPendingFiles] = useState<Record<string, File | null>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -69,7 +72,6 @@ const ConfigureIntegrationDrawer = ({
           ? { ...defaultValues, ...tenantConfig.configuration }
           : defaultValues,
       );
-      setPendingFiles({});
       setErrors({});
     }
   }, [tenantConfig, open]);
@@ -85,46 +87,21 @@ const ConfigureIntegrationDrawer = ({
     }
   };
 
-  const handleFileChange = (fieldKey: string, file: File | null) => {
-    setPendingFiles((prev) => ({ ...prev, [fieldKey]: file }));
-  };
-
   const handleSave = async () => {
     try {
       await configSchema.validate(values, { abortEarly: false });
       setErrors({});
       setSaving(true);
 
-      const existingConfig = tenantConfig?.configuration as QitafConfig | undefined;
-
-      // Upload any pending files to OCI
-      let certificateUrl = existingConfig?.certificateUrl;
-      let privateKeyUrl = existingConfig?.privateKeyUrl;
-
-      if (pendingFiles.certificateFile) {
-        const res = await tenantIntegrationService.uploadCertificate(pendingFiles.certificateFile);
-        certificateUrl = res.url;
-      }
-      if (pendingFiles.privateKeyFile) {
-        const res = await tenantIntegrationService.uploadCertificate(pendingFiles.privateKeyFile);
-        privateKeyUrl = res.url;
-      }
-
-      const configuration = {
-        ...values,
-        ...(certificateUrl ? { certificateUrl } : {}),
-        ...(privateKeyUrl ? { privateKeyUrl } : {}),
-      };
-
       if (tenantConfig?.id) {
-        await tenantIntegrationService.update(tenantConfig.id, { configuration });
+        await tenantIntegrationService.update(tenantConfig.id, { configuration: values });
         toast.success("Configuration updated successfully");
       } else {
         await tenantIntegrationService.create({
           tenantId,
           integrationId,
           isEnabled: true,
-          configuration,
+          configuration: values,
         });
         toast.success("Integration configured and enabled successfully");
       }
@@ -145,12 +122,6 @@ const ConfigureIntegrationDrawer = ({
     } finally {
       setSaving(false);
     }
-  };
-
-  const existingConfig = tenantConfig?.configuration as QitafConfig | undefined;
-  const existingFileUrls: Record<string, string | undefined> = {
-    certificateFile: existingConfig?.certificateUrl,
-    privateKeyFile: existingConfig?.privateKeyUrl,
   };
 
   const terminalTabDisabled = !tenantConfig?.id;
@@ -199,9 +170,6 @@ const ConfigureIntegrationDrawer = ({
                 values={values}
                 errors={errors}
                 onChange={handleChange}
-                files={pendingFiles}
-                onFileChange={handleFileChange}
-                existingFileUrls={existingFileUrls}
               />
             </Grid2>
 

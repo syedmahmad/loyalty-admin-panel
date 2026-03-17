@@ -20,30 +20,15 @@ export interface TenantIntegrationConfig {
 }
 
 export interface QitafConfig {
-  // CSR Generation (stored for reference)
-  qitafPartnerId?: string;
-  country?: string;
-  city?: string;
-  organisation?: string;
-
   // Credentials from STC
-  secretToken?: string;
-  authUsername?: string;
-  authPassword?: string;
-  certificateUrl?: string;
-  privateKeyUrl?: string;
+  secretToken: string;
+  authUsername: string;
+  authPassword: string;
 
   // Operational
-  environment: "test" | "production";
   apiBaseUrl: string;
-  timeoutSeconds: number;
-  otpValidityMinutes: number;
   pointToAmountRatio: number;
   refundPeriodDays: number;
-
-  // Test only
-  testMsisdn?: string;
-  simCardSerial?: string;
 }
 
 export interface TerminalMapping {
@@ -68,6 +53,10 @@ export interface SchemaField {
   default?: string | number;
   options?: string[];
   accept?: string;
+  /** Renders as a masked password input with show/hide toggle and copy button */
+  secret?: boolean;
+  /** When set to "url", adds URL format validation on top of the required check */
+  format?: "url";
   showWhen?: { key: string; value: string };
   helperText?: string;
   sectionTitle?: string;

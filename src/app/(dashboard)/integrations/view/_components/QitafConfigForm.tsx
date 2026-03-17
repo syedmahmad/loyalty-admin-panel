@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useState } from "react";
 import Grid2 from "@mui/material/Unstable_Grid2";
 import {
   TextField,
   MenuItem,
   Typography,
   Box,
-  Button,
-  Chip,
   Divider,
+  InputAdornment,
+  IconButton,
   Tooltip,
 } from "@mui/material";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { CustomTextfield } from "@/components/CustomTextField";
 import type { SchemaField } from "@/types/integration.types";
 import { INTEGRATION_SCHEMAS } from "@/constants/integrationSchemas";
@@ -23,29 +24,24 @@ interface Props {
   values: Record<string, any>;
   errors: Record<string, string>;
   onChange: (key: string, value: any) => void;
-  // Generic file handling — keyed by schema field key
-  files: Record<string, File | null>;
-  onFileChange: (fieldKey: string, file: File | null) => void;
-  existingFileUrls: Record<string, string | undefined>;
 }
 
-const QitafConfigForm = ({
-  partnerId,
-  values,
-  errors,
-  onChange,
-  files,
-  onFileChange,
-  existingFileUrls,
-}: Props) => {
-  // One ref per file field — stored in a map by field key
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+const QitafConfigForm = ({ partnerId, values, errors, onChange }: Props) => {
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
 
   const schema = INTEGRATION_SCHEMAS[partnerId] ?? [];
 
   const isVisible = (field: SchemaField) => {
     if (!field.showWhen) return true;
     return values[field.showWhen.key] === field.showWhen.value;
+  };
+
+  const toggleVisibility = (key: string) =>
+    setVisibleSecrets((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const copyToClipboard = (key: string) => {
+    const val = values[key] ?? "";
+    if (val) navigator.clipboard.writeText(val);
   };
 
   const renderField = (field: SchemaField, index: number) => {
@@ -70,7 +66,40 @@ const QitafConfigForm = ({
 
     let fieldEl: React.ReactNode;
 
-    if (field.type === "select") {
+    if (field.secret) {
+      const revealed = !!visibleSecrets[field.key];
+      fieldEl = (
+        <Grid2 xs={12} key={field.key}>
+          <TextField
+            required={field.required}
+            fullWidth
+            label={field.label}
+            type={revealed ? "text" : "password"}
+            value={values[field.key] ?? ""}
+            onChange={(e) => onChange(field.key, e.target.value)}
+            error={!!errors[field.key]}
+            helperText={errors[field.key] || field.helperText}
+            inputProps={{ dir: "ltr" }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title={revealed ? "Hide" : "Show"}>
+                    <IconButton size="small" onClick={() => toggleVisibility(field.key)}>
+                      {revealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Copy">
+                    <IconButton size="small" onClick={() => copyToClipboard(field.key)}>
+                      <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid2>
+      );
+    } else if (field.type === "select") {
       fieldEl = (
         <Grid2 xs={12} key={field.key}>
           <TextField
@@ -89,77 +118,6 @@ const QitafConfigForm = ({
               </MenuItem>
             ))}
           </TextField>
-        </Grid2>
-      );
-    } else if (field.type === "file") {
-      const currentFile = files[field.key] ?? null;
-      const existingUrl = existingFileUrls[field.key];
-      const hasExisting = !!existingUrl;
-      const hasNew = !!currentFile;
-
-      fieldEl = (
-        <Grid2 xs={12} key={field.key}>
-          <Typography variant="body2" fontWeight={600} mb={0.5}>
-            {field.label}
-            {field.helperText && (
-              <Tooltip title={field.helperText} placement="right">
-                <InfoOutlinedIcon
-                  fontSize="small"
-                  sx={{ ml: 0.5, verticalAlign: "middle", color: "text.secondary" }}
-                />
-              </Tooltip>
-            )}
-          </Typography>
-
-          {(hasExisting || hasNew) && (
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
-              <Chip
-                label={hasNew ? currentFile!.name : "Uploaded ✓"}
-                size="small"
-                color={hasNew ? "primary" : "success"}
-                variant="outlined"
-                onDelete={
-                  hasNew
-                    ? () => {
-                        onFileChange(field.key, null);
-                        if (fileInputRefs.current[field.key]) {
-                          fileInputRefs.current[field.key]!.value = "";
-                        }
-                      }
-                    : undefined
-                }
-              />
-              {hasExisting && !hasNew && (
-                <Typography variant="caption" color="text.secondary">
-                  <a href={existingUrl} target="_blank" rel="noreferrer">
-                    View
-                  </a>
-                </Typography>
-              )}
-            </Box>
-          )}
-
-          <input
-            ref={(el) => { fileInputRefs.current[field.key] = el; }}
-            type="file"
-            accept={field.accept}
-            style={{ display: "none" }}
-            onChange={(e) => onFileChange(field.key, e.target.files?.[0] ?? null)}
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AttachFileIcon />}
-            onClick={() => fileInputRefs.current[field.key]?.click()}
-          >
-            {hasExisting || hasNew ? `Replace ${field.label}` : `Upload ${field.label}`}
-          </Button>
-
-          {errors[field.key] && (
-            <Typography variant="caption" color="error" display="block" mt={0.5}>
-              {errors[field.key]}
-            </Typography>
-          )}
         </Grid2>
       );
     } else {
