@@ -75,7 +75,10 @@ const IntegrationCard = ({ integration, reFetch, onEdit }: Props) => {
         </Box>
 
         {/* Icon + Name */}
-        <Grid2 xs={12} sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+        <Grid2
+          xs={12}
+          sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}
+        >
           <IntegrationInstructionsIcon
             sx={{ color: theme.palette.primary.main, fontSize: 28 }}
           />
@@ -83,18 +86,25 @@ const IntegrationCard = ({ integration, reFetch, onEdit }: Props) => {
             variant="h3"
             color={theme.palette.primary.dark}
             textTransform="capitalize"
-            sx={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            sx={{
+              maxWidth: 180,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
             {integration.name}
           </Typography>
         </Grid2>
 
         {/* Status badge */}
-        {!integration.isActive && (
-          <Grid2 xs={12} sx={{ mb: 1 }}>
+        <Grid2 xs={12} sx={{ mb: 1 }}>
+          {integration.isActive ? (
+            <Chip label="Active" size="small" color="success" />
+          ) : (
             <Chip label="Inactive" size="small" color="default" />
-          </Grid2>
-        )}
+          )}
+        </Grid2>
 
         {/* Description */}
         {integration.description && (

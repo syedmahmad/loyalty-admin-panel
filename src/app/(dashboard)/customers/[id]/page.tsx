@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { qitafTransactionService, type QitafTransaction } from "@/services/qitafTransactionService";
 import { toast } from "react-toastify";
 
 export default function CustomerDetail() {
@@ -56,6 +57,12 @@ export default function CustomerDetail() {
   const [usageCouponPage, setUsageCouponPage] = useState(1);
   const [usageCouponTotalPages, setUsageCouponTotalPages] = useState(1);
   const [usageCoupons, setUsageCoupons] = useState([]);
+
+  // STC Qitaf Transactions
+  const [qitafTransactions, setQitafTransactions] = useState<QitafTransaction[]>([]);
+  const [qitafPage, setQitafPage] = useState(1);
+  const [qitafTotalPages, setQitafTotalPages] = useState(1);
+  const [qitafLoading, setQitafLoading] = useState(false);
 
   const fetchCustomerDetail = async ({
     pointPage,
@@ -146,6 +153,20 @@ export default function CustomerDetail() {
     }
   };
 
+  const fetchQitafTransactions = async (page: number) => {
+    setQitafLoading(true);
+    try {
+      const result = await qitafTransactionService.getByCustomer(customerId, page, 10);
+      setQitafTransactions(result.data);
+      setQitafPage(result.page);
+      setQitafTotalPages(result.totalPages);
+    } catch {
+      // No Qitaf integration for this customer — silently skip
+    } finally {
+      setQitafLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (customerId) {
       fetchCustomerDetail({
@@ -154,6 +175,7 @@ export default function CustomerDetail() {
         pointSearchValue,
         couponSearchValue,
       });
+      fetchQitafTransactions(1);
     }
   }, [customerId, pointSearchValue, couponSearchValue]);
 
@@ -858,6 +880,132 @@ export default function CustomerDetail() {
             Next →
           </Button>
         </Box>
+      </Box>
+
+      {/* STC Qitaf Transactions */}
+      <Box mt={2}>
+        <Typography sx={{ fontFamily: "Outfit", fontSize: "20px", fontWeight: 500 }}>
+          STC Qitaf Transactions
+        </Typography>
+
+        {qitafLoading ? (
+          <Box display="flex" justifyContent="center" mt={2}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : qitafTransactions.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            No Qitaf transactions found for this customer.
+          </Typography>
+        ) : (
+          <>
+            <TableContainer component={Paper} sx={{ mt: 1 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Amount (SAR)</TableCell>
+                    <TableCell>Points</TableCell>
+                    <TableCell>Branch / Terminal</TableCell>
+                    <TableCell>Global ID</TableCell>
+                    <TableCell>Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {qitafTransactions.map((tx) => (
+                    <TableRow key={tx.id}>
+                      <TableCell>
+                        <Chip
+                          label={tx.transaction_type}
+                          size="small"
+                          variant="outlined"
+                          color={
+                            tx.transaction_type === "earn" || tx.transaction_type === "earn_incentive"
+                              ? "success"
+                              : tx.transaction_type === "redeem"
+                                ? "warning"
+                                : tx.transaction_type === "reverse"
+                                  ? "error"
+                                  : "default"
+                          }
+                          sx={{ fontFamily: "Outfit", fontWeight: 550, textTransform: "capitalize" }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={tx.status}
+                          size="small"
+                          variant="outlined"
+                          color={
+                            tx.status === "success"
+                              ? "success"
+                              : tx.status === "auto_reversed"
+                                ? "warning"
+                                : "error"
+                          }
+                          sx={{ fontFamily: "Outfit", fontWeight: 550, textTransform: "capitalize" }}
+                        />
+                      </TableCell>
+                      <TableCell>{tx.amount ?? tx.reduction_amount ?? "—"}</TableCell>
+                      <TableCell>{tx.points ?? "—"}</TableCell>
+                      <TableCell sx={{ fontSize: "12px", color: "text.secondary" }}>
+                        {tx.branch_id && tx.terminal_id
+                          ? `${tx.branch_id} / ${tx.terminal_id}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "11px", color: "text.secondary", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {tx.global_id ?? "—"}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>
+                        {new Date(tx.created_at).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {qitafTotalPages > 1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderTop: "1px solid #E0E0E0",
+                  paddingY: 2,
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  onClick={() => fetchQitafTransactions(qitafPage - 1)}
+                  disabled={qitafPage === 1}
+                  sx={{ textTransform: "none", borderRadius: 2, px: 3, minWidth: 100 }}
+                >
+                  ← Previous
+                </Button>
+                <Pagination
+                  count={qitafTotalPages}
+                  page={qitafPage}
+                  onChange={(_, value) => fetchQitafTransactions(value)}
+                  shape="rounded"
+                  siblingCount={1}
+                  boundaryCount={1}
+                  hidePrevButton
+                  hideNextButton
+                  sx={{ "& .MuiPaginationItem-root": { borderRadius: "8px", fontWeight: 500, minWidth: "36px", height: "36px" } }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => fetchQitafTransactions(qitafPage + 1)}
+                  disabled={qitafPage === qitafTotalPages}
+                  sx={{ textTransform: "none", borderRadius: 2, px: 3, minWidth: 100 }}
+                >
+                  Next →
+                </Button>
+              </Box>
+            )}
+          </>
+        )}
       </Box>
     </Box>
   );

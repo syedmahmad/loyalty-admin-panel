@@ -369,8 +369,14 @@ const LoyaltyAnalyticsPage = () => {
   ];
 
   const handleExport = () => {
-    const { summary, pointSplits, customerByPoints, itemUsage, barChart, nonClaimed } =
-      analyticsData;
+    const {
+      summary,
+      pointSplits,
+      customerByPoints,
+      itemUsage,
+      barChart,
+      nonClaimed,
+    } = analyticsData;
 
     const q = (val: any) => `"${String(val ?? "").replace(/"/g, '""')}"`;
     const fmt = (n: any) =>
@@ -390,29 +396,58 @@ const LoyaltyAnalyticsPage = () => {
 
     // Export metadata
     csvSections.push([q("Loyalty Analytics Export")]);
-    csvSections.push([q("Exported On"), q(dayjs().format("YYYY-MM-DD HH:mm:ss"))]);
+    csvSections.push([
+      q("Exported On"),
+      q(dayjs().format("YYYY-MM-DD HH:mm:ss")),
+    ]);
     csvSections.push([q("Date Range"), q(dateRangeLabel)]);
     csvSections.push([]);
 
     // Summary
     csvSections.push([q("Loyalty Point Summary")]);
     csvSections.push([q("Label"), q("Value")]);
-    csvSections.push([q("Total Earned Points"), q(fmt(summary.totalEarnedPoints))]);
-    csvSections.push([q("Total Burnt Points"), q(fmt(summary.totalBurntPoints))]);
-    csvSections.push([q("Not Confirmed Burnt Points"), q(fmt(summary.totalNotConfirmedBurntPoints))]);
-    csvSections.push([q("Net Loyalty Points"), q(fmt(summary.totalLoyaltyPoints))]);
-    csvSections.push([q("Remaining Points in Wallets"), q(fmt(summary.totalRemainingPoints))]);
+    csvSections.push([
+      q("Total Earned Points"),
+      q(fmt(summary.totalEarnedPoints)),
+    ]);
+    csvSections.push([
+      q("Total Burnt Points"),
+      q(fmt(summary.totalBurntPoints)),
+    ]);
+    csvSections.push([
+      q("Not Confirmed Burnt Points"),
+      q(fmt(summary.totalNotConfirmedBurntPoints)),
+    ]);
+    csvSections.push([
+      q("Net Loyalty Points"),
+      q(fmt(summary.totalLoyaltyPoints)),
+    ]);
+    csvSections.push([
+      q("Remaining Points in Wallets"),
+      q(fmt(summary.totalRemainingPoints)),
+    ]);
     csvSections.push([]);
 
     // Non Claimed Points
     csvSections.push([q("Non Claimed Points (App Users)")]);
     csvSections.push([q("Label"), q("Value")]);
-    csvSections.push([q("Unclaimed Invoices"), q(fmt(nonClaimed?.unclaimedCount))]);
-    csvSections.push([q("Total Invoice Amount (SAR)"), q(fmtDec(nonClaimed?.totalAmount))]);
-    csvSections.push([q("Estimated Unclaimed Points"), q(fmt(nonClaimed?.estimatedPoints))]);
+    csvSections.push([
+      q("Unclaimed Invoices"),
+      q(fmt(nonClaimed?.unclaimedCount)),
+    ]);
+    csvSections.push([
+      q("Total Invoice Amount (SAR)"),
+      q(fmtDec(nonClaimed?.totalAmount)),
+    ]);
+    csvSections.push([
+      q("Estimated Unclaimed Points"),
+      q(fmt(nonClaimed?.estimatedPoints)),
+    ]);
     csvSections.push([
       q("Earning Rate"),
-      q(`${Number(nonClaimed?.pointsPerSar ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} pts / SAR`),
+      q(
+        `${Number(nonClaimed?.pointsPerSar ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} pts / SAR`,
+      ),
     ]);
     csvSections.push([]);
 
@@ -440,7 +475,11 @@ const LoyaltyAnalyticsPage = () => {
     csvSections.push([q("Earn Activity by Source Type")]);
     csvSections.push([q("Source Type"), q("Transactions"), q("Total Points")]);
     itemUsage.forEach((item: any) => {
-      csvSections.push([q(item.sourceType), q(fmt(item.transactionCount)), q(fmt(item.totalPoints))]);
+      csvSections.push([
+        q(item.sourceType),
+        q(fmt(item.transactionCount)),
+        q(fmt(item.totalPoints)),
+      ]);
     });
     csvSections.push([]);
 
@@ -448,7 +487,11 @@ const LoyaltyAnalyticsPage = () => {
     csvSections.push([q("Earn & Burn Points Over Time")]);
     csvSections.push([q("Date"), q("Earned Points"), q("Burnt Points")]);
     barChart?.forEach((entry: any) => {
-      csvSections.push([q(entry.date), q(fmt(entry.earned)), q(fmt(entry.burnt))]);
+      csvSections.push([
+        q(entry.date),
+        q(fmt(entry.earned)),
+        q(fmt(entry.burnt)),
+      ]);
     });
 
     const BOM = "\uFEFF";

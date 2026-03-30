@@ -15,11 +15,19 @@ export interface TenantIntegrationConfig {
   integration?: GlobalIntegration;
   isEnabled: boolean;
   configuration: QitafConfig | Record<string, unknown>;
+  /** POS API Bearer token — generated from admin panel, no expiry */
+  posApiToken?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface QitafConfig {
+  // STC Account
+  stcPartnerId: string;
+  organisation: string;
+  country: string;
+  city?: string;
+
   // Credentials from STC
   secretToken: string;
   authUsername: string;

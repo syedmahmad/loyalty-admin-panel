@@ -3,14 +3,19 @@
 import React, { useEffect, useState } from "react";
 import { Button, Box, Typography, CircularProgress, Tabs, Tab } from "@mui/material";
 import Grid2 from "@mui/material/Unstable_Grid2";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import BaseDrawer from "@/components/drawer/basedrawer";
 import QitafConfigForm from "./QitafConfigForm";
+import SslCertificateTab from "./SslCertificateTab";
 import TerminalMappingTab from "./TerminalMappingTab";
+import PosApiTokenTab from "./PosApiTokenTab";
 import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
 import type { TenantIntegrationConfig } from "@/types/integration.types";
-import { INTEGRATION_SCHEMAS } from "@/constants/integrationSchemas";
+import { INTEGRATION_SCHEMAS, ACCOUNT_INFO_SCHEMAS } from "@/constants/integrationSchemas";
+import { computeSslExpiry } from "./SslCertificateTab";
 
 interface Props {
   open: boolean;
@@ -22,16 +27,27 @@ interface Props {
   reFetch: () => void;
 }
 
-const buildSchemaAndDefaults = (integrationId: number) => {
-  const fields = INTEGRATION_SCHEMAS[integrationId] ?? [];
-  const shape: Record<string, yup.AnySchema> = {};
-  const defaults: Record<string, any> = {};
+const TAB_ACCOUNT = 0;
+const TAB_CONFIG = 1;
+const TAB_SSL = 2;
+const TAB_TERMINALS = 3;
+const TAB_TOKEN = 4;
 
-  for (const field of fields) {
-    // Default value
+const buildSchemaAndDefaults = (integrationId: number) => {
+  const accountFields = ACCOUNT_INFO_SCHEMAS[integrationId] ?? [];
+  const configFields = INTEGRATION_SCHEMAS[integrationId] ?? [];
+  const allFields = [...accountFields, ...configFields];
+
+  const shape: Record<string, yup.AnySchema> = {};
+  const defaults: Record<string, any> = {
+    // SSL fields — not in schema arrays, but included in config JSON
+    sslEnvironment: "",
+    sslCertGeneratedAt: "",
+  };
+
+  for (const field of allFields) {
     defaults[field.key] = field.type === "number" ? (field.default ?? 0) : (field.default ?? "");
 
-    // Validation — only required fields
     if (!field.required) continue;
     if (field.type === "number") {
       shape[field.key] = yup.number().min(0).required(`${field.label} is required`);
@@ -43,6 +59,14 @@ const buildSchemaAndDefaults = (integrationId: number) => {
   }
 
   return { schema: yup.object().shape(shape), defaults };
+};
+
+/** Returns which tab a given field key lives in */
+const getFieldTab = (key: string, integrationId: number): number => {
+  const accountKeys = (ACCOUNT_INFO_SCHEMAS[integrationId] ?? []).map((f) => f.key);
+  if (accountKeys.includes(key)) return TAB_ACCOUNT;
+  if (key === "sslEnvironment" || key === "sslCertGeneratedAt") return TAB_SSL;
+  return TAB_CONFIG;
 };
 
 const ConfigureIntegrationDrawer = ({
@@ -59,20 +83,22 @@ const ConfigureIntegrationDrawer = ({
     [integrationId],
   );
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(TAB_ACCOUNT);
   const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [posApiToken, setPosApiToken] = useState<string | null>(tenantConfig?.posApiToken ?? null);
 
   useEffect(() => {
     if (open) {
-      setActiveTab(0);
+      setActiveTab(TAB_ACCOUNT);
       setValues(
         tenantConfig?.configuration
           ? { ...defaultValues, ...tenantConfig.configuration }
           : defaultValues,
       );
       setErrors({});
+      setPosApiToken(tenantConfig?.posApiToken ?? null);
     }
   }, [tenantConfig, open]);
 
@@ -115,7 +141,12 @@ const ConfigureIntegrationDrawer = ({
           fieldErrors[e.path] = e.message;
         });
         setErrors(fieldErrors);
-        setActiveTab(0);
+
+        // Navigate to the first tab that has an error
+        const firstErrorKey = Object.keys(fieldErrors)[0];
+        if (firstErrorKey) {
+          setActiveTab(getFieldTab(firstErrorKey, integrationId));
+        }
       } else {
         toast.error(err?.response?.data?.message || "Failed to save configuration");
       }
@@ -124,7 +155,28 @@ const ConfigureIntegrationDrawer = ({
     }
   };
 
-  const terminalTabDisabled = !tenantConfig?.id;
+  const hasErrors = (tab: number): boolean => {
+    return Object.keys(errors).some((key) => getFieldTab(key, integrationId) === tab);
+  };
+
+  const canAccessTab = (tab: number): boolean => {
+    if (tab === TAB_TERMINALS || tab === TAB_TOKEN) return !!tenantConfig?.id;
+    return true;
+  };
+
+  const sslExpiry = computeSslExpiry(values.sslCertGeneratedAt, values.sslEnvironment);
+
+  const SaveButton = () => (
+    <Button
+      variant="outlined"
+      color="primary"
+      onClick={handleSave}
+      disabled={saving}
+      startIcon={saving ? <CircularProgress size={16} /> : undefined}
+    >
+      {saving ? "Saving…" : tenantConfig?.id ? "Update Configuration" : "Save & Enable"}
+    </Button>
+  );
 
   return (
     <BaseDrawer
@@ -138,64 +190,199 @@ const ConfigureIntegrationDrawer = ({
           value={activeTab}
           onChange={(_, v) => setActiveTab(v)}
           sx={{ borderBottom: 1, borderColor: "divider" }}
+          variant="scrollable"
+          scrollButtons="auto"
         >
-          <Tab label="General Config" value={0} />
-          <Tab label="Branch & Terminal Mapping" value={1} disabled={terminalTabDisabled} />
+          <Tab
+            label="STC Account"
+            value={TAB_ACCOUNT}
+            sx={{ color: hasErrors(TAB_ACCOUNT) ? "error.main" : undefined }}
+          />
+          <Tab
+            label="STC Config"
+            value={TAB_CONFIG}
+            sx={{ color: hasErrors(TAB_CONFIG) ? "error.main" : undefined }}
+          />
+          <Tab
+            label={
+              sslExpiry && (sslExpiry.isExpired || sslExpiry.isWarning)
+                ? "SSL Certificate ⚠"
+                : "SSL Certificate"
+            }
+            value={TAB_SSL}
+            sx={{
+              color:
+                sslExpiry && (sslExpiry.isExpired || sslExpiry.isWarning)
+                  ? "error.main"
+                  : sslExpiry?.isCaution
+                    ? "warning.main"
+                    : undefined,
+            }}
+          />
+          <Tab label="Branch & Terminal" value={TAB_TERMINALS} disabled={!canAccessTab(TAB_TERMINALS)} />
+          <Tab label="POS API Token" value={TAB_TOKEN} disabled={!canAccessTab(TAB_TOKEN)} />
         </Tabs>
 
-        {terminalTabDisabled ? (
+        {!tenantConfig?.id && (
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: "block", mt: 0.5, mb: 2 }}
+            sx={{ display: "block", mt: 0.5, mb: 1 }}
           >
-            Save general config first to enable branch mapping.
+            Save config first to enable terminal mapping and token management.
           </Typography>
-        ) : (
-          <Box mb={2} />
         )}
 
-        {activeTab === 0 && (
-          <Grid2 container spacing={3}>
-            <Grid2 xs={12}>
-              <Typography variant="body2" color="text.secondary">
-                Set the credentials and parameters for this integration. Configuration is stored
-                per tenant.
-              </Typography>
+        <Box mt={2}>
+          {/* Tab 0 — STC Account */}
+          {activeTab === TAB_ACCOUNT && (
+            <Grid2 container spacing={3}>
+              <Grid2 xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  Enter your STC account details. These identify your organisation within STC&apos;s system.
+                </Typography>
+              </Grid2>
+              <Grid2 xs={12}>
+                <QitafConfigForm
+                  partnerId={integrationId}
+                  schemaSource="account"
+                  values={values}
+                  errors={errors}
+                  onChange={handleChange}
+                />
+              </Grid2>
+              <Grid2 xs={12}>
+                <Box display="flex" justifyContent="space-between" mt={1}>
+                  <SaveButton />
+                  <Button
+                    variant="contained"
+                    endIcon={<ArrowForwardIcon />}
+                    onClick={() => setActiveTab(TAB_CONFIG)}
+                  >
+                    Next
+                  </Button>
+                </Box>
+              </Grid2>
             </Grid2>
+          )}
 
-            <Grid2 xs={12}>
-              <QitafConfigForm
-                partnerId={integrationId}
-                values={values}
-                errors={errors}
-                onChange={handleChange}
-              />
+          {/* Tab 1 — General Config */}
+          {activeTab === TAB_CONFIG && (
+            <Grid2 container spacing={3}>
+              <Grid2 xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  Set the API credentials and operational parameters for this integration.
+                </Typography>
+              </Grid2>
+              <Grid2 xs={12}>
+                <QitafConfigForm
+                  partnerId={integrationId}
+                  schemaSource="config"
+                  values={values}
+                  errors={errors}
+                  onChange={handleChange}
+                />
+              </Grid2>
+              <Grid2 xs={12}>
+                <Box display="flex" justifyContent="space-between" mt={1}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={() => setActiveTab(TAB_ACCOUNT)}
+                  >
+                    Back
+                  </Button>
+                  <Box display="flex" gap={1}>
+                    <SaveButton />
+                    <Button
+                      variant="contained"
+                      endIcon={<ArrowForwardIcon />}
+                      onClick={() => setActiveTab(TAB_SSL)}
+                    >
+                      Next
+                    </Button>
+                  </Box>
+                </Box>
+              </Grid2>
             </Grid2>
+          )}
 
-            <Grid2 xs={12}>
-              <Box display="flex" justifyContent="center" mt={1}>
+          {/* Tab 2 — SSL Certificate */}
+          {activeTab === TAB_SSL && (
+            <Grid2 container spacing={3}>
+              <Grid2 xs={12}>
+                <SslCertificateTab values={values} onChange={handleChange} />
+              </Grid2>
+              <Grid2 xs={12}>
+                <Box display="flex" justifyContent="space-between" mt={1}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={() => setActiveTab(TAB_CONFIG)}
+                  >
+                    Back
+                  </Button>
+                  <Box display="flex" gap={1}>
+                    <SaveButton />
+                    {canAccessTab(TAB_TERMINALS) && (
+                      <Button
+                        variant="contained"
+                        endIcon={<ArrowForwardIcon />}
+                        onClick={() => setActiveTab(TAB_TERMINALS)}
+                      >
+                        Next
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </Grid2>
+            </Grid2>
+          )}
+
+          {/* Tab 3 — Branch & Terminal Mapping */}
+          {activeTab === TAB_TERMINALS && tenantConfig?.id && (
+            <Box>
+              <TerminalMappingTab integrationId={tenantConfig.id} />
+              <Box display="flex" justifyContent="space-between" mt={2}>
                 <Button
                   variant="outlined"
-                  color="primary"
-                  onClick={handleSave}
-                  disabled={saving}
-                  startIcon={saving ? <CircularProgress size={16} /> : undefined}
+                  startIcon={<ArrowBackIcon />}
+                  onClick={() => setActiveTab(TAB_SSL)}
                 >
-                  {saving
-                    ? "Saving…"
-                    : tenantConfig?.id
-                      ? "Update Configuration"
-                      : "Save & Enable"}
+                  Back
+                </Button>
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => setActiveTab(TAB_TOKEN)}
+                >
+                  Next
                 </Button>
               </Box>
-            </Grid2>
-          </Grid2>
-        )}
+            </Box>
+          )}
 
-        {activeTab === 1 && tenantConfig?.id && (
-          <TerminalMappingTab integrationId={tenantConfig.id} />
-        )}
+          {/* Tab 4 — POS API Token */}
+          {activeTab === TAB_TOKEN && tenantConfig?.id && (
+            <Box>
+              <PosApiTokenTab
+                tenantId={tenantId}
+                partnerId={integrationId}
+                initialToken={posApiToken}
+                onTokenGenerated={(token) => setPosApiToken(token)}
+              />
+              <Box display="flex" justifyContent="flex-start" mt={2}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={() => setActiveTab(TAB_TERMINALS)}
+                >
+                  Back
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
       </Box>
     </BaseDrawer>
   );

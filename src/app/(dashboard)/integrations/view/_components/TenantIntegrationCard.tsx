@@ -19,6 +19,7 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { toast } from "react-toastify";
 import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 import ConfigureIntegrationDrawer from "./ConfigureIntegrationDrawer";
+import { computeSslExpiry } from "./SslCertificateTab";
 import type { GlobalIntegration, TenantIntegrationConfig } from "@/types/integration.types";
 
 interface Props {
@@ -40,6 +41,11 @@ const TenantIntegrationCard = ({
 
   const isEnabled = tenantConfig?.isEnabled ?? false;
   const isConfigured = !!tenantConfig?.id;
+
+  const sslExpiry = computeSslExpiry(
+    (tenantConfig?.configuration as any)?.sslCertGeneratedAt,
+    (tenantConfig?.configuration as any)?.sslEnvironment,
+  );
 
   const handleToggle = async () => {
     if (!isConfigured && !isEnabled) {
@@ -130,14 +136,40 @@ const TenantIntegrationCard = ({
           </Grid2>
         )}
 
-        {/* Status badge */}
+        {/* Status badge + SSL expiry badge */}
         <Grid2 xs={12}>
-          <Chip
-            label={isConfigured ? (isEnabled ? "Active" : "Disabled") : "Not configured"}
-            size="small"
-            color={isEnabled ? "success" : "default"}
-            variant={isEnabled ? "filled" : "outlined"}
-          />
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <Chip
+              label={isConfigured ? (isEnabled ? "Active" : "Disabled") : "Not configured"}
+              size="small"
+              color={isEnabled ? "success" : "default"}
+              variant={isEnabled ? "filled" : "outlined"}
+            />
+            {sslExpiry && (
+              <Chip
+                label={
+                  sslExpiry.isExpired
+                    ? "SSL Expired"
+                    : sslExpiry.isWarning
+                      ? `SSL expires in ${sslExpiry.daysRemaining}d`
+                      : sslExpiry.isCaution
+                        ? `SSL ${sslExpiry.daysRemaining}d left`
+                        : `SSL valid`
+                }
+                size="small"
+                color={
+                  sslExpiry.isExpired || sslExpiry.isWarning
+                    ? "error"
+                    : sslExpiry.isCaution
+                      ? "warning"
+                      : "success"
+                }
+                variant="outlined"
+                onClick={() => setConfigureOpen(true)}
+                sx={{ cursor: "pointer" }}
+              />
+            )}
+          </Box>
         </Grid2>
 
         {/* Actions: toggle + configure */}

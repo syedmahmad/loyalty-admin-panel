@@ -17,19 +17,24 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { CustomTextfield } from "@/components/CustomTextField";
 import type { SchemaField } from "@/types/integration.types";
-import { INTEGRATION_SCHEMAS } from "@/constants/integrationSchemas";
+import { INTEGRATION_SCHEMAS, ACCOUNT_INFO_SCHEMAS } from "@/constants/integrationSchemas";
 
 interface Props {
   partnerId: number;
+  /** Which schema to render: "account" = STC Account tab, "config" = General Config tab (default) */
+  schemaSource?: "account" | "config";
   values: Record<string, any>;
   errors: Record<string, string>;
   onChange: (key: string, value: any) => void;
 }
 
-const QitafConfigForm = ({ partnerId, values, errors, onChange }: Props) => {
+const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, onChange }: Props) => {
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
 
-  const schema = INTEGRATION_SCHEMAS[partnerId] ?? [];
+  const schema =
+    schemaSource === "account"
+      ? (ACCOUNT_INFO_SCHEMAS[partnerId] ?? [])
+      : (INTEGRATION_SCHEMAS[partnerId] ?? []);
 
   const isVisible = (field: SchemaField) => {
     if (!field.showWhen) return true;
