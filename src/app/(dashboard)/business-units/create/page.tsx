@@ -14,6 +14,7 @@ import {
   IconButton,
   useTheme,
   Box,
+  MenuItem,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Formik, Form } from "formik";
@@ -25,10 +26,16 @@ import { POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
+const PROGRAM_TYPES = [
+  { value: "points", label: "Points" },
+  { value: "otp", label: "OTP (e.g. Qitaf)" },
+];
+
 const BusinessUnitSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   description: Yup.string(),
   location: Yup.string(),
+  type: Yup.string().required("Program type is required"),
 });
 
 const BusinessUnitCreateForm = ({ onSuccess } : any) => {
@@ -97,6 +104,7 @@ const BusinessUnitCreateForm = ({ onSuccess } : any) => {
           name: "",
           description: "",
           location: "",
+          type: "points",
         }}
         validationSchema={BusinessUnitSchema}
         onSubmit={handleSubmit}
@@ -159,6 +167,25 @@ const BusinessUnitCreateForm = ({ onSuccess } : any) => {
                     ),
                   }}
                 />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  name="type"
+                  label="Program Type"
+                  value={values.type}
+                  onChange={handleChange}
+                  error={touched.type && Boolean(errors.type)}
+                  helperText={touched.type && errors.type}
+                >
+                  {PROGRAM_TYPES.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
               <Grid item xs={12}>
