@@ -16,6 +16,11 @@ import {
   IconButton,
   useTheme,
 } from '@mui/material';
+
+const PROGRAM_TYPES = [
+  { value: 'points', label: 'Points' },
+  { value: 'otp', label: 'OTP (e.g. Qitaf)' },
+];
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Formik, Form } from 'formik';
@@ -62,6 +67,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
     name: '',
     description: '',
     location: '',
+    type: 'points',
   });
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +82,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
             name: data.name || '',
             description: data.description || '',
             location: data.location || '',
+            type: data.type || 'points',
           });
         })
         .finally(() => setLoading(false));
@@ -91,6 +98,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
             name: data.name || '',
             description: data.description || '',
             location: data.location || '',
+            type: data.type || 'points',
           });
         })
         .finally(() => setLoading(false));
@@ -166,6 +174,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
               name: Yup.string().required('Name is required'),
               description: Yup.string(),
               location: Yup.string(),
+              type: Yup.string().required('Program type is required'),
             })}
             onSubmit={handleSubmit}
           >
@@ -226,6 +235,25 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
                         ),
                       }}
                     />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      select
+                      fullWidth
+                      name="type"
+                      label="Program Type"
+                      value={values.type ?? 'points'}
+                      onChange={handleChange}
+                      error={touched.type && Boolean(errors.type)}
+                      helperText={touched.type && errors.type}
+                    >
+                      {PROGRAM_TYPES.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                   </Grid>
 
                       <Grid item xs={12}>
