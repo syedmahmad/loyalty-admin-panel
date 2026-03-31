@@ -54,14 +54,26 @@ const API_ENDPOINTS: ApiEndpoint[] = [
   {
     method: "PUT",
     path: "/qitaf/redemption/reverse",
-    description: "Manual reverse — cancel a successful redemption",
+    description: "Manual reverse — cancel a redemption using the exact globalId and requestDate from the original redeem response",
     body: {
       Msisdn: 500000000,
       BranchId: "xxxx",
       TerminalId: "xxxx",
-      RefRequestId: "<globalId from redeem>",
-      RefRequestDate: "<requestDate from redeem>",
+      RefRequestId: "<globalId from redeem response>",
+      RefRequestDate: "<requestDate from redeem response>",
     },
+    note: "Use reverse-by-msisdn below if you don't have the globalId handy",
+  },
+  {
+    method: "PUT",
+    path: "/qitaf/redemption/reverse-by-msisdn",
+    description:
+      "Cashier-friendly reverse — cancels the customer's last successful redemption without needing a UUID. " +
+      "The system looks up our transaction history, finds the most recent successful redeem for this Msisdn, " +
+      "and automatically fills in the RefRequestId and RefRequestDate before calling STC. " +
+      "The cashier only needs the customer's phone number — nothing else.",
+    body: { Msisdn: 500000000, BranchId: "xxxx", TerminalId: "xxxx" },
+    note: "Preferred over manual reverse — cashier never has to copy/paste a UUID",
   },
   {
     method: "POST",
@@ -234,33 +246,69 @@ const PosApiTokenTab = ({ tenantId, partnerId, initialToken, onTokenGenerated }:
               <Box key={ep.path}>
                 {i > 0 && <Divider />}
                 <Box px={2} py={1.5}>
+                  {/* Method badge + path */}
                   <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                    <Chip label={ep.method} color={METHOD_COLOR[ep.method]} size="small" sx={{ fontWeight: 700, fontFamily: "monospace", minWidth: 48 }} />
+                    <Chip
+                      label={ep.method}
+                      color={METHOD_COLOR[ep.method]}
+                      size="small"
+                      sx={{ fontWeight: 700, fontFamily: "monospace", minWidth: 48 }}
+                    />
                     <Typography variant="body2" fontFamily="monospace" fontWeight={600}>
                       {ep.path}
                     </Typography>
                   </Box>
+
+                  {/* Description */}
                   <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                     {ep.description}
                   </Typography>
+
+                  {/* Body block with copy button */}
                   {ep.body && (
-                    <Box
-                      component="pre"
-                      sx={{
-                        m: 0,
-                        p: 1,
-                        bgcolor: "action.hover",
-                        borderRadius: 1,
-                        fontSize: 11,
-                        fontFamily: "monospace",
-                        overflowX: "auto",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-all",
-                      }}
-                    >
-                      {JSON.stringify(ep.body, null, 2)}
+                    <Box sx={{ position: "relative" }}>
+                      {/* Copy body button — top-right corner of the code block */}
+                      <Tooltip title="Copy body">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            navigator.clipboard.writeText(JSON.stringify(ep.body, null, 2));
+                            toast.success("Body copied!");
+                          }}
+                          sx={{
+                            position: "absolute",
+                            top: 4,
+                            right: 4,
+                            zIndex: 1,
+                            bgcolor: "background.paper",
+                            "&:hover": { bgcolor: "action.hover" },
+                          }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 13 }} />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Box
+                        component="pre"
+                        sx={{
+                          m: 0,
+                          p: 1,
+                          pr: 4, // leave space so text doesn't go under the copy button
+                          bgcolor: "action.hover",
+                          borderRadius: 1,
+                          fontSize: 11,
+                          fontFamily: "monospace",
+                          overflowX: "auto",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {JSON.stringify(ep.body, null, 2)}
+                      </Box>
                     </Box>
                   )}
+
+                  {/* Optional note below the body */}
                   {ep.note && (
                     <Typography variant="caption" color="warning.main" display="block" mt={0.5}>
                       ↳ {ep.note}
