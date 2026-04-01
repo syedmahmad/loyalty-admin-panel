@@ -8,6 +8,8 @@ import {
   MenuItem,
   Autocomplete,
   Chip,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { CustomTextfield } from "@/components/CustomTextField";
 import * as yup from "yup";
@@ -44,6 +46,7 @@ const validationSchema = yup.object().shape({
 const EditClient = ({
   itemToBeEdited,
   reFetch,
+  openEditClientInfoModal,
   setOpenEditClientInfoModal,
 }: any) => {
   const theme = useTheme();
@@ -54,6 +57,8 @@ const EditClient = ({
     countryId: "",
     languageIds: [],
     currencyIds: [],
+    otp_burn_required: false,
+    otp_burn_ttl_minutes: 5,
   });
 
   const { data: countriesData } = useQuery({
@@ -82,9 +87,11 @@ const EditClient = ({
           itemToBeEdited?.languages?.map((cl: any) => cl?.language) || [],
         currencyIds:
           itemToBeEdited?.currencies?.map((cl: any) => cl?.currency) || [],
+        otp_burn_required: !!itemToBeEdited?.otp_burn_required,
+        otp_burn_ttl_minutes: itemToBeEdited?.otp_burn_ttl_minutes ?? 5,
       });
     }
-  }, [itemToBeEdited]);
+  }, [itemToBeEdited, openEditClientInfoModal]);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -105,6 +112,10 @@ const EditClient = ({
         country_id: clientInfo?.countryId,
         languageIds: clientInfo?.languageIds,
         currencyIds: clientInfo?.currencyIds,
+        otp_burn_required: clientInfo.otp_burn_required ? 1 : 0,
+        otp_burn_ttl_minutes: clientInfo.otp_burn_required
+          ? Number(clientInfo.otp_burn_ttl_minutes)
+          : 5,
       };
 
       await PATCH(`/tenants/${itemToBeEdited.id}`, payload, {
@@ -319,6 +330,40 @@ const EditClient = ({
           )}
         />
       </Grid2>
+
+      {/* OTP Burn Feature */}
+      <Grid2 xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={clientInfo.otp_burn_required}
+              onChange={(e) =>
+                setClientInfo({ ...clientInfo, otp_burn_required: e.target.checked })
+              }
+            />
+          }
+          label="Enable OTP Burn"
+        />
+      </Grid2>
+
+      {clientInfo.otp_burn_required && (
+        <Grid2 xs={12}>
+          <TextField
+            fullWidth
+            type="number"
+            label="OTP Expiry (minutes)"
+            value={clientInfo.otp_burn_ttl_minutes}
+            onChange={(e) =>
+              setClientInfo({
+                ...clientInfo,
+                otp_burn_ttl_minutes: Math.max(1, Number(e.target.value)),
+              })
+            }
+            inputProps={{ min: 1 }}
+            helperText="How long the OTP remains valid after generation"
+          />
+        </Grid2>
+      )}
 
       <Grid2 xs={12} display="flex" justifyContent="center">
         <Button
