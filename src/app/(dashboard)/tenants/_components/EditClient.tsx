@@ -184,7 +184,7 @@ const EditClient = ({
           getOptionLabel={(option: any) => option?.name || ""}
           value={
             countriesData?.countries?.find(
-              (c: any) => c.id === clientInfo.countryId
+              (c: any) => c.id === clientInfo.countryId,
             ) || null
           }
           onChange={(_, newValue) => {
@@ -227,7 +227,7 @@ const EditClient = ({
               const id =
                 typeof singleLang === "object" ? singleLang.id : singleLang;
               return languagesData?.languages.find(
-                (lang: any) => lang?.id === id
+                (lang: any) => lang?.id === id,
               );
             })
             .filter(Boolean)}
@@ -243,7 +243,7 @@ const EditClient = ({
             selected.map(
               (
                 option: { id: number; flag: string; name: string },
-                index: number
+                index: number,
               ) => {
                 const { key, ...tagProps } = getTagProps({ index });
                 return (
@@ -253,7 +253,7 @@ const EditClient = ({
                     {...tagProps}
                   />
                 );
-              }
+              },
             )
           }
           renderInput={(params) => (
@@ -288,7 +288,7 @@ const EditClient = ({
             .map((currency: any) => {
               const id = typeof currency === "object" ? currency.id : currency;
               return currenciesData?.currencies.find(
-                (singleCurreny: any) => singleCurreny?.id == id
+                (singleCurreny: any) => singleCurreny?.id == id,
               );
             })
             .filter(Boolean)}
@@ -304,7 +304,7 @@ const EditClient = ({
             selected.map(
               (
                 option: { id: number; flag: string; name: string },
-                index: number
+                index: number,
               ) => {
                 const { key, ...tagProps } = getTagProps({ index });
                 return (
@@ -314,7 +314,7 @@ const EditClient = ({
                     {...tagProps}
                   />
                 );
-              }
+              },
             )
           }
           renderInput={(params) => (
@@ -338,11 +338,14 @@ const EditClient = ({
             <Switch
               checked={clientInfo.otp_burn_required}
               onChange={(e) =>
-                setClientInfo({ ...clientInfo, otp_burn_required: e.target.checked })
+                setClientInfo({
+                  ...clientInfo,
+                  otp_burn_required: e.target.checked,
+                })
               }
             />
           }
-          label="Enable OTP Burn"
+          label="Enable OTP Burn For Petromin App"
         />
       </Grid2>
 

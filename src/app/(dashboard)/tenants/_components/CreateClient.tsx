@@ -124,7 +124,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
               "An error occurred while creating tenant",
             {
               toastId: "create-tenant-error",
-            }
+            },
           );
         }
       }
@@ -224,7 +224,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
             selected.map(
               (
                 option: { id: number; flag: string; name: string },
-                index: number
+                index: number,
               ) => {
                 const { key, ...tagProps } = getTagProps({ index });
                 return (
@@ -234,7 +234,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
                     {...tagProps}
                   />
                 );
-              }
+              },
             )
           }
           renderInput={(params) => (
@@ -274,7 +274,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
             selected.map(
               (
                 option: { id: number; flag: string; name: string },
-                index: number
+                index: number,
               ) => {
                 const { key, ...tagProps } = getTagProps({ index });
                 return (
@@ -284,7 +284,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
                     {...tagProps}
                   />
                 );
-              }
+              },
             )
           }
           renderInput={(params) => (
@@ -308,11 +308,14 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
             <Switch
               checked={clientInfo.otp_burn_required}
               onChange={(e) =>
-                setClientInfo({ ...clientInfo, otp_burn_required: e.target.checked })
+                setClientInfo({
+                  ...clientInfo,
+                  otp_burn_required: e.target.checked,
+                })
               }
             />
           }
-          label="Enable OTP Burn"
+          label="Enable OTP Burn For Petromin App"
         />
       </Grid2>
 
