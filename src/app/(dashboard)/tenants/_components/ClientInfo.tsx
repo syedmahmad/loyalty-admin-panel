@@ -28,6 +28,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useRouter } from "next/navigation";
 import { GET, POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
@@ -221,11 +222,42 @@ const ClientDetails = ({ clientInfo }: any) => {
     <Grid2 container spacing={1}>
       {/* API Token row */}
       <Grid2 xs={12}>
-        <Typography
-          sx={{ fontSize: "14px", fontWeight: "600", color: theme.palette.primary.dark }}
-        >
-          <b>API Token:</b>
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Typography
+            sx={{ fontSize: "14px", fontWeight: "600", color: theme.palette.primary.dark }}
+          >
+            <b>API Token:</b>
+          </Typography>
+          <Tooltip
+            arrow
+            placement="right"
+            title={
+              <Box sx={{ p: 0.5, maxWidth: 260 }}>
+                <Typography variant="body2" fontWeight={700} mb={0.5}>
+                  Tenant API Token
+                </Typography>
+                <Typography variant="caption" display="block" mb={1}>
+                  This is the master Bearer token for the <strong>{clientInfo.name}</strong> tenant.
+                  It authenticates all API calls made on behalf of this tenant.
+                </Typography>
+                <Typography variant="caption" fontWeight={700} display="block" mb={0.5}>
+                  Used by:
+                </Typography>
+                <Typography variant="caption" component="ul" sx={{ m: 0, pl: 2 }}>
+                  <li>POS systems (checkout, earn &amp; burn)</li>
+                  <li>Website / mobile app integrations</li>
+                  <li>STC Qitaf POS terminals</li>
+                  <li>Any third-party vendor calling the loyalty API</li>
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1, color: "warning.light" }}>
+                  Include as: <code>Authorization: Bearer &lt;token&gt;</code>
+                </Typography>
+              </Box>
+            }
+          >
+            <InfoOutlinedIcon sx={{ fontSize: 15, color: "text.secondary", cursor: "help", mt: "1px" }} />
+          </Tooltip>
+        </Box>
       </Grid2>
       <Grid2 xs={12}>
         {token ? (

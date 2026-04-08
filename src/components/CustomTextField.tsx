@@ -19,15 +19,20 @@ export const CustomTextfield = (props: any) => {
       placeholder={placeholder ? placeholder : defaultPlaceholder}
       FormHelperTextProps={{ sx: { ml: 0 } }}
       InputLabelProps={{
+        ...otherProps.InputLabelProps,
         sx: {
           direction: isArabic ? "rtl" : "ltr",
           textAlign: isArabic ? "right" : "left",
+          ...otherProps.InputLabelProps?.sx,
         },
       }}
       inputProps={{
         ...otherProps.inputProps,
         dir: isArabic ? "rtl" : "ltr",
-        style: { textAlign: isArabic ? "right" : "left" },
+        style: {
+          textAlign: isArabic ? "right" : "left",
+          ...otherProps.inputProps?.style,
+        },
       }}
       sx={{
         "& .MuiOutlinedInput-root": {
@@ -41,6 +46,7 @@ export const CustomTextfield = (props: any) => {
             borderColor: fieldsetcolor || theme.palette.primary.main,
           },
         },
+        ...otherProps.sx,
       }}
     />
   );

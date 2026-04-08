@@ -9,9 +9,11 @@ import {
   Chip,
   Alert,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import Grid2 from "@mui/material/Unstable_Grid2";
 import SecurityIcon from "@mui/icons-material/Security";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 const EXPIRY_YEARS: Record<string, number> = {
   staging: 3,
@@ -85,11 +87,11 @@ const SslCertificateTab = ({ values, onChange }: Props) => {
       <Box display="flex" alignItems="center" gap={1} mb={1}>
         <SecurityIcon fontSize="small" color="action" />
         <Typography
-          variant="caption"
           fontWeight={700}
           color="text.secondary"
           textTransform="uppercase"
           letterSpacing={0.8}
+          sx={{ fontSize: 12 }}
         >
           SSL / mTLS Certificate
         </Typography>
@@ -114,10 +116,24 @@ const SslCertificateTab = ({ values, onChange }: Props) => {
             select
             fullWidth
             required
-            label="Environment"
+            label={
+              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                Environment
+                <Tooltip
+                  placement="top"
+                  arrow
+                  title="Select whether this certificate was issued for the STC Staging (test) environment or Production. Staging certificates are valid for 3 years; Production certificates are valid for 5 years. Using the wrong environment will cause the expiry calculation to be incorrect."
+                >
+                  <InfoOutlinedIcon sx={{ fontSize: 13, cursor: "help", opacity: 0.55 }} />
+                </Tooltip>
+              </Box>
+            }
             value={values.sslEnvironment ?? ""}
             onChange={(e) => onChange("sslEnvironment", e.target.value)}
-            helperText="Select the STC environment this certificate was issued for"
+            helperText="Staging = 3-year cert · Production = 5-year cert"
+            inputProps={{ style: { fontSize: 15 } }}
+            InputLabelProps={{ sx: { fontSize: 15 } }}
+            FormHelperTextProps={{ sx: { fontSize: 12.5 } }}
           >
             <MenuItem value="staging">Staging (Testing)</MenuItem>
             <MenuItem value="production">Production</MenuItem>
@@ -129,13 +145,25 @@ const SslCertificateTab = ({ values, onChange }: Props) => {
           <TextField
             fullWidth
             required
-            label="Certificate Generation Date"
+            label={
+              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                Certificate Generation Date
+                <Tooltip
+                  placement="top"
+                  arrow
+                  title="The exact date STC generated and issued this mTLS certificate. The system uses this date to calculate when the certificate will expire and warn you before it becomes invalid. You can find this date in the certificate file or in the email STC sent when they issued it."
+                >
+                  <InfoOutlinedIcon sx={{ fontSize: 13, cursor: "help", opacity: 0.55 }} />
+                </Tooltip>
+              </Box>
+            }
             type="date"
             value={values.sslCertGeneratedAt ?? ""}
             onChange={(e) => onChange("sslCertGeneratedAt", e.target.value)}
-            helperText="The date this mTLS certificate was generated/issued by STC"
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ max: new Date().toISOString().split("T")[0] }}
+            helperText="Used to calculate expiry — check your STC certificate file or onboarding email"
+            InputLabelProps={{ shrink: true, sx: { fontSize: 15 } }}
+            inputProps={{ max: new Date().toISOString().split("T")[0], style: { fontSize: 15 } }}
+            FormHelperTextProps={{ sx: { fontSize: 12.5 } }}
           />
         </Grid2>
 

@@ -15,8 +15,6 @@ export interface TenantIntegrationConfig {
   integration?: GlobalIntegration;
   isEnabled: boolean;
   configuration: QitafConfig | Record<string, unknown>;
-  /** POS API Bearer token — generated from admin panel, no expiry */
-  posApiToken?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -35,7 +33,10 @@ export interface QitafConfig {
 
   // Operational
   apiBaseUrl: string;
-  pointToAmountRatio: number;
+  /** SAR value of 1 Qitaf point at redemption. Current: 0.2 (500 pts = 100 SAR) */
+  burnSarPerPoint: number;
+  /** Points earned per 1 SAR spent. Current: 0.1 (SAR 65 → 6 pts, rounded down) */
+  earnPointsPerSar: number;
   refundPeriodDays: number;
 }
 
@@ -67,5 +68,7 @@ export interface SchemaField {
   format?: "url";
   showWhen?: { key: string; value: string };
   helperText?: string;
+  /** Tooltip shown on the label info icon — use for richer explanation than helperText */
+  tooltip?: string;
   sectionTitle?: string;
 }

@@ -9,7 +9,7 @@ import BaseDrawer from "@/components/drawer/basedrawer";
 import QitafConfigForm from "./QitafConfigForm";
 import SslCertificateTab from "./SslCertificateTab";
 import TerminalMappingTab from "./TerminalMappingTab";
-import PosApiTokenTab from "./PosApiTokenTab";
+import AuthenticationTab from "./PosApiTokenTab";
 import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 import { toast } from "react-toastify";
 import * as yup from "yup";
@@ -87,7 +87,6 @@ const ConfigureIntegrationDrawer = ({
   const [values, setValues] = useState<Record<string, any>>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [posApiToken, setPosApiToken] = useState<string | null>(tenantConfig?.posApiToken ?? null);
 
   useEffect(() => {
     if (open) {
@@ -98,7 +97,6 @@ const ConfigureIntegrationDrawer = ({
           : defaultValues,
       );
       setErrors({});
-      setPosApiToken(tenantConfig?.posApiToken ?? null);
     }
   }, [tenantConfig, open]);
 
@@ -220,7 +218,7 @@ const ConfigureIntegrationDrawer = ({
             }}
           />
           <Tab label="Branch & Terminal" value={TAB_TERMINALS} disabled={!canAccessTab(TAB_TERMINALS)} />
-          <Tab label="POS API Token" value={TAB_TOKEN} disabled={!canAccessTab(TAB_TOKEN)} />
+          <Tab label="Authentication" value={TAB_TOKEN} disabled={!canAccessTab(TAB_TOKEN)} />
         </Tabs>
 
         {!tenantConfig?.id && (
@@ -362,15 +360,10 @@ const ConfigureIntegrationDrawer = ({
             </Box>
           )}
 
-          {/* Tab 4 — POS API Token */}
+          {/* Tab 4 — Authentication */}
           {activeTab === TAB_TOKEN && tenantConfig?.id && (
             <Box>
-              <PosApiTokenTab
-                tenantId={tenantId}
-                partnerId={integrationId}
-                initialToken={posApiToken}
-                onTokenGenerated={(token) => setPosApiToken(token)}
-              />
+              <AuthenticationTab />
               <Box display="flex" justifyContent="flex-start" mt={2}>
                 <Button
                   variant="outlined"

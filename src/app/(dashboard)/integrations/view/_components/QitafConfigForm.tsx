@@ -15,6 +15,7 @@ import {
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { CustomTextfield } from "@/components/CustomTextField";
 import type { SchemaField } from "@/types/integration.types";
 import { INTEGRATION_SCHEMAS, ACCOUNT_INFO_SCHEMAS } from "@/constants/integrationSchemas";
@@ -27,6 +28,21 @@ interface Props {
   errors: Record<string, string>;
   onChange: (key: string, value: any) => void;
 }
+
+/** Renders a label string with an info icon tooltip if tooltip text is provided. */
+const LabelWithTooltip = ({ label, tooltip }: { label: string; tooltip?: string }) => {
+  if (!tooltip) return <>{label}</>;
+  return (
+    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+      {label}
+      <Tooltip title={tooltip} placement="top" arrow>
+        <InfoOutlinedIcon
+          sx={{ fontSize: 13, cursor: "help", opacity: 0.55, verticalAlign: "middle" }}
+        />
+      </Tooltip>
+    </Box>
+  );
+};
 
 const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, onChange }: Props) => {
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
@@ -56,11 +72,11 @@ const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, o
       <Grid2 xs={12} key={`section-${field.key}`}>
         <Box mt={index === 0 ? 0 : 1}>
           <Typography
-            variant="caption"
             fontWeight={700}
             color="text.secondary"
             textTransform="uppercase"
             letterSpacing={0.8}
+            sx={{ fontSize: 12 }}
           >
             {field.sectionTitle}
           </Typography>
@@ -68,6 +84,8 @@ const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, o
         </Box>
       </Grid2>
     ) : null;
+
+    const fieldLabel = <LabelWithTooltip label={field.label} tooltip={field.tooltip} />;
 
     let fieldEl: React.ReactNode;
 
@@ -78,13 +96,15 @@ const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, o
           <TextField
             required={field.required}
             fullWidth
-            label={field.label}
+            label={fieldLabel}
             type={revealed ? "text" : "password"}
             value={values[field.key] ?? ""}
             onChange={(e) => onChange(field.key, e.target.value)}
             error={!!errors[field.key]}
             helperText={errors[field.key] || field.helperText}
-            inputProps={{ dir: "ltr" }}
+            inputProps={{ dir: "ltr", style: { fontSize: 15 } }}
+            InputLabelProps={{ sx: { fontSize: 15 } }}
+            FormHelperTextProps={{ sx: { fontSize: 12.5 } }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -111,11 +131,14 @@ const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, o
             required={field.required}
             select
             fullWidth
-            label={field.label}
+            label={fieldLabel}
             value={values[field.key] ?? ""}
             onChange={(e) => onChange(field.key, e.target.value)}
             error={!!errors[field.key]}
             helperText={errors[field.key] || field.helperText}
+            inputProps={{ style: { fontSize: 15 } }}
+            InputLabelProps={{ sx: { fontSize: 15 } }}
+            FormHelperTextProps={{ sx: { fontSize: 12.5 } }}
           >
             {(field.options ?? []).map((opt) => (
               <MenuItem key={opt} value={opt}>
@@ -135,7 +158,7 @@ const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, o
             multiline={field.type === "textarea"}
             rows={field.type === "textarea" ? 5 : undefined}
             type={field.type === "number" ? "number" : "text"}
-            label={field.label}
+            label={fieldLabel}
             value={values[field.key] ?? (field.default !== undefined ? field.default : "")}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               onChange(
@@ -149,9 +172,11 @@ const QitafConfigForm = ({ partnerId, schemaSource = "config", values, errors, o
               dir: "ltr",
               style:
                 field.type === "textarea"
-                  ? { fontFamily: "monospace", fontSize: 12 }
-                  : undefined,
+                  ? { fontFamily: "monospace", fontSize: 14 }
+                  : { fontSize: 15 },
             }}
+            InputLabelProps={{ sx: { fontSize: 15 } }}
+            FormHelperTextProps={{ sx: { fontSize: 12.5 } }}
           />
         </Grid2>
       );

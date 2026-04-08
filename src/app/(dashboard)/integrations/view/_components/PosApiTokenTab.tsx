@@ -1,33 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
   Typography,
-  Button,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Divider,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   Chip,
+  Alert,
 } from "@mui/material";
-import Grid2 from "@mui/material/Unstable_Grid2";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import KeyIcon from "@mui/icons-material/Key";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { IconButton, Tooltip } from "@mui/material";
 import { toast } from "react-toastify";
-import { tenantIntegrationService } from "@/services/tenantIntegrationService";
 
 interface ApiEndpoint {
   method: "POST" | "PUT" | "GET";
@@ -119,112 +106,44 @@ const METHOD_COLOR: Record<string, "success" | "warning" | "info"> = {
   GET: "info",
 };
 
-interface Props {
-  tenantId: number;
-  partnerId: number;
-  initialToken: string | null | undefined;
-  onTokenGenerated: (token: string) => void;
-}
-
-const PosApiTokenTab = ({ tenantId, partnerId, initialToken, onTokenGenerated }: Props) => {
-  const [token, setToken] = useState<string | null>(initialToken ?? null);
-  const [revealed, setRevealed] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const { token: newToken } = await tenantIntegrationService.generateToken(tenantId, partnerId);
-      setToken(newToken);
-      setRevealed(true);
-      onTokenGenerated(newToken);
-      toast.success("POS API token generated successfully");
-    } catch {
-      toast.error("Failed to generate token");
-    } finally {
-      setGenerating(false);
-      setConfirmOpen(false);
-    }
-  };
-
-  const copyToken = () => {
-    if (token) {
-      navigator.clipboard.writeText(token);
-      toast.success("Token copied to clipboard");
-    }
-  };
-
+const AuthenticationTab = () => {
   return (
     <Box>
-      {/* ── Token Section ───────────────────────────────────────────────── */}
+      {/* ── Authentication Instructions ─────────────────────────────────────── */}
       <Box mb={3}>
-        <Box display="flex" alignItems="center" gap={1} mb={1}>
-          <KeyIcon fontSize="small" color="action" />
-          <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing={0.8}>
-            POS API Token
-          </Typography>
-        </Box>
-        <Divider sx={{ mb: 2 }} />
+        <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing={0.8}>
+          Authentication
+        </Typography>
+        <Divider sx={{ mt: 1, mb: 2 }} />
 
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          This token is used by POS systems to authenticate all Qitaf API calls.
-          Add it as <code>Authorization: Bearer &lt;token&gt;</code> on every request.
-          Tokens have no expiry — regenerate if compromised.
+        <Alert severity="info" sx={{ mb: 2 }}>
+          POS systems authenticate using the <strong>tenant API token</strong> — the same token used
+          for all other loyalty API calls. No separate Qitaf token is needed.
+        </Alert>
+
+        <Typography variant="body2" color="text.secondary" mb={1}>
+          Include the token on every request as a Bearer header:
         </Typography>
 
-        {token ? (
-          <Grid2 container spacing={2}>
-            <Grid2 xs={12}>
-              <TextField
-                fullWidth
-                label="Bearer Token"
-                value={token}
-                type={revealed ? "text" : "password"}
-                inputProps={{ dir: "ltr", style: { fontFamily: "monospace", fontSize: 12 } }}
-                InputProps={{
-                  readOnly: true,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title={revealed ? "Hide" : "Show"}>
-                        <IconButton size="small" onClick={() => setRevealed((v) => !v)}>
-                          {revealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Copy token">
-                        <IconButton size="small" onClick={copyToken}>
-                          <ContentCopyIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid2>
-            <Grid2 xs={12}>
-              <Box display="flex" justifyContent="flex-end">
-                <Button
-                  variant="outlined"
-                  color="warning"
-                  size="small"
-                  onClick={() => setConfirmOpen(true)}
-                  disabled={generating}
-                >
-                  Regenerate Token
-                </Button>
-              </Box>
-            </Grid2>
-          </Grid2>
-        ) : (
-          <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={3}>
-            <Typography variant="body2" color="text.secondary">
-              No token generated yet. Click below to create one.
-            </Typography>
-            <Button variant="contained" color="primary" onClick={handleGenerate} disabled={generating}>
-              {generating ? "Generating…" : "Generate Token"}
-            </Button>
-          </Box>
-        )}
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            p: 1.5,
+            bgcolor: "action.hover",
+            borderRadius: 1,
+            fontSize: 12,
+            fontFamily: "monospace",
+            overflowX: "auto",
+          }}
+        >
+          {`Authorization: Bearer <tenant-api-token>`}
+        </Box>
+
+        <Typography variant="body2" color="text.secondary" mt={2}>
+          The tenant API token can be found in the tenant settings page. Tokens are long-lived
+          and have no expiry — rotate from tenant settings if compromised.
+        </Typography>
       </Box>
 
       {/* ── API Documentation ────────────────────────────────────────────── */}
@@ -238,7 +157,7 @@ const PosApiTokenTab = ({ tenantId, partnerId, initialToken, onTokenGenerated }:
           <AccordionDetails sx={{ p: 0 }}>
             <Box px={2} py={1}>
               <Typography variant="caption" color="text.secondary">
-                All endpoints require: <code>Authorization: Bearer &lt;token&gt;</code>
+                All endpoints require: <code>Authorization: Bearer &lt;tenant-api-token&gt;</code>
               </Typography>
             </Box>
             <Divider />
@@ -267,7 +186,6 @@ const PosApiTokenTab = ({ tenantId, partnerId, initialToken, onTokenGenerated }:
                   {/* Body block with copy button */}
                   {ep.body && (
                     <Box sx={{ position: "relative" }}>
-                      {/* Copy body button — top-right corner of the code block */}
                       <Tooltip title="Copy body">
                         <IconButton
                           size="small"
@@ -293,7 +211,7 @@ const PosApiTokenTab = ({ tenantId, partnerId, initialToken, onTokenGenerated }:
                         sx={{
                           m: 0,
                           p: 1,
-                          pr: 4, // leave space so text doesn't go under the copy button
+                          pr: 4,
                           bgcolor: "action.hover",
                           borderRadius: 1,
                           fontSize: 11,
@@ -320,27 +238,8 @@ const PosApiTokenTab = ({ tenantId, partnerId, initialToken, onTokenGenerated }:
           </AccordionDetails>
         </Accordion>
       </Box>
-
-      {/* ── Regenerate Confirmation Dialog ───────────────────────────────── */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Regenerate POS API Token?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This will invalidate the current token immediately. Any POS system using the old token
-            will stop working until it is updated with the new one. Are you sure?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} disabled={generating}>
-            Cancel
-          </Button>
-          <Button onClick={handleGenerate} color="warning" variant="contained" disabled={generating}>
-            {generating ? "Regenerating…" : "Yes, Regenerate"}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
 
-export default PosApiTokenTab;
+export default AuthenticationTab;

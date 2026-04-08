@@ -8,7 +8,6 @@ const toConfig = (r: any): TenantIntegrationConfig => ({
   integrationId: r.partner_id,
   isEnabled: r.is_enabled === 1,
   configuration: r.configuration ?? {},
-  posApiToken: r.pos_api_token ?? null,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
@@ -57,12 +56,6 @@ export const tenantIntegrationService = {
   remove: async (id: number): Promise<void> => {
     const response = await DELETE(`/tenant-integrations/${id}`);
     if (response?.status !== 200) throw new Error("Failed to remove tenant integration");
-  },
-
-  generateToken: async (tenantId: number, partnerId: number): Promise<{ token: string }> => {
-    const response = await POST("/qitaf/auth/token", { tenant_id: tenantId, partner_id: partnerId });
-    if (response?.status !== 201) throw new Error("Failed to generate token");
-    return response.data;
   },
 
   uploadCertificate: async (file: File): Promise<{ url: string }> => {
