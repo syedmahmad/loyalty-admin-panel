@@ -175,7 +175,6 @@ export default function CustomerDetail() {
         pointSearchValue,
         couponSearchValue,
       });
-      fetchQitafTransactions(1);
     }
   }, [customerId, pointSearchValue, couponSearchValue]);
 
@@ -882,8 +881,8 @@ export default function CustomerDetail() {
         </Box>
       </Box>
 
-      {/* STC Qitaf Transactions */}
-      <Box mt={2}>
+      {/* STC Qitaf Transactions — moved to /qitaf-transactions dedicated route */}
+      {false && <Box mt={2}>
         <Typography sx={{ fontFamily: "Outfit", fontSize: "20px", fontWeight: 500 }}>
           STC Qitaf Transactions
         </Typography>
@@ -1006,7 +1005,7 @@ export default function CustomerDetail() {
             )}
           </>
         )}
-      </Box>
+      </Box>}
     </Box>
   );
 }

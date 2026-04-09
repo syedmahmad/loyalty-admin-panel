@@ -12,6 +12,7 @@ import Groups3Icon from "@mui/icons-material/Groups3";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -190,6 +191,15 @@ const menuItems: { items: NavItemType[] } = {
       url: "/customers",
       privileges: [],
       icon: GroupIcon,
+    },
+    {
+      id: "qitaf-transactions",
+      title: "Qitaf Transactions",
+      type: "item",
+      url: "/qitaf-transactions",
+      privileges: [],
+      icon: ReceiptLongIcon,
+      requiresQitaf: true,
     },
     {
       id: "customer-segment",

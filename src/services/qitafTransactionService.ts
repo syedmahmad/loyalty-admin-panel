@@ -42,4 +42,17 @@ export const qitafTransactionService = {
     if (response?.status !== 200) throw new Error("Failed to fetch Qitaf transactions");
     return response.data;
   },
+
+  getAll: async (
+    tenantId: number,
+    msisdn?: string,
+    page = 1,
+    limit = 10,
+  ): Promise<QitafTransactionsResult> => {
+    let url = `/qitaf/transactions/all/${tenantId}?page=${page}&limit=${limit}`;
+    if (msisdn) url += `&msisdn=${encodeURIComponent(msisdn)}`;
+    const response = await GET(url);
+    if (response?.status !== 200) throw new Error("Failed to fetch Qitaf transactions");
+    return response.data;
+  },
 };
