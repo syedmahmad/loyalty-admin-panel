@@ -127,6 +127,7 @@ const BusinessUnitEditForm = ({ onSuccess }: any) => {
               description: data.description || "",
               location: data.location || "",
               type: data.type || "points",
+              status: data.status ?? 1,
             });
           })
           .finally(() => setLoading(false));
