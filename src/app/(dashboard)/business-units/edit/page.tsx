@@ -15,6 +15,8 @@ import {
   Tooltip,
   IconButton,
   useTheme,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -62,6 +64,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
     name: '',
     description: '',
     location: '',
+    status: 1,
   });
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +79,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
             name: data.name || '',
             description: data.description || '',
             location: data.location || '',
+            status: data.status ?? 1,
           });
         })
         .finally(() => setLoading(false));
@@ -91,6 +95,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
             name: data.name || '',
             description: data.description || '',
             location: data.location || '',
+            status: data.status ?? 1,
           });
         })
         .finally(() => setLoading(false));
@@ -169,7 +174,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
             })}
             onSubmit={handleSubmit}
           >
-            {({ values, errors, touched, handleChange }) => (
+            {({ values, errors, touched, handleChange, setFieldValue }) => (
               <Form noValidate>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
@@ -225,6 +230,21 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
                           </InputAdornment>
                         ),
                       }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={values.status === 1}
+                          onChange={(e) =>
+                            setFieldValue('status', e.target.checked ? 1 : 0)
+                          }
+                          color="primary"
+                        />
+                      }
+                      label={values.status === 1 ? 'Business Unit Enabled' : 'Business Unit Disabled'}
                     />
                   </Grid>
 
