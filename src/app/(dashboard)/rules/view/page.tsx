@@ -27,6 +27,7 @@ import {
   Tooltip,
   Typography,
   Menu,
+  Chip,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -339,18 +340,26 @@ const RuleList = () => {
                       }}
                     >
                       {" "}
-                      <Typography
-                        variant="h3"
-                        fontWeight={500}
-                        sx={{
-                          fontFamily: "Outfit",
-                          fontSize: "14px",
-                          lineHeight: "21px",
-                          letterSpacing: "0%",
-                        }}
-                      >
-                        {rule?.locales[0]?.name}
-                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography
+                          variant="h3"
+                          fontWeight={500}
+                          sx={{
+                            fontFamily: "Outfit",
+                            fontSize: "14px",
+                            lineHeight: "21px",
+                            letterSpacing: "0%",
+                          }}
+                        >
+                          {rule?.locales[0]?.name}
+                        </Typography>
+                        <Chip
+                          label={rule.status === 0 ? "Disabled" : "Active"}
+                          size="small"
+                          color={rule.status === 0 ? "default" : "success"}
+                          sx={{ fontSize: "11px", height: "20px" }}
+                        />
+                      </Box>
                       <Box>
                         <IconButton
                           onClick={(event) => handleMenuClick(event, rule)}
@@ -492,6 +501,7 @@ const RuleList = () => {
                     <TableCell>Max Redeem Points</TableCell>
                     <TableCell>Conversion Factor</TableCell>
                     <TableCell>Max Burn %</TableCell>
+                    <TableCell>Status</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -542,6 +552,13 @@ const RuleList = () => {
                           {rule.rule_type === "burn"
                             ? (rule.max_burn_percent_on_invoice ?? "-")
                             : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={rule.status === 0 ? "Disabled" : "Active"}
+                            size="small"
+                            color={rule.status === 0 ? "default" : "success"}
+                          />
                         </TableCell>
                         <TableCell align="right">
                           <IconButton

@@ -27,6 +27,7 @@ import {
   Select,
   MenuItem,
   Menu,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -48,6 +49,7 @@ type BusinessUnit = {
   name: string;
   description?: string;
   location?: string;
+  status?: number;
 };
 
 const fetchBusinessUnits = async (
@@ -273,7 +275,7 @@ const BusinessUnitList = () => {
                         transition: "none",
                       }}
                     >
-                      <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Typography
                           variant="h3"
                           fontWeight={500}
@@ -286,6 +288,12 @@ const BusinessUnitList = () => {
                         >
                           {unit.name}
                         </Typography>
+                        <Chip
+                          label={unit.status === 0 ? "Disabled" : "Active"}
+                          size="small"
+                          color={unit.status === 0 ? "default" : "success"}
+                          sx={{ fontSize: "11px", height: "20px" }}
+                        />
                       </Box>
                       <Box>
                         <IconButton
@@ -391,6 +399,7 @@ const BusinessUnitList = () => {
                       />
                       Location
                     </TableCell>
+                    <TableCell>Status</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -400,6 +409,13 @@ const BusinessUnitList = () => {
                       <TableCell>{unit.name}</TableCell>
                       <TableCell>{unit.description || "—"}</TableCell>
                       <TableCell>{unit.location || "—"}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={unit.status === 0 ? "Disabled" : "Active"}
+                          size="small"
+                          color={unit.status === 0 ? "default" : "success"}
+                        />
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton
                           onClick={(event) => handleMenuClick(event, unit)}

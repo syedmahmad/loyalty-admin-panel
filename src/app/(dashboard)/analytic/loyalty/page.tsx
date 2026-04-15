@@ -17,8 +17,10 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip as MuiTooltip,
   Typography,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { LocalizationProvider, StaticDatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
@@ -353,18 +355,26 @@ const LoyaltyAnalyticsPage = () => {
     {
       label: "Total Earned Points",
       count: analyticsData.summary.totalEarnedPoints,
+      tooltip:
+        "Sum of all earning. This reflects the customer's lifetime earned history and does not include burn records.",
     },
     {
       label: "Total Burnt Points",
       count: analyticsData.summary.totalBurntPoints,
+      tooltip:
+        "Total points redeemed (burned) by customers. Burn transactions are tracked separately from earn transactions.",
     },
     {
       label: "Not Confirmed Burnt Points",
       count: analyticsData.summary.totalNotConfirmedBurntPoints,
+      tooltip:
+        "Burn transactions that are pending confirmation and have not yet been finalized.",
     },
     {
       label: "Remaining Points in Wallets",
       count: analyticsData.summary.totalRemainingPoints,
+      tooltip:
+        "Points currently available in wallets = Total Earned − Burned − Expired. This is the usable balance customers can still redeem.",
     },
   ];
 
@@ -800,7 +810,18 @@ const LoyaltyAnalyticsPage = () => {
                 <SectionLoader />
               ) : (
                 <Box>
-                  <Typography fontWeight={600}>{item.label}</Typography>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography fontWeight={600}>{item.label}</Typography>
+                    <MuiTooltip title={item.tooltip} placement="top" arrow>
+                      <InfoOutlinedIcon
+                        sx={{
+                          fontSize: 16,
+                          color: "text.secondary",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </MuiTooltip>
+                  </Box>
                   <Typography variant="h6">
                     {Number(item.count).toLocaleString("en-US", {
                       maximumFractionDigits: 0,

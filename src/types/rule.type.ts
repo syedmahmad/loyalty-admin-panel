@@ -30,4 +30,5 @@ export type FormType = {
   conditions: Condition[];
   is_priority: number;
   business_unit_id: string;
+  status: number;
 };

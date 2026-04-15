@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -15,27 +15,29 @@ import {
   Tooltip,
   IconButton,
   useTheme,
-} from '@mui/material';
+  Switch,
+  FormControlLabel,
+} from "@mui/material";
 
 const PROGRAM_TYPES = [
-  { value: 'points', label: 'Points' },
-  { value: 'otp', label: 'OTP (e.g. Qitaf)' },
+  { value: "points", label: "Points" },
+  { value: "otp", label: "OTP (e.g. Qitaf)" },
 ];
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form } from 'formik';
-import * as Yup from 'yup';
-import BusinessIcon from '@mui/icons-material/Business';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import DescriptionIcon from '@mui/icons-material/Description';
-import { GET, PUT } from '@/utils/AxiosUtility';
-import { toast } from 'react-toastify';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import BusinessIcon from "@mui/icons-material/Business";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import DescriptionIcon from "@mui/icons-material/Description";
+import { GET, PUT } from "@/utils/AxiosUtility";
+import { toast } from "react-toastify";
 
 const fetchBusinessUnits = async () => {
-  const clientInfo = JSON.parse(localStorage.getItem('client-info')!);
+  const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
   const response = await GET(`/business-units/${clientInfo.id}`);
   if (response?.status !== 200) {
-    throw new Error('Failed to fetch business units');
+    throw new Error("Failed to fetch business units");
   }
   return response.data;
 };
@@ -43,7 +45,7 @@ const fetchBusinessUnits = async () => {
 const fetchBusinessUnitById = async (id: string) => {
   const response = await GET(`/business-units/single/${id}`);
   if (response?.status !== 200) {
-    throw new Error('Failed to fetch business units');
+    throw new Error("Failed to fetch business units");
   }
   return response.data;
 };
@@ -51,23 +53,26 @@ const fetchBusinessUnitById = async (id: string) => {
 const updateBusinessUnit = async (id: string, payload: any) => {
   const response = await PUT(`/business-units/${id}`, payload);
   if (response?.status !== 200) {
-    throw new Error('Failed to update business unit');
+    throw new Error("Failed to update business unit");
   }
   return response.data;
 };
 
-const BusinessUnitEditForm =  ({ onSuccess }: any) => {
+const BusinessUnitEditForm = ({ onSuccess }: any) => {
   const params = useSearchParams();
-  const paramId =  params.get('id') || null;
+  const paramId = params.get("id") || null;
   const router = useRouter();
   const theme = useTheme();
-  const [businessUnits, setBusinessUnits] = useState<{ id: number; name: string }[]>([]);
+  const [businessUnits, setBusinessUnits] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [selectedId, setSelectedId] = useState<string | null>(paramId ?? null);
   const [initialValues, setInitialValues] = useState({
-    name: '',
-    description: '',
-    location: '',
-    type: 'points',
+    name: "",
+    description: "",
+    location: "",
+    type: "points",
+    status: 1,
   });
   const [loading, setLoading] = useState(false);
 
@@ -79,10 +84,11 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
       fetchBusinessUnitById(paramId)
         .then((data) => {
           setInitialValues({
-            name: data.name || '',
-            description: data.description || '',
-            location: data.location || '',
-            type: data.type || 'points',
+            name: data.name || "",
+            description: data.description || "",
+            location: data.location || "",
+            type: data.type || "points",
+            status: data.status ?? 1,
           });
         })
         .finally(() => setLoading(false));
@@ -95,10 +101,11 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
       fetchBusinessUnitById(selectedId)
         .then((data) => {
           setInitialValues({
-            name: data.name || '',
-            description: data.description || '',
-            location: data.location || '',
-            type: data.type || 'points',
+            name: data.name || "",
+            description: data.description || "",
+            location: data.location || "",
+            type: data.type || "points",
+            status: data.status ?? 1,
           });
         })
         .finally(() => setLoading(false));
@@ -106,7 +113,7 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
   }, [selectedId]);
 
   const handleSubmit = async (values: any) => {
-    if (!selectedId) return alert('No Business Unit selected.');
+    if (!selectedId) return alert("No Business Unit selected.");
     setLoading(true);
     try {
       await updateBusinessUnit(selectedId, values);
@@ -116,18 +123,18 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
         fetchBusinessUnitById(selectedId)
           .then((data) => {
             setInitialValues({
-              name: data.name || '',
-              description: data.description || '',
-              location: data.location || '',
-              type: data.type || 'points',
+              name: data.name || "",
+              description: data.description || "",
+              location: data.location || "",
+              type: data.type || "points",
             });
           })
           .finally(() => setLoading(false));
       }
-      toast.success('Business Unit updated!');
-          onSuccess();// router.push('/business-units/view');
+      toast.success("Business Unit updated!");
+      onSuccess(); // router.push('/business-units/view');
     } catch (e) {
-      console.log('Something went wrong', e);
+      console.log("Something went wrong", e);
     } finally {
       setLoading(false);
     }
@@ -147,14 +154,14 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
           ✏️ Edit Business Unit
         </Typography> */}
 
-        {!paramId && (
-          <Grid container spacing={2} sx={{ mb: 1, width: '100%' }}>
+      {!paramId && (
+        <Grid container spacing={2} sx={{ mb: 1, width: "100%" }}>
           <Grid item xs={12}>
             <TextField
               select
               fullWidth
               label="Select Business Unit"
-              value={selectedId || ''}
+              value={selectedId || ""}
               onChange={(e) => setSelectedId(e.target.value)}
             >
               {businessUnits.map((bu) => (
@@ -165,125 +172,143 @@ const BusinessUnitEditForm =  ({ onSuccess }: any) => {
             </TextField>
           </Grid>
         </Grid>
-        )}
-        <br />
-        {selectedId && !loading ? (
-          <Formik
-            enableReinitialize
-            initialValues={initialValues}
-            validationSchema={Yup.object().shape({
-              name: Yup.string().required('Name is required'),
-              description: Yup.string(),
-              location: Yup.string(),
-              type: Yup.string().required('Program type is required'),
-            })}
-            onSubmit={handleSubmit}
-          >
-            {({ values, errors, touched, handleChange }) => (
-              <Form noValidate>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="name"
-                      label="Business Unit Name"
-                      value={values.name}
-                      onChange={handleChange}
-                      error={touched.name && Boolean(errors.name)}
-                      helperText={touched.name && errors.name}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <BusinessIcon color="action" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="description"
-                      label="Description"
-                      value={values.description}
-                      onChange={handleChange}
-                      error={touched.description && Boolean(errors.description)}
-                      helperText={touched.description && errors.description}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <DescriptionIcon color="action" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      name="location"
-                      label="Location"
-                      value={values.location}
-                      onChange={handleChange}
-                      error={touched.location && Boolean(errors.location)}
-                      helperText={touched.location && errors.location}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <LocationOnIcon color="action" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      select
-                      fullWidth
-                      name="type"
-                      label="Program Type"
-                      value={values.type ?? 'points'}
-                      onChange={handleChange}
-                      error={touched.type && Boolean(errors.type)}
-                      helperText={touched.type && errors.type}
-                    >
-                      {PROGRAM_TYPES.map((opt) => (
-                        <MenuItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-
-                      <Grid item xs={12}>
-                      <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-                    <Button
-                       variant="outlined"
-                        color="primary"
-                        type="submit"
-                        disabled={loading}
-                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight:550  }}
-                        >
-                       {loading ? <CircularProgress size={24} /> : 'Update'}
-                       </Button>
-                    </Box>
-                  </Grid>
-                  
-                    <br />
-                    <br />
-                  
-                  
+      )}
+      <br />
+      {selectedId && !loading ? (
+        <Formik
+          enableReinitialize
+          initialValues={initialValues}
+          validationSchema={Yup.object().shape({
+            name: Yup.string().required("Name is required"),
+            description: Yup.string(),
+            location: Yup.string(),
+            type: Yup.string().required("Program type is required"),
+          })}
+          onSubmit={handleSubmit}
+        >
+          {({ values, errors, touched, handleChange, setFieldValue }) => (
+            <Form noValidate>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="name"
+                    label="Business Unit Name"
+                    value={values.name}
+                    onChange={handleChange}
+                    error={touched.name && Boolean(errors.name)}
+                    helperText={touched.name && errors.name}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <BusinessIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
                 </Grid>
-              </Form>
-            )}
-          </Formik>
-        ) : selectedId && loading ? (
-          <Box textAlign="center" mt={4}>
-            <CircularProgress />
-          </Box>
-        ) : null}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="description"
+                    label="Description"
+                    value={values.description}
+                    onChange={handleChange}
+                    error={touched.description && Boolean(errors.description)}
+                    helperText={touched.description && errors.description}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DescriptionIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    name="location"
+                    label="Location"
+                    value={values.location}
+                    onChange={handleChange}
+                    error={touched.location && Boolean(errors.location)}
+                    helperText={touched.location && errors.location}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationOnIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    select
+                    fullWidth
+                    name="type"
+                    label="Program Type"
+                    value={values.type ?? "points"}
+                    onChange={handleChange}
+                    error={touched.type && Boolean(errors.type)}
+                    helperText={touched.type && errors.type}
+                  >
+                    {PROGRAM_TYPES.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={values.status === 1}
+                        onChange={(e) =>
+                          setFieldValue("status", e.target.checked ? 1 : 0)
+                        }
+                        color="primary"
+                      />
+                    }
+                    label={
+                      values.status === 1
+                        ? "Business Unit Enabled"
+                        : "Business Unit Disabled"
+                    }
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      type="submit"
+                      disabled={loading}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 550,
+                      }}
+                    >
+                      {loading ? <CircularProgress size={24} /> : "Update"}
+                    </Button>
+                  </Box>
+                </Grid>
+
+                <br />
+                <br />
+              </Grid>
+            </Form>
+          )}
+        </Formik>
+      ) : selectedId && loading ? (
+        <Box textAlign="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      ) : null}
       {/* </CardContent>
     </Card> */}
     </>
