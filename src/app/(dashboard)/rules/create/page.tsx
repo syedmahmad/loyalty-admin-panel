@@ -77,6 +77,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
     ],
     is_priority: 0,
     business_unit_id: "",
+    status: 1,
   };
   const theme = useTheme();
   const userInfo = JSON.parse(localStorage.getItem("client-info") || "{}");
