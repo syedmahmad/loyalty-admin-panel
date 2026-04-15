@@ -17,6 +17,7 @@ import {
   Autocomplete,
   FormControlLabel,
   Checkbox,
+  Switch,
   Alert,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -65,6 +66,7 @@ const initialForm: FormType = {
   ],
   is_priority: 0,
   business_unit_id: "",
+  status: 1,
 };
 
 const RuleEdit = ({ onSuccess }: any) => {
@@ -167,6 +169,7 @@ const RuleEdit = ({ onSuccess }: any) => {
         conditions: rule.dynamic_conditions || form.conditions,
         is_priority: rule.is_priority,
         business_unit_id: rule.business_unit_id || 0,
+        status: rule.status ?? 1,
         ruleBasicInfo: {
           locales: tierLocales,
         },
@@ -334,6 +337,7 @@ const RuleEdit = ({ onSuccess }: any) => {
         ? form.conditions
         : null,
       is_priority: form.is_priority ? 1 : 0,
+      status: form.status,
       tiers: tiersPayload,
       business_unit_id: form.business_unit_id,
       locales: Object.entries(form.ruleBasicInfo.locales).map(
@@ -1012,6 +1016,23 @@ const RuleEdit = ({ onSuccess }: any) => {
               />
             </Grid>
           )}
+
+          {/* Enable / Disable Rule */}
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.status === 1}
+                  onChange={(e) =>
+                    handleChange("status", e.target.checked ? 1 : 0)
+                  }
+                  color="primary"
+                />
+              }
+              label={form.status === 1 ? "Rule Enabled" : "Rule Disabled"}
+            />
+          </Grid>
+
           {allTiers.length > 0 && (
             <Grid
               item
