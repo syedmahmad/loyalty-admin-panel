@@ -193,13 +193,27 @@ const menuItems: { items: NavItemType[] } = {
       icon: GroupIcon,
     },
     {
-      id: "qitaf-transactions",
-      title: "Qitaf Transactions",
-      type: "item",
-      url: "/qitaf-transactions",
-      privileges: [],
+      id: "stc-qitaf",
+      title: "STC Qitaf",
+      type: "collapse",
       icon: ReceiptLongIcon,
       requiresQitaf: true,
+      children: [
+        {
+          id: "qitaf-transactions",
+          title: "Transactions",
+          type: "item",
+          url: "/qitaf-transactions",
+          privileges: [],
+        },
+        {
+          id: "qitaf-analytic",
+          title: "Analytics",
+          type: "item",
+          url: "/stc-qitaf/analytic",
+          privileges: [],
+        },
+      ],
     },
     {
       id: "customer-segment",
