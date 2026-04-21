@@ -10,6 +10,8 @@ import {
   AccordionDetails,
   Chip,
   Alert,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -106,9 +108,44 @@ const METHOD_COLOR: Record<string, "success" | "warning" | "info"> = {
   GET: "info",
 };
 
-const AuthenticationTab = () => {
+interface Props {
+  values: Record<string, any>;
+  onChange: (key: string, value: any) => void;
+}
+
+const AuthenticationTab = ({ values, onChange }: Props) => {
   return (
     <Box>
+      {/* ── Checkout Behaviour ──────────────────────────────────────────────── */}
+      <Box mb={3}>
+        <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing={0.8}>
+          Checkout Behaviour
+        </Typography>
+        <Divider sx={{ mt: 1, mb: 2 }} />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={!!values.autoEarnOnPartialRedemption}
+              onChange={(e) => onChange("autoEarnOnPartialRedemption", e.target.checked)}
+              color="primary"
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" fontWeight={600}>
+                Auto-earn STC points on remaining payment
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                When enabled, if a customer partially pays using Qitaf points and pays the rest via cash or card,
+                the system will automatically reward STC Qitaf points for the remaining paid amount.
+              </Typography>
+            </Box>
+          }
+          sx={{ alignItems: "flex-start", mb: 1 }}
+        />
+      </Box>
+
       {/* ── Authentication Instructions ─────────────────────────────────────── */}
       <Box mb={3}>
         <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing={0.8}>

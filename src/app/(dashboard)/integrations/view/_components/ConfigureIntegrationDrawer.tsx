@@ -218,7 +218,7 @@ const ConfigureIntegrationDrawer = ({
             }}
           />
           <Tab label="Branch & Terminal" value={TAB_TERMINALS} disabled={!canAccessTab(TAB_TERMINALS)} />
-          <Tab label="Authentication" value={TAB_TOKEN} disabled={!canAccessTab(TAB_TOKEN)} />
+          <Tab label="POS Settings" value={TAB_TOKEN} disabled={!canAccessTab(TAB_TOKEN)} />
         </Tabs>
 
         {!tenantConfig?.id && (
@@ -360,10 +360,10 @@ const ConfigureIntegrationDrawer = ({
             </Box>
           )}
 
-          {/* Tab 4 — Authentication */}
+          {/* Tab 4 — POS Settings */}
           {activeTab === TAB_TOKEN && tenantConfig?.id && (
             <Box>
-              <AuthenticationTab />
+              <AuthenticationTab values={values} onChange={handleChange} />
               <Box display="flex" justifyContent="flex-start" mt={2}>
                 <Button
                   variant="outlined"

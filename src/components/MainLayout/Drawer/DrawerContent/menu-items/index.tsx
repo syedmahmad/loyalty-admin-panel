@@ -193,29 +193,6 @@ const menuItems: { items: NavItemType[] } = {
       icon: GroupIcon,
     },
     {
-      id: "stc-qitaf",
-      title: "STC Qitaf",
-      type: "collapse",
-      icon: ReceiptLongIcon,
-      requiresQitaf: true,
-      children: [
-        {
-          id: "qitaf-transactions",
-          title: "Transactions",
-          type: "item",
-          url: "/qitaf-transactions",
-          privileges: [],
-        },
-        {
-          id: "qitaf-analytic",
-          title: "Analytics",
-          type: "item",
-          url: "/stc-qitaf/analytic",
-          privileges: [],
-        },
-      ],
-    },
-    {
       id: "customer-segment",
       title: "Customer Segment",
       type: "item",
@@ -246,6 +223,29 @@ const menuItems: { items: NavItemType[] } = {
       url: "/integrations/view",
       privileges: [],
       icon: IntegrationInstructionsIcon,
+    },
+    {
+      id: "stc-qitaf",
+      title: "STC Qitaf",
+      type: "collapse",
+      icon: ReceiptLongIcon,
+      requiresQitaf: true,
+      children: [
+        {
+          id: "qitaf-transactions",
+          title: "Transactions",
+          type: "item",
+          url: "/qitaf-transactions",
+          privileges: [],
+        },
+        {
+          id: "qitaf-analytic",
+          title: "Analytics",
+          type: "item",
+          url: "/stc-qitaf/analytic",
+          privileges: [],
+        },
+      ],
     },
     {
       id: "analytics",
