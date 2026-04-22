@@ -43,6 +43,9 @@ const buildSchemaAndDefaults = (integrationId: number) => {
     // SSL fields — not in schema arrays, but included in config JSON
     sslEnvironment: "",
     sslCertGeneratedAt: "",
+    // POS Settings toggles — always serialised so the backend receives an explicit boolean
+    autoEarnOnPartialRedemption: false,
+    earnInternalPointsOnQitafRedemption: false,
   };
 
   for (const field of allFields) {
@@ -364,7 +367,7 @@ const ConfigureIntegrationDrawer = ({
           {activeTab === TAB_TOKEN && tenantConfig?.id && (
             <Box>
               <AuthenticationTab values={values} onChange={handleChange} />
-              <Box display="flex" justifyContent="flex-start" mt={2}>
+              <Box display="flex" justifyContent="space-between" mt={2}>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
@@ -372,6 +375,7 @@ const ConfigureIntegrationDrawer = ({
                 >
                   Back
                 </Button>
+                <SaveButton />
               </Box>
             </Box>
           )}

@@ -142,6 +142,29 @@ const AuthenticationTab = ({ values, onChange }: Props) => {
               </Typography>
             </Box>
           }
+          sx={{ alignItems: "flex-start", mb: 2 }}
+        />
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={!!values.earnInternalPointsOnQitafRedemption}
+              onChange={(e) => onChange("earnInternalPointsOnQitafRedemption", e.target.checked)}
+              color="primary"
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" fontWeight={600}>
+                Award internal loyalty points on Qitaf transactions
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                When enabled, customers also earn internal Petromin loyalty points when they claim
+                an invoice that was paid (fully or partially) via STC Qitaf redemption. Disable to
+                give only STC points on those transactions and skip internal rewards.
+              </Typography>
+            </Box>
+          }
           sx={{ alignItems: "flex-start", mb: 1 }}
         />
       </Box>
