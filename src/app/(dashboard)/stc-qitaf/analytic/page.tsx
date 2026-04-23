@@ -37,12 +37,19 @@ interface QitafSummary {
   totalRedemptions: number;
   totalAmount: number;
   avgAmount: number;
+  earn: {
+    totalEarns: number;
+    totalAmount: number;
+    avgAmount: number;
+  };
 }
 
 interface QitafBarEntry {
   date: string | null;
   count: number;
   amount: number;
+  earnCount: number;
+  earnAmount: number;
 }
 
 const SectionLoader = () => (
@@ -56,6 +63,7 @@ export default function QitafAnalyticPage() {
     totalRedemptions: 0,
     totalAmount: 0,
     avgAmount: 0,
+    earn: { totalEarns: 0, totalAmount: 0, avgAmount: 0 },
   });
   const [barChart, setBarChart] = useState<QitafBarEntry[]>([]);
   const [loadingSummary, setLoadingSummary] = useState(true);
@@ -105,7 +113,7 @@ export default function QitafAnalyticPage() {
     setLoadingSummary(true);
     try {
       const res = await GET("/loyalty/analytics/qitaf/summary", { params: dateParams });
-      setSummary(res?.data ?? { totalRedemptions: 0, totalAmount: 0, avgAmount: 0 });
+      setSummary(res?.data ?? { totalRedemptions: 0, totalAmount: 0, avgAmount: 0, earn: { totalEarns: 0, totalAmount: 0, avgAmount: 0 } });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to load Qitaf summary");
     } finally {
@@ -157,9 +165,14 @@ export default function QitafAnalyticPage() {
       [q("Total Amount (SAR)"), q(fmtDec(summary.totalAmount))],
       [q("Avg. Amount per Transaction (SAR)"), q(fmtDec(summary.avgAmount))],
       [],
-      [q("Daily Redemptions")],
-      [q("Date"), q("Transactions"), q("Amount (SAR)")],
-      ...barChart.map((r) => [q(r.date), q(r.count), q(fmtDec(r.amount))]),
+      [q("Earn Summary")],
+      [q("Total Earns"), q(summary.earn.totalEarns)],
+      [q("Total Earn Amount (SAR)"), q(fmtDec(summary.earn.totalAmount))],
+      [q("Avg. Earn Amount per Transaction (SAR)"), q(fmtDec(summary.earn.avgAmount))],
+      [],
+      [q("Daily Transactions")],
+      [q("Date"), q("Redeem Transactions"), q("Redeem Amount (SAR)"), q("Earn Transactions"), q("Earn Amount (SAR)")],
+      ...barChart.map((r) => [q(r.date), q(r.count), q(fmtDec(r.amount)), q(r.earnCount), q(fmtDec(r.earnAmount))]),
     ];
 
     const BOM = "\uFEFF";
@@ -199,6 +212,30 @@ export default function QitafAnalyticPage() {
         maximumFractionDigits: 2,
       }),
       tooltip: "Average SAR value per redemption transaction.",
+    },
+  ];
+
+  const earnCards = [
+    {
+      label: "Total Earn Amount (SAR)",
+      value: Number(summary.earn.totalAmount).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      tooltip: "Total SAR value of points earned through STC Qitaf.",
+    },
+    {
+      label: "Total Earns",
+      value: Number(summary.earn.totalEarns).toLocaleString("en-US", { maximumFractionDigits: 0 }),
+      tooltip: "Count of successful earn transactions.",
+    },
+    {
+      label: "Avg. Earn Amount (SAR)",
+      value: Number(summary.earn.avgAmount).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      tooltip: "Average SAR value per earn transaction.",
     },
   ];
 
@@ -341,17 +378,18 @@ export default function QitafAnalyticPage() {
         </Typography>
       </Box>
 
-      {/* Bar Chart */}
+      {/* Bar Chart — Redemptions */}
       <Typography variant="h4" color="secondary" mb={1}>
         Daily Redemptions (SAR)
       </Typography>
       <Box
         p={2}
+        mb={4}
         sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff", minHeight: 120 }}
       >
         {loadingBarChart ? (
           <SectionLoader />
-        ) : !barChart.length ? (
+        ) : !barChart.some((r) => r.count > 0) ? (
           <Box display="flex" justifyContent="center" alignItems="center" height={100}>
             <Typography variant="body2" color="text.secondary">
               No redemption data available for this period
@@ -374,6 +412,74 @@ export default function QitafAnalyticPage() {
               <Legend />
               <Bar yAxisId="left" dataKey="amount" name="Amount (SAR)" fill="#d5008f" />
               <Bar yAxisId="right" dataKey="count" name="Transactions" fill="#441e75" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Box>
+
+      {/* Earn Summary Cards */}
+      <Typography variant="h4" color="secondary" mb={1}>
+        Earn Summary
+      </Typography>
+      <Grid container spacing={2} mb={3}>
+        {earnCards.map((card, idx) => (
+          <Grid item xs={12} sm={6} md={4} key={idx}>
+            <Card sx={{ p: 2, borderRadius: 3, boxShadow: 3, minHeight: 80 }}>
+              {loadingSummary ? (
+                <SectionLoader />
+              ) : (
+                <Box>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography fontWeight={600} color="text.secondary" fontSize={13}>
+                      {card.label}
+                    </Typography>
+                    <MuiTooltip title={card.tooltip} placement="top" arrow>
+                      <InfoOutlinedIcon sx={{ fontSize: 15, color: "text.secondary", cursor: "pointer" }} />
+                    </MuiTooltip>
+                  </Box>
+                  <Typography variant="h6" fontWeight={700}>
+                    {card.value}
+                  </Typography>
+                </Box>
+              )}
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Bar Chart — Earns */}
+      <Typography variant="h4" color="secondary" mb={1}>
+        Daily Earns (SAR)
+      </Typography>
+      <Box
+        p={2}
+        sx={{ borderRadius: 3, boxShadow: 3, backgroundColor: "#fff", minHeight: 120 }}
+      >
+        {loadingBarChart ? (
+          <SectionLoader />
+        ) : !barChart.some((r) => r.earnCount > 0) ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height={100}>
+            <Typography variant="body2" color="text.secondary">
+              No earn data available for this period
+            </Typography>
+          </Box>
+        ) : (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={barChart}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis yAxisId="left" orientation="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip
+                formatter={(value: any, name: string) =>
+                  name === "Earn Amount (SAR)"
+                    ? [Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), name]
+                    : [Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 }), name]
+                }
+              />
+              <Legend />
+              <Bar yAxisId="left" dataKey="earnAmount" name="Earn Amount (SAR)" fill="#00897b" />
+              <Bar yAxisId="right" dataKey="earnCount" name="Earn Transactions" fill="#00564f" />
             </BarChart>
           </ResponsiveContainer>
         )}
