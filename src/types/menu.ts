@@ -24,6 +24,7 @@ export type NavItemType = {
   type?: string;
   url?: string | undefined;
   privileges?: string[];
+  requiresQitaf?: boolean;
 };
 
 export type LinkTarget = '_blank' | '_self' | '_parent' | '_top';

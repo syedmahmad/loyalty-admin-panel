@@ -77,6 +77,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
     ],
     is_priority: 0,
     business_unit_id: "",
+    status: 1,
   };
   const theme = useTheme();
   const userInfo = JSON.parse(localStorage.getItem("client-info") || "{}");
@@ -99,7 +100,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
     eOrName:
       | string
       | ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-    maybeValue?: any
+    maybeValue?: any,
   ) => {
     let name: string;
     let value: any;
@@ -135,8 +136,8 @@ const RuleCreateForm = ({ onSuccess }: any) => {
   };
 
   const handleSubmit = async () => {
-    const allNamesValid = Object.values(form.ruleBasicInfo.locales).every(
-      (locale) => locale.name && locale.name.trim() !== ""
+    const allNamesValid = Object.values(form.ruleBasicInfo.locales).some(
+      (locale) => locale.name && locale.name.trim() !== "",
     );
 
     if (!allNamesValid || !form.rule_type || !form.business_unit_id) {
@@ -167,20 +168,20 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
     for (const t of tiers) {
       const tierInfo = allTiers.find(
-        (singleTier) => singleTier.id === t.tier_id
+        (singleTier) => singleTier.id === t.tier_id,
       );
 
       const rate = Number(t.point_conversion_rate);
       if (isNaN(rate)) {
         toast.error(
-          `The point conversion rate for the ${tierInfo.name} tier is required.`
+          `The point conversion rate for the ${tierInfo.name} tier is required.`,
         );
         return;
       }
 
       if (rate < 0) {
         toast.error(
-          `The point conversion rate for the ${tierInfo.name} tier cannot be negative`
+          `The point conversion rate for the ${tierInfo.name} tier cannot be negative`,
         );
         return;
       }
@@ -237,7 +238,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
           languageId,
           name: localization.name,
           description: localization.description,
-        })
+        }),
       ),
     };
     try {
@@ -254,7 +255,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message ||
-          "An error occurred while creating the rule"
+          "An error occurred while creating the rule",
       );
     }
 
@@ -263,7 +264,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
   const handleConditionTypeDropdownChange = (
     index: number,
-    newValue: string
+    newValue: string,
   ) => {
     const updated = [...form.conditions];
     updated[index].condition_type = newValue;
@@ -292,11 +293,11 @@ const RuleCreateForm = ({ onSuccess }: any) => {
           languageResponse?.languages?.map((cl: any) => cl?.language) || [];
 
         const english = allLanguages.find(
-          (lang: { code: string }) => lang.code === "en"
+          (lang: { code: string }) => lang.code === "en",
         );
 
         const others = allLanguages.filter(
-          (lang: { code: string }) => lang.code !== "en"
+          (lang: { code: string }) => lang.code !== "en",
         );
         const englishFirst = english ? [english, ...others] : allLanguages;
         setLanguages(englishFirst);
@@ -320,8 +321,8 @@ const RuleCreateForm = ({ onSuccess }: any) => {
   const handleConversionRateChange = (tierId: number, value?: number) => {
     setTiers((prev) =>
       prev.map((t) =>
-        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t
-      )
+        t.tier_id === tierId ? { ...t, point_conversion_rate: value } : t,
+      ),
     );
   };
 
@@ -330,8 +331,9 @@ const RuleCreateForm = ({ onSuccess }: any) => {
       try {
         const clientInfo = JSON.parse(localStorage.getItem("client-info")!);
         const response = await GET(
-          `/tiers/${clientInfo.id}?bu=${form.business_unit_id}`
+          `/tiers/${clientInfo.id}?bu=${form.business_unit_id}`,
         );
+
         if (response?.status === 200) {
           setAllTiers(response.data.tiers || []);
         } else {
@@ -341,7 +343,6 @@ const RuleCreateForm = ({ onSuccess }: any) => {
         toast.error("An error occurred while fetching tiers");
       }
     };
-
     if (form.business_unit_id) {
       fetchTiers();
     }
@@ -349,7 +350,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
   const handleTranslateText = async (
     targetLang: string,
-    englishText: string
+    englishText: string,
   ): Promise<string> => {
     try {
       setTranslationLoading((prev) => ({ ...prev, [targetLang]: true }));
@@ -404,7 +405,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
                             const translatedText = await handleTranslateText(
                               targetLang,
-                              englishText
+                              englishText,
                             );
 
                             setForm((prev) => ({
@@ -425,7 +426,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                           } catch (err) {
                             console.error(
                               `Translation failed for ${targetLang}`,
-                              err
+                              err,
                             );
                           } finally {
                             setTranslationLoading((prev) => ({
@@ -542,7 +543,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                 />
 
                 {/* Condition Operator */}
-                <TextField
+                {/* <TextField
                   select
                   fullWidth
                   label="Condition Operator"
@@ -559,6 +560,82 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                   <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
                   <MenuItem value="<">Less Than (&lt;)</MenuItem>
                   <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+                </TextField> */}
+
+                {/* Value */}
+                {/* <TextField
+                  label="Value"
+                  fullWidth
+                  value={eachCondition.condition_value}
+                  onChange={(e) => {
+                    const updated = [...form.conditions];
+                    updated[index].condition_value = e.target.value;
+                    handleChange("conditions", updated);
+                  }}
+                /> */}
+
+                {/* Any-checkbox */}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={
+                        (
+                          eachCondition.condition_operator || ""
+                        ).toUpperCase() === "ANY" ||
+                        eachCondition.condition_value === "*"
+                      }
+                      onChange={(e) => {
+                        const updated = [...form.conditions];
+
+                        if (e.target.checked) {
+                          updated[index].condition_operator = "ANY";
+                          updated[index].condition_value = "*";
+                        } else {
+                          updated[index].condition_operator = "";
+                          updated[index].condition_value = "";
+                        }
+
+                        handleChange("conditions", updated);
+                      }}
+                    />
+                  }
+                  label="Any"
+                />
+
+                {/* Condition Operator */}
+                <TextField
+                  select
+                  fullWidth
+                  label="Condition Operator"
+                  value={eachCondition.condition_operator}
+                  disabled={
+                    (eachCondition.condition_operator || "").toUpperCase() ===
+                      "ANY" || eachCondition.condition_value === "*"
+                  }
+                  onChange={(e) => {
+                    // const updated = [...form.conditions];
+                    // updated[index].condition_operator = e.target.value;
+                    // handleChange("conditions", updated);
+                    const updated = [...form.conditions];
+                    const op = e.target.value;
+                    updated[index].condition_operator = op;
+
+                    if (op === "ANY") {
+                      updated[index].condition_value = "*";
+                    }
+
+                    handleChange("conditions", updated);
+                  }}
+                >
+                  <MenuItem value="==">Equal To (==)</MenuItem>
+                  <MenuItem value="!=">Not Equal (!=)</MenuItem>
+                  <MenuItem value=">">Greater Than (&gt;)</MenuItem>
+                  <MenuItem value=">=">Greater Than or Equal (&gt;=)</MenuItem>
+                  <MenuItem value="<">Less Than (&lt;)</MenuItem>
+                  <MenuItem value="<=">Less Than or Equal (&lt;=)</MenuItem>
+
+                  {/* optional: allow selecting ANY directly */}
+                  <MenuItem value="ANY">Any</MenuItem>
                 </TextField>
 
                 {/* Value */}
@@ -566,6 +643,16 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                   label="Value"
                   fullWidth
                   value={eachCondition.condition_value}
+                  disabled={
+                    (eachCondition.condition_operator || "").toUpperCase() ===
+                      "ANY" || eachCondition.condition_value === "*"
+                  }
+                  placeholder={
+                    (eachCondition.condition_operator || "").toUpperCase() ===
+                    "ANY"
+                      ? "*"
+                      : ""
+                  }
                   onChange={(e) => {
                     const updated = [...form.conditions];
                     updated[index].condition_value = e.target.value;
@@ -595,7 +682,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                   <IconButton
                     onClick={() => {
                       const updated = form.conditions.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       );
                       handleChange("conditions", updated);
                     }}
@@ -855,72 +942,73 @@ const RuleCreateForm = ({ onSuccess }: any) => {
           </Grid>
         )}
 
-        <Grid
-          item
-          xs={12}
-          marginLeft="16px"
-          marginTop="16px"
-          border={`1px solid ${theme.palette.secondary.light}`}
-          borderRadius={2}
-          paddingRight={2}
-        >
-          <Typography variant="h4" color="primary">
-            Tiers
-          </Typography>
-          <Alert>
-            <Typography variant="body1">
-              You can select multiple tiers, once you select one you will see
-              point conversion factor, you can change that point conversion
-              fatcor for each tier customers so they get different benefits
-              according to there tier
+        {allTiers.length > 0 && (
+          <Grid
+            item
+            xs={12}
+            marginLeft="16px"
+            marginTop="16px"
+            border={`1px solid ${theme.palette.secondary.light}`}
+            borderRadius={2}
+            paddingRight={2}
+          >
+            <Typography variant="h4" color="primary">
+              Tiers
             </Typography>
-          </Alert>
-          <br />
+            <Alert>
+              <Typography variant="body1">
+                You can select multiple tiers, once you select one you will see
+                point conversion factor, you can change that point conversion
+                fatcor for each tier customers so they get different benefits
+                according to there tier
+              </Typography>
+            </Alert>
+            <br />
 
-          <Grid container>
-            {allTiers.map((tier, index) => {
-              const selected = isTierSelected(tier.id);
-              const current = tiers.find((t) => t.tier_id === tier.id);
-              return (
-                <React.Fragment key={index}>
-                  <Grid item xs={4}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selected}
-                          onChange={() => handleTierToggle(tier.id)}
-                        />
-                      }
-                      sx={{ mb: 2 }}
-                      label={tier?.locales?.[0]?.name}
-                    />
-                  </Grid>
+            <Grid container>
+              {allTiers.map((tier, index) => {
+                const selected = isTierSelected(tier.id);
+                const current = tiers.find((t) => t.tier_id === tier.id);
+                return (
+                  <React.Fragment key={index}>
+                    <Grid item xs={4}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selected}
+                            onChange={() => handleTierToggle(tier.id)}
+                          />
+                        }
+                        sx={{ mb: 2 }}
+                        label={tier?.locales?.[0]?.name}
+                      />
+                    </Grid>
 
-                  <Grid item xs={8}>
-                    {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="Point Conversion Rate"
-                      value={current?.point_conversion_rate ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        handleConversionRateChange(
-                          tier.id,
-                          val === "" ? undefined : Number(val)
-                        );
-                      }}
-                      sx={{ mb: 2 }}
-                      inputProps={{ step: 0.01, min: 0 }}
-                    />
-                    {/* )} */}
-                  </Grid>
-                </React.Fragment>
-              );
-            })}
+                    <Grid item xs={8}>
+                      {/* {selected && selectedCampaignType?.value === "POINTS" && ( */}
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Point Conversion Rate"
+                        value={current?.point_conversion_rate ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleConversionRateChange(
+                            tier.id,
+                            val === "" ? undefined : Number(val),
+                          );
+                        }}
+                        sx={{ mb: 2 }}
+                        inputProps={{ step: 0.01, min: 0 }}
+                      />
+                      {/* )} */}
+                    </Grid>
+                  </React.Fragment>
+                );
+              })}
+            </Grid>
           </Grid>
-        </Grid>
-
+        )}
         {/* Description */}
         {languages.length > 0 &&
           languages.map((singleLanguage: Language, index) => {
@@ -970,7 +1058,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
 
                             const translatedText = await handleTranslateText(
                               targetLang,
-                              englishText
+                              englishText,
                             );
 
                             setForm((prev) => ({
@@ -991,7 +1079,7 @@ const RuleCreateForm = ({ onSuccess }: any) => {
                           } catch (err) {
                             console.error(
                               `Translation failed for ${targetLang}`,
-                              err
+                              err,
                             );
                           } finally {
                             setTranslationLoading((prev) => ({

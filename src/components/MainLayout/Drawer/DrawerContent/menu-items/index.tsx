@@ -10,7 +10,9 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import WalletIcon from "@mui/icons-material/Wallet";
 import Groups3Icon from "@mui/icons-material/Groups3";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
+import NewReleasesIcon from "@mui/icons-material/NewReleases";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
 // types
 import { NavItemType } from "@/types/menu";
@@ -140,40 +142,40 @@ const menuItems: { items: NavItemType[] } = {
       privileges: [],
       icon: NewReleasesIcon,
     },
-    {
-      id: "campaigns",
-      title: "Campaigns",
-      type: "item",
-      url: "/campaigns/view",
-      // children: [
-      //   {
-      //    id: "view-campaigns",
-      //    title: "View",
-      //    type: "item",
-      //    url: "/campaigns/view",
-      //    privileges: [],
-      //    icon: FundViewOutlined,
-      //  },
-      //   {
-      //    id: "create-campaigns",
-      //    title: "Create",
-      //    type: "item",
-      //    url: "/campaigns/create",
-      //    privileges: [],
-      //    icon: FileAddFilled,
-      //   },
-      //   {
-      //    id: "edit-campaigns",
-      //    title: "Edit",
-      //    type: "item",
-      //    url: "/campaigns/edit",
-      //    privileges: [],
-      //    icon: EditFilled,
-      //   }
-      // ],
-      privileges: [],
-      icon: CampaignIcon,
-    },
+    // {
+    //   id: "campaigns",
+    //   title: "Campaigns",
+    //   type: "item",
+    //   url: "/campaigns/view",
+    //   // children: [
+    //   //   {
+    //   //    id: "view-campaigns",
+    //   //    title: "View",
+    //   //    type: "item",
+    //   //    url: "/campaigns/view",
+    //   //    privileges: [],
+    //   //    icon: FundViewOutlined,
+    //   //  },
+    //   //   {
+    //   //    id: "create-campaigns",
+    //   //    title: "Create",
+    //   //    type: "item",
+    //   //    url: "/campaigns/create",
+    //   //    privileges: [],
+    //   //    icon: FileAddFilled,
+    //   //   },
+    //   //   {
+    //   //    id: "edit-campaigns",
+    //   //    title: "Edit",
+    //   //    type: "item",
+    //   //    url: "/campaigns/edit",
+    //   //    privileges: [],
+    //   //    icon: EditFilled,
+    //   //   }
+    //   // ],
+    //   privileges: [],
+    //   icon: CampaignIcon,
+    // },
     // {
     //   id: "rewards",
     //   title: "Rewards",
@@ -213,6 +215,37 @@ const menuItems: { items: NavItemType[] } = {
       url: "/wallet-settings",
       privileges: [],
       icon: SettingsIcon,
+    },
+    {
+      id: "integrations",
+      title: "Integrations",
+      type: "item",
+      url: "/integrations/view",
+      privileges: [],
+      icon: IntegrationInstructionsIcon,
+    },
+    {
+      id: "stc-qitaf",
+      title: "STC Qitaf",
+      type: "collapse",
+      icon: ReceiptLongIcon,
+      requiresQitaf: true,
+      children: [
+        {
+          id: "qitaf-transactions",
+          title: "Transactions",
+          type: "item",
+          url: "/qitaf-transactions",
+          privileges: [],
+        },
+        {
+          id: "qitaf-analytic",
+          title: "Analytics",
+          type: "item",
+          url: "/stc-qitaf/analytic",
+          privileges: [],
+        },
+      ],
     },
     {
       id: "analytics",

@@ -1,21 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   TextField,
   Typography,
   CircularProgress,
-  Card,
-  CardContent,
   Grid,
   InputAdornment,
-  Tooltip,
-  IconButton,
-  useTheme,
   Box,
+  MenuItem,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -23,19 +20,26 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { POST } from "@/utils/AxiosUtility";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
+
+const PROGRAM_TYPES = [
+  { value: "points", label: "Points" },
+  { value: "otp", label: "OTP (e.g. Qitaf)" },
+];
 
 const BusinessUnitSchema = Yup.object().shape({
   name: Yup.string().required("Name is required"),
   description: Yup.string(),
   location: Yup.string(),
+  type: Yup.string().required("Program type is required"),
 });
 
-const BusinessUnitCreateForm = ({ onSuccess } : any) => {
+const BusinessUnitCreateForm = ({ onSuccess }: any) => {
   const [tenantId, setTenantId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const theme = useTheme();
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [iconUploading, setIconUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const clientInfo = localStorage.getItem("client-info");
     if (clientInfo) {
@@ -48,6 +52,37 @@ const BusinessUnitCreateForm = ({ onSuccess } : any) => {
     }
   }, []);
 
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!["jpg", "jpeg", "png", "avif"].includes(ext)) {
+      toast.error("Please upload a valid image file (JPG or PNG)");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setIconUploading(true);
+    try {
+      const res = await POST("/business-units/file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (res?.data?.success) {
+        setIconUrl(res.data.uploaded_url);
+        toast.success("Icon uploaded");
+      } else {
+        toast.error("Icon upload failed");
+      }
+    } catch {
+      toast.error("Icon upload failed");
+    } finally {
+      setIconUploading(false);
+    }
+  };
+
   const handleSubmit = async (values: any, { resetForm }: any) => {
     if (!tenantId) return alert("Tenant ID not found in localStorage.");
 
@@ -56,18 +91,18 @@ const BusinessUnitCreateForm = ({ onSuccess } : any) => {
       const payload = {
         ...values,
         tenant_id: tenantId,
+        icon: iconUrl ?? null,
       };
 
-      // 🔁 Replace with actual API call
       const response = await POST("/business-units", payload);
-      console.log("Creating business unit with payload:", payload, response);
 
       if (response?.status !== 201) {
         throw new Error("Failed to create business unit");
       } else {
         resetForm();
+        setIconUrl(null);
         toast.success("Business Unit created successfully!");
-        onSuccess(); // router.push('/business-units/view');
+        onSuccess();
       }
     } catch (err) {
       console.error(err);
@@ -87,21 +122,18 @@ const BusinessUnitCreateForm = ({ onSuccess } : any) => {
 
   return (
     <>
-      {/* <Tooltip title="Go Back">
-        <IconButton onClick={() => router.back()} sx={{ width: 120, color: theme.palette.primary.main }}>
-          <ArrowBackIcon /> &nbsp; Go Back
-        </IconButton>
-      </Tooltip> */}
       <Formik
         initialValues={{
           name: "",
           description: "",
           location: "",
+          type: "points",
+          redemption_enabled: 1,
         }}
         validationSchema={BusinessUnitSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, errors, touched, handleChange }) => (
+        {({ values, errors, touched, handleChange, setFieldValue }) => (
           <Form noValidate>
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -162,23 +194,89 @@ const BusinessUnitCreateForm = ({ onSuccess } : any) => {
               </Grid>
 
               <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  name="type"
+                  label="Program Type"
+                  value={values.type}
+                  onChange={handleChange}
+                  error={touched.type && Boolean(errors.type)}
+                  helperText={touched.type && errors.type}
+                >
+                  {PROGRAM_TYPES.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={values.redemption_enabled === 1}
+                      onChange={(e) =>
+                        setFieldValue("redemption_enabled", e.target.checked ? 1 : 0)
+                      }
+                      color="primary"
+                    />
+                  }
+                  label={
+                    values.redemption_enabled === 1
+                      ? "Redemption Enabled"
+                      : "Redemption Disabled"
+                  }
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Program Icon (optional)
+                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    disabled={iconUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {iconUploading ? <CircularProgress size={18} /> : "Upload Icon"}
+                  </Button>
+                  {iconUrl && (
+                    <Box
+                      component="img"
+                      src={iconUrl}
+                      alt="icon preview"
+                      sx={{ width: 48, height: 48, objectFit: "contain", borderRadius: 1, border: "1px solid #ddd" }}
+                    />
+                  )}
+                  {iconUrl && (
+                    <Button size="small" color="error" onClick={() => setIconUrl(null)}>
+                      Remove
+                    </Button>
+                  )}
+                </Box>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/avif"
+                  style={{ display: "none" }}
+                  onChange={handleIconUpload}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
                 <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
                   <Button
                     variant="outlined"
                     color="primary"
                     type="submit"
-                    disabled={loading}
-                    sx={{
-                      borderRadius: 2,
-                      textTransform: "none",
-                      fontWeight: 550,
-                    }}
+                    disabled={loading || iconUploading}
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 550 }}
                   >
-                    {loading ? (
-                      <CircularProgress size={24} />
-                    ) : (
-                      "Create business"
-                    )}
+                    {loading ? <CircularProgress size={24} /> : "Create business"}
                   </Button>
                 </Box>
               </Grid>

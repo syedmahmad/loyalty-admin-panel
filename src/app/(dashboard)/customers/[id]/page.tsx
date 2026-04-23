@@ -2,6 +2,7 @@
 import GoBackButton from "@/components/buttons/GoBackButton";
 import { GET, POST } from "@/utils/AxiosUtility";
 import SearchIcon from "@mui/icons-material/Search";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   Box,
   Button,
@@ -19,9 +20,11 @@ import {
   TableRow,
   TextField,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { qitafTransactionService, type QitafTransaction } from "@/services/qitafTransactionService";
 import { toast } from "react-toastify";
 
 export default function CustomerDetail() {
@@ -55,6 +58,12 @@ export default function CustomerDetail() {
   const [usageCouponTotalPages, setUsageCouponTotalPages] = useState(1);
   const [usageCoupons, setUsageCoupons] = useState([]);
 
+  // STC Qitaf Transactions
+  const [qitafTransactions, setQitafTransactions] = useState<QitafTransaction[]>([]);
+  const [qitafPage, setQitafPage] = useState(1);
+  const [qitafTotalPages, setQitafTotalPages] = useState(1);
+  const [qitafLoading, setQitafLoading] = useState(false);
+
   const fetchCustomerDetail = async ({
     pointPage,
     couponPage,
@@ -68,23 +77,25 @@ export default function CustomerDetail() {
   }) => {
     try {
       const response: any = await GET(
-        `/customers/${customerId}/details?pointPage=${pointPage}&couponPage=${couponPage}&pageSize=${pageSize}&point-search-query=${pointSearchValue}&coupon-search-query=${couponSearchValue}`
+        `/customers/${customerId}/details?pointPage=${pointPage}&couponPage=${couponPage}&pageSize=${pageSize}&point-search-query=${pointSearchValue}&coupon-search-query=${couponSearchValue}`,
       );
       setCustomer(response.data);
       setPointTotalPages(
-        Math.ceil((response.data?.transactions?.total || 0) / pageSize)
+        Math.ceil((response.data?.transactions?.total || 0) / pageSize),
       );
       setPointPage(Number(response.data?.transactions?.page));
 
       setCouponTotalPages(
-        Math.ceil((response.data?.couponTransactionInfo?.total || 0) / pageSize)
+        Math.ceil(
+          (response.data?.couponTransactionInfo?.total || 0) / pageSize,
+        ),
       );
       setCouponPage(Number(response.data?.couponTransactionInfo?.page));
       setbUId(response.data?.wallet?.business_unit.id);
       setCustomerUuid(response.data.uuid);
     } catch (error: any) {
       // console.error("Error fetching customer details:", error);
-      const msg = error.response.data.message || "Customer not found";
+      const msg = error?.response?.data?.message || "Customer not found";
       toast.error(msg);
       router.push("/customers");
     } finally {
@@ -97,7 +108,7 @@ export default function CustomerDetail() {
     bUId: number,
     assignedCouponPage: number,
     pageSize: number,
-    assignedCouponSearchQuery: string
+    assignedCouponSearchQuery: string,
   ) => {
     try {
       const response: any = await POST(
@@ -107,7 +118,7 @@ export default function CustomerDetail() {
           bUId,
           page: assignedCouponPage,
           limit: pageSize,
-        }
+        },
       );
       setAssignedCoupons(response?.data?.result?.data || []);
       setAssignedCouponTotalPages(response?.data?.result?.totalPages);
@@ -122,7 +133,7 @@ export default function CustomerDetail() {
     bUId: number,
     usageCouponPage: number,
     pageSize: number,
-    usageCouponSearchQuery: string
+    usageCouponSearchQuery: string,
   ) => {
     try {
       const response: any = await POST(
@@ -132,13 +143,27 @@ export default function CustomerDetail() {
           bUId,
           page: usageCouponPage,
           limit: pageSize,
-        }
+        },
       );
       setUsageCoupons(response?.data?.result?.data || []);
       setUsageCouponTotalPages(response?.data?.result?.totalPages);
       setUsageCouponPage(response?.data?.result?.page);
     } catch (error) {
       console.log("Error");
+    }
+  };
+
+  const fetchQitafTransactions = async (page: number) => {
+    setQitafLoading(true);
+    try {
+      const result = await qitafTransactionService.getByCustomer(customerId, page, 10);
+      setQitafTransactions(result.data);
+      setQitafPage(result.page);
+      setQitafTotalPages(result.totalPages);
+    } catch {
+      // No Qitaf integration for this customer — silently skip
+    } finally {
+      setQitafLoading(false);
     }
   };
 
@@ -160,7 +185,7 @@ export default function CustomerDetail() {
         bUId,
         assignedCouponPage,
         pageSize,
-        assignedCouponSearchQuery
+        assignedCouponSearchQuery,
       );
 
       fetchUsageCouponHistory(
@@ -168,7 +193,7 @@ export default function CustomerDetail() {
         bUId,
         usageCouponPage,
         pageSize,
-        usageCouponSearchQuery
+        usageCouponSearchQuery,
       );
     }
   }, [bUId, customerUuid, assignedCouponSearchQuery, usageCouponSearchQuery]);
@@ -276,6 +301,33 @@ export default function CustomerDetail() {
         </Typography>
 
         <Box mb={2} mt={1}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search Points Transactions
+            </Typography>
+            <Tooltip
+              title="Search for point transactions by description"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             placeholder="Search"
             value={pointSearchValue}
@@ -317,6 +369,7 @@ export default function CustomerDetail() {
                 <TableCell>Amount</TableCell>
                 <TableCell>Points</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell>Date</TableCell>
               </TableRow>
             </TableHead>
@@ -329,6 +382,19 @@ export default function CustomerDetail() {
                   <TableCell>
                     <Chip
                       label={point.type}
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        backgroundColor: "#fff",
+                        fontFamily: "Outfit",
+                        fontWeight: 550,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={point.status}
                       color="primary"
                       size="small"
                       variant="outlined"
@@ -439,6 +505,33 @@ export default function CustomerDetail() {
         </Typography>
 
         <Box mb={2} mt={1}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search Coupon Usage History
+            </Typography>
+            <Tooltip
+              title="Search for used coupons by invoice number"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             placeholder="Search"
             value={usageCouponSearchQuery}
@@ -518,7 +611,7 @@ export default function CustomerDetail() {
                   bUId,
                   usageCouponPage - 1,
                   pageSize,
-                  usageCouponSearchQuery
+                  usageCouponSearchQuery,
                 );
               }
             }}
@@ -544,7 +637,7 @@ export default function CustomerDetail() {
                   bUId,
                   value,
                   pageSize,
-                  usageCouponSearchQuery
+                  usageCouponSearchQuery,
                 );
               }
             }}
@@ -573,7 +666,7 @@ export default function CustomerDetail() {
                   bUId,
                   usageCouponPage + 1,
                   pageSize,
-                  usageCouponSearchQuery
+                  usageCouponSearchQuery,
                 );
               }
             }}
@@ -598,6 +691,33 @@ export default function CustomerDetail() {
         </Typography>
 
         <Box mb={2} mt={1}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Outfit",
+                fontWeight: 500,
+                fontSize: "13px",
+                color: "rgba(0, 0, 0, 0.6)",
+              }}
+            >
+              Search Assigned Coupons
+            </Typography>
+            <Tooltip
+              title="Search for assigned coupons by code"
+              arrow
+              placement="top"
+            >
+              <InfoOutlinedIcon
+                sx={{
+                  fontSize: 16,
+                  ml: 0.5,
+                  color: "rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                }}
+              />
+            </Tooltip>
+          </Box>
           <TextField
             placeholder="Search"
             value={assignedCouponSearchQuery}
@@ -689,7 +809,7 @@ export default function CustomerDetail() {
                   bUId,
                   assignedCouponPage - 1,
                   pageSize,
-                  assignedCouponSearchQuery
+                  assignedCouponSearchQuery,
                 );
               }
             }}
@@ -715,7 +835,7 @@ export default function CustomerDetail() {
                   bUId,
                   value,
                   pageSize,
-                  assignedCouponSearchQuery
+                  assignedCouponSearchQuery,
                 );
               }
             }}
@@ -744,7 +864,7 @@ export default function CustomerDetail() {
                   bUId,
                   assignedCouponPage + 1,
                   pageSize,
-                  assignedCouponSearchQuery
+                  assignedCouponSearchQuery,
                 );
               }
             }}
@@ -760,6 +880,132 @@ export default function CustomerDetail() {
           </Button>
         </Box>
       </Box>
+
+      {/* STC Qitaf Transactions — moved to /qitaf-transactions dedicated route */}
+      {false && <Box mt={2}>
+        <Typography sx={{ fontFamily: "Outfit", fontSize: "20px", fontWeight: 500 }}>
+          STC Qitaf Transactions
+        </Typography>
+
+        {qitafLoading ? (
+          <Box display="flex" justifyContent="center" mt={2}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : qitafTransactions.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            No Qitaf transactions found for this customer.
+          </Typography>
+        ) : (
+          <>
+            <TableContainer component={Paper} sx={{ mt: 1 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Amount (SAR)</TableCell>
+                    <TableCell>Points</TableCell>
+                    <TableCell>Branch / Terminal</TableCell>
+                    <TableCell>Global ID</TableCell>
+                    <TableCell>Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {qitafTransactions.map((tx) => (
+                    <TableRow key={tx.id}>
+                      <TableCell>
+                        <Chip
+                          label={tx.transaction_type}
+                          size="small"
+                          variant="outlined"
+                          color={
+                            tx.transaction_type === "earn" || tx.transaction_type === "earn_incentive"
+                              ? "success"
+                              : tx.transaction_type === "redeem"
+                                ? "warning"
+                                : tx.transaction_type === "reverse"
+                                  ? "error"
+                                  : "default"
+                          }
+                          sx={{ fontFamily: "Outfit", fontWeight: 550, textTransform: "capitalize" }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={tx.status}
+                          size="small"
+                          variant="outlined"
+                          color={
+                            tx.status === "success"
+                              ? "success"
+                              : tx.status === "auto_reversed"
+                                ? "warning"
+                                : "error"
+                          }
+                          sx={{ fontFamily: "Outfit", fontWeight: 550, textTransform: "capitalize" }}
+                        />
+                      </TableCell>
+                      <TableCell>{tx.amount ?? tx.reduction_amount ?? "—"}</TableCell>
+                      <TableCell>{tx.points ?? "—"}</TableCell>
+                      <TableCell sx={{ fontSize: "12px", color: "text.secondary" }}>
+                        {tx.branch_id && tx.terminal_id
+                          ? `${tx.branch_id} / ${tx.terminal_id}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: "11px", color: "text.secondary", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {tx.global_id ?? "—"}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>
+                        {new Date(tx.created_at).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {qitafTotalPages > 1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderTop: "1px solid #E0E0E0",
+                  paddingY: 2,
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  onClick={() => fetchQitafTransactions(qitafPage - 1)}
+                  disabled={qitafPage === 1}
+                  sx={{ textTransform: "none", borderRadius: 2, px: 3, minWidth: 100 }}
+                >
+                  ← Previous
+                </Button>
+                <Pagination
+                  count={qitafTotalPages}
+                  page={qitafPage}
+                  onChange={(_, value) => fetchQitafTransactions(value)}
+                  shape="rounded"
+                  siblingCount={1}
+                  boundaryCount={1}
+                  hidePrevButton
+                  hideNextButton
+                  sx={{ "& .MuiPaginationItem-root": { borderRadius: "8px", fontWeight: 500, minWidth: "36px", height: "36px" } }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => fetchQitafTransactions(qitafPage + 1)}
+                  disabled={qitafPage === qitafTotalPages}
+                  sx={{ textTransform: "none", borderRadius: 2, px: 3, minWidth: 100 }}
+                >
+                  Next →
+                </Button>
+              </Box>
+            )}
+          </>
+        )}
+      </Box>}
     </Box>
   );
 }

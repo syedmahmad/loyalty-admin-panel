@@ -9,6 +9,8 @@ import {
   Box,
   Autocomplete,
   Chip,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { CustomTextfield } from "@/components/CustomTextField";
 import { POST } from "@/utils/AxiosUtility";
@@ -31,6 +33,8 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
     countryId: "",
     languageIds: [],
     currencyIds: [],
+    otp_burn_required: false,
+    otp_burn_ttl_minutes: 5,
   });
 
   const { data: countriesData } = useQuery({
@@ -84,6 +88,10 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
         country_id: clientInfo?.countryId,
         languageIds: clientInfo?.languageIds,
         currencyIds: clientInfo?.currencyIds,
+        otp_burn_required: clientInfo.otp_burn_required ? 1 : 0,
+        otp_burn_ttl_minutes: clientInfo.otp_burn_required
+          ? Number(clientInfo.otp_burn_ttl_minutes)
+          : 5,
       };
 
       const token = localStorage.getItem("token");
@@ -116,7 +124,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
               "An error occurred while creating tenant",
             {
               toastId: "create-tenant-error",
-            }
+            },
           );
         }
       }
@@ -216,7 +224,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
             selected.map(
               (
                 option: { id: number; flag: string; name: string },
-                index: number
+                index: number,
               ) => {
                 const { key, ...tagProps } = getTagProps({ index });
                 return (
@@ -226,7 +234,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
                     {...tagProps}
                   />
                 );
-              }
+              },
             )
           }
           renderInput={(params) => (
@@ -266,7 +274,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
             selected.map(
               (
                 option: { id: number; flag: string; name: string },
-                index: number
+                index: number,
               ) => {
                 const { key, ...tagProps } = getTagProps({ index });
                 return (
@@ -276,7 +284,7 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
                     {...tagProps}
                   />
                 );
-              }
+              },
             )
           }
           renderInput={(params) => (
@@ -292,6 +300,43 @@ const CreateClient = ({ reFetch, setOpenModal }: any) => {
           )}
         />
       </Grid2>
+
+      {/* OTP Burn Feature */}
+      <Grid2 xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={clientInfo.otp_burn_required}
+              onChange={(e) =>
+                setClientInfo({
+                  ...clientInfo,
+                  otp_burn_required: e.target.checked,
+                })
+              }
+            />
+          }
+          label="Enable OTP Burn For Petromin App"
+        />
+      </Grid2>
+
+      {clientInfo.otp_burn_required && (
+        <Grid2 xs={12}>
+          <TextField
+            fullWidth
+            type="number"
+            label="OTP Expiry (minutes)"
+            value={clientInfo.otp_burn_ttl_minutes}
+            onChange={(e) =>
+              setClientInfo({
+                ...clientInfo,
+                otp_burn_ttl_minutes: Math.max(1, Number(e.target.value)),
+              })
+            }
+            inputProps={{ min: 1 }}
+            helperText="How long the OTP remains valid after generation"
+          />
+        </Grid2>
+      )}
 
       <Grid2 xs={12} md={12}>
         <Box
